@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ po.po_number }}</title>
+
+  <style>
+    /*
+      ============================================================
+      factory_purchase_order.html
+
+      功能：
+        这是“发给工厂的 Purchase Order / PO”的 HTML 模板。
+        它只负责页面排版，不负责业务计算。
+
+      业务逻辑由 06_generate_factory_po.py 负责，例如：
+        - PO 编号生成
+        - Order Date / Expected Arrival 计算
+        - Shipping Address 读取
+        - 工厂地址读取
+        - 产品数量读取
+        - 根据 serial expiration date 计算折扣
+        - 按 product_code + discount_rate 严谨分组
+        - amount 和 total 计算
+        - HTML/PDF 生成
+
+      当前模板设计：
+        1. 每页顶部固定浅绿色页眉
+           - 左侧 logo
+           - 右侧香港公司地址
+           - 使用 SVG 近似样本中的斜切曲线分界
+           - Purchase Order 标题放在页眉右下白色区域
+
+        2. 每页底部页脚
+           - 左侧公司名称和 Business Registration
+           - 右侧自动页码 Page x / y
+
+        3. 正文
+           - Shipping address + Factory address
+           - Buyer / Order Date / Expected Arrival
+           - 产品表
+           - Total
+
+      注意：
+        - Taxes 列已删除。
+        - Unit Price 全部由 Python 传入，当前规则为 120.00。
+        - Disc. 由 Python 根据 expiration date 判断。
+        - Amount 由 Python 计算。
+      ============================================================
+    */
+
+
+    /*
+      ============================================================
+      0. 颜色变量
+      ------------------------------------------------------------
+      后续要调整整体颜色，只需要改这里。
+      ============================================================
+    */
+
+    :root {
+      --po-green: #3a8d24;
+      --po-light-green: #eef6ea;
+      --po-line-green: #7ab65a;
+      --text-dark: #1f2933;
+      --text-muted: #4b5563;
+      --line-dark: #333333;
+    }
+
+
+    /*
+      ============================================================
+      1. 页面设置
+      ------------------------------------------------------------
+      这里不用 @top-center 放页眉。
+
+      原因：
+        @top-center 在 WeasyPrint 中是页眉中间盒子，
+        不容易铺满整页宽度，所以会出现“中间一块绿色矩形”。
+
+      新方案：
+        使用 position: fixed 的 .po-header，
+        并通过 top / left / right 的负边距让它覆盖整页顶部。
+
+      margin:
+        top = 50mm:
+          给固定页眉留出空间，避免页眉遮挡正文。
+        left/right = 16mm:
+          正文左右边距。
+        bottom = 20mm:
+          给页脚留出空间。
+      ============================================================
+    */
+
+    @page {
+      size: A4;
+      margin: 50mm 16mm 20mm 16mm;
+
+      @bottom-left {
+        content: element(poFooterLeft);
+      }
+
+      @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+        font-size: 9.5px;
+        color: #777777;
+      }
+    }
+
+
+    /*
+      ============================================================
+      2. 全局基础样式
+      ------------------------------------------------------------
+      字号整体比上一版加大。
+      ============================================================
+    */
+
+    body {
+      font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+      font-size: 11.5px;
+      color: var(--text-dark);
+      margin: 0;
+      padding: 0;
+      line-height: 1.38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    /*
+      ============================================================
+      3. 每页固定页眉：全宽浅绿色背景 + SVG 曲线
+      ------------------------------------------------------------
+      .po-header:
+        position: fixed 让它出现在每一页。
+        top: -50mm 对应 @page 上边距 50mm。
+        left/right: -16mm 对应 @page 左右边距 16mm。
+        这样页眉会覆盖整张纸的宽度，而不是正文宽度。
+
+      .po-header-bg:
+        SVG 背景形状。
+        近似样本中：
+          - 左侧浅绿色区域更低
+          - 中间有斜切和圆角
+          - 右侧浅绿色区域更高
+          - Purchase Order 标题位于右侧白色区域
+      ============================================================
+    */
+
+    .po-header {
+      position: fixed;
+      top: -50mm;
+      left: -16mm;
+      right: -16mm;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .po-header-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .po-header-content {
+      position: relative;
+      z-index: 1;
+      height: 50mm;
+      width: 100%;
+    }
+
+    /*
+      Logo 位置：
+        左侧，略靠下，与样本风格接近。
+        如果 logo 太大/太小，可调整 width。
+    */
+    .po-header-logo {
+      position: absolute;
+      left: 16mm;
+      top: 10mm;
+      width: 230px;
+      height: auto;
+    }
+
+    /*
+      香港公司地址：
+        右上角，右对齐。
+    */
+    .po-header-company {
+      position: absolute;
+      right: 16mm;
+      top: 9mm;
+      text-align: right;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #111827;
+      max-width: 360px;
+    }
+
+    .po-header-company-name {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    /*
+      Purchase Order 标题：
+        放在页眉右下方白色区域。
+        这样每一页都会出现。
+    */
+    .po-title {
+      position: absolute;
+      right: 7mm;
+      bottom: 3.5mm;
+      width: 45%;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--po-green);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .po-title .po-number {
+      font-weight: 400;
+    }
+
+
+    /*
+      ============================================================
+      4. 每页页脚
+      ------------------------------------------------------------
+      左侧：
+        Dela Global Trade Consulting Limited
+        Business Registration NO.71 99 26 22
+
+      右侧：
+        Page x / y，由 @page @bottom-right 自动生成。
+      ============================================================
+    */
+
+    .po-footer-left {
+      position: running(poFooterLeft);
+      font-size: 9.5px;
+      line-height: 1.35;
+      color: var(--text-dark);
+    }
+
+    .po-footer-company-name {
+      color: var(--po-green);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .po-footer-registration {
+      color: var(--text-muted);
+      font-size: 8.8px;
+    }
+
+
+    /*
+      ============================================================
+      5. 正文整体容器
+      ------------------------------------------------------------
+      页眉已经固定在页面顶部。
+      正文从 @page 的 top margin 后开始。
+      ============================================================
+    */
+
+    .document {
+      width: 100%;
+      max-width: 100%;
+    }
+
+
+    /*
+      ============================================================
+      6. 地址区域：Shipping address + Factory address
+      ------------------------------------------------------------
+      左侧：
+        医院收货地址，来自 extracted_order.json。
+
+      右侧：
+        工厂地址，来自 config/factory_info.json。
+
+      注意：
+        Purchase Order 标题已经放到页眉里，
+        所以正文这里不再单独显示 PO 标题。
+      ============================================================
+    */
+
+    .address-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 28px;
+      width: 100%;
+      margin-bottom: 25px;
+    }
+
+    .address-box {
+      width: 50%;
+      line-height: 1.38;
+      font-size: 11.3px;
+    }
+
+    .address-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: var(--text-dark);
+    }
+
+    .factory-address {
+      padding-left: 12px;
+    }
+
+
+    /*
+      ============================================================
+      7. Buyer / Order Date / Expected Arrival
+      ------------------------------------------------------------
+      三列布局：
+        左侧 Buyer
+        中间 Order Date
+        右侧 Expected Arrival
+
+      样式参考样本，标题为蓝色。
+      ============================================================
+    */
+
+    .meta-section {
+      display: grid;
+      grid-template-columns: 58% 21% 21%;
+      column-gap: 2%;
+      width: 100%;
+      margin-bottom: 18px;
+      font-size: 11.4px;
+    }
+
+    .meta-block {
+      line-height: 1.38;
+    }
+
+    .meta-title {
+      font-weight: 700;
+      color: #1d4f73;
+      margin-bottom: 3px;
+    }
+
+    .meta-value {
+      color: var(--text-dark);
+    }
+
+
+    /*
+      ============================================================
+      8. 产品表
+      ------------------------------------------------------------
+      重点修改：
+        - 使用 colgroup 固定列宽
+        - 使用 nth-child 强制标题和数字列对齐
+        - 数字列全部右对齐
+        - 表头绿色
+        - 横线绿色
+        - 跨页时表头重复
+
+      列：
+        1. Description
+        2. Qty
+        3. Unit Price
+        4. Disc.
+        5. Amount
+      ============================================================
+    */
+
+    .po-items-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11.2px;
+      margin-top: 4px;
+      margin-bottom: 15px;
+    }
+
+    .po-items-table thead {
+      display: table-header-group;
+    }
+
+    .po-items-table tbody {
+      display: table-row-group;
+    }
+
+    /*
+      colgroup 中的列宽。
+      总和 = 100%。
+    */
+    .col-description {
+      width: 46%;
+    }
+
+    .col-qty {
+      width: 10%;
+    }
+
+    .col-unit-price {
+      width: 15%;
+    }
+
+    .col-discount {
+      width: 12%;
+    }
+
+    .col-amount {
+      width: 17%;
+    }
+
+    .po-items-table th {
+      color: var(--po-green);
+      font-weight: 700;
+      padding: 7px 4px;
+      border-top: 2px solid var(--po-green);
+      border-bottom: 2px solid var(--po-green);
+      background: transparent;
+    }
+
+    .po-items-table td {
+      padding: 8px 4px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--po-line-green);
+    }
+
+    .po-items-table tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /*
+      第一列左对齐。
+    */
+    .po-items-table th:nth-child(1),
+    .po-items-table td:nth-child(1) {
+      text-align: left;
+    }
+
+    /*
+      Qty / Unit Price / Disc. / Amount 四列标题和数字全部右对齐。
+      这样标题和下方数字会严格对齐。
+    */
+    .po-items-table th:nth-child(n+2),
+    .po-items-table td:nth-child(n+2) {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .product-code {
+      font-weight: 400;
+      margin-bottom: 2px;
+    }
+
+    .product-description {
+      color: var(--text-dark);
+    }
+
+    /*
+      如果 Python 开启 --show-discount-note，
+      这里会显示折扣原因。
+      默认不显示也不会影响排版。
+    */
+    .discount-note {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+
+    /*
+      ============================================================
+      9. Total 区域
+      ------------------------------------------------------------
+      只保留 Total。
+      不显示 VAT / Untaxed Amount。
+      总金额由 Python 计算。
+      ============================================================
+    */
+
+    .total-section {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .total-box {
+    width: 35%;
+    border-top: none;
+    border-bottom: 1px solid var(--po-green);
+    padding-top: 0;
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--po-green);
+    display: flex;
+    justify-content: space-between;
+    }
+
+    .total-label {
+    text-align: left;
+    color: var(--po-green);
+    }
+
+    .total-value {
+    text-align: right;
+    white-space: nowrap;
+    color: var(--po-green);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!--
+    ============================================================
+    A. 固定页眉
+    ------------------------------------------------------------
+    position: fixed 会让这个页眉出现在每一页。
+    SVG 用来做浅绿色背景和曲线分割形状。
+    ============================================================
+  -->
+
+  <div class="po-header">
+
+    <!-- SVG 背景形状 -->
+    <svg class="po-header-bg" viewBox="0 0 1000 190" preserveAspectRatio="none">
+      <!--
+        path 说明：
+          M0 0 H1000 V122
+            从左上角到右上角，再到右侧较高的底边位置。
+
+          H570
+            右半部分浅绿色底边到中间附近。
+
+          C535 122 525 134 505 154
+            中间圆角斜线。
+
+          C488 172 468 182 430 182
+            继续形成圆角过渡。
+
+          H0 Z
+            左侧浅绿色区域下边缘较低。
+      -->
+      <path
+        d="M0 0 H1000 V122 H570 C535 122 525 134 505 154 C488 172 468 182 430 182 H0 Z"
+        fill="#eef6ea"
+      />
+    </svg>
+
+    <div class="po-header-content">
+
+      <img class="po-header-logo" src="{{ company.logo_path }}" alt="Company Logo">
+
+      <div class="po-header-company">
+        <div class="po-header-company-name">{{ company.po_company.display_name }}</div>
+        {% for line in company.po_company.address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="po-title">
+        Purchase Order #<span class="po-number">{{ po.po_number }}</span>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!--
+    ============================================================
+    B. 页脚左侧元素
+    ------------------------------------------------------------
+    通过 @page @bottom-left 显示在每一页底部。
+    ============================================================
+  -->
+
+  <div class="po-footer-left">
+    <div class="po-footer-company-name">{{ company.company_name }}</div>
+    <div class="po-footer-registration">
+      Business Registration NO.{{ company.registration_no }}
+    </div>
+  </div>
+
+
+  <!--
+    ============================================================
+    C. 正文内容
+    ============================================================
+  -->
+
+  <div class="document">
+
+    <!--
+      ============================================================
+      C1. 地址区域
+      ------------------------------------------------------------
+      左侧：医院收货地址
+      右侧：工厂地址
+      ============================================================
+    -->
+
+    <div class="address-section">
+
+      <div class="address-box shipping-address">
+        <div class="address-title">Shipping address</div>
+        {% for line in shipping_address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="address-box factory-address">
+        <div class="address-title">Factory address</div>
+        <div>{{ factory.factory_name }}</div>
+        {% for line in factory.factory_address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+
+    <!--
+      ============================================================
+      C2. Buyer / Order Date / Expected Arrival
+      ------------------------------------------------------------
+      buyer 来自 factory_info.json。
+      order_date 和 expected_arrival 由 Python 生成。
+      ============================================================
+    -->
+
+    <div class="meta-section">
+
+      <div class="meta-block">
+        <div class="meta-title">Buyer</div>
+        <div class="meta-value">{{ factory.buyer }}</div>
+      </div>
+
+      <div class="meta-block">
+        <div class="meta-title">Order Date:</div>
+        <div class="meta-value">{{ po.order_date }}</div>
+      </div>
+
+      <div class="meta-block">
+        <div class="meta-title">Expected Arrival:</div>
+        <div class="meta-value">{{ po.expected_arrival }}</div>
+      </div>
+
+    </div>
+
+
+    <!--
+      ============================================================
+      C3. 产品明细表
+      ------------------------------------------------------------
+      colgroup 固定列宽，确保 Qty / Unit Price / Disc. / Amount
+      与下方数字严格对齐。
+      ============================================================
+    -->
+
+    <table class="po-items-table">
+
+      <colgroup>
+        <col class="col-description">
+        <col class="col-qty">
+        <col class="col-unit-price">
+        <col class="col-discount">
+        <col class="col-amount">
+      </colgroup>
+
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Disc.</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div class="product-code">{{ item.product_code }}</div>
+            <div class="product-description">{{ item.description }}</div>
+
+            {% if item.discount_note %}
+              <div class="discount-note">{{ item.discount_note }}</div>
+            {% endif %}
+          </td>
+
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.unit_price }}</td>
+          <td>{{ item.discount }}</td>
+          <td>{{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+
+
+    <!--
+      ============================================================
+      C4. Total
+      ------------------------------------------------------------
+      只保留 Total 价格。
+      ============================================================
+    -->
+
+    <div class="total-section">
+      <div class="total-box">
+        <div class="total-label">Total</div>
+        <div class="total-value">{{ totals.total }}</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

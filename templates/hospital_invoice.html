@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ invoice.invoice_number }}</title>
+
+  <style>
+    /*
+      ============================================================
+      hospital_invoice.html
+
+      功能：
+        这是发给医院的 Invoice PDF 模板。
+        它只负责页面排版，不负责业务逻辑。
+
+      业务逻辑由 05_generate_hospital_invoice.py 负责，例如：
+        - Invoice 编号生成
+        - Invoice Date / Due Date 计算
+        - 医院地址匹配
+        - 产品描述和价格读取
+        - 数量、金额、总价计算
+        - Serial Number 整理
+
+      当前新版式：
+        1. 页眉改成和 PO 一致的风格：
+           - 整页宽浅绿色背景
+           - 左侧 logo
+           - 右侧公司名称和地址
+           - 右下 INVOICE 编号
+           - SVG 斜切曲线
+
+        2. 发票正文：
+           - Shipping Address / Invoice Address
+           - Invoice Date / Due Date / Source
+           - 产品表
+           - Bank Details + Totals + Payment Reference
+           - Serial / Lot Numbers
+
+        3. 页脚：
+           - 左侧 Bank Account
+           - 中间 Page x / y
+           - 右侧 Registration no. + VAT note
+
+      注意：
+        页眉已经显示公司名称和地址，所以正文中不再重复显示 company-block。
+      ============================================================
+    */
+
+
+    /*
+      ============================================================
+      0. 颜色变量
+      ------------------------------------------------------------
+      这里统一使用 PO 模板中的绿色体系。
+      ============================================================
+    */
+
+    :root {
+      --po-green: #3a8d24;
+      --po-light-green: #eef6ea;
+      --po-line-green: #7ab65a;
+      --text-dark: #1f2933;
+      --text-muted: #4b5563;
+      --line-dark: #333333;
+    }
+
+
+    /*
+      ============================================================
+      1. 页面设置
+      ------------------------------------------------------------
+      页眉使用 position: fixed，而不是 @top-left / @top-right。
+      原因：
+        fixed header 可以铺满整页宽度，并支持 SVG 背景曲线。
+
+      margin:
+        top = 50mm:
+          给固定页眉留空间，避免遮挡正文。
+
+        left/right = 18mm:
+          比之前稍宽，页面更舒展。
+
+        bottom = 20mm:
+          给页脚留空间。
+      ============================================================
+    */
+
+    @page {
+      size: A4;
+      margin: 50mm 18mm 20mm 18mm;
+
+      @bottom-left {
+        content: element(invoiceFooterBank);
+      }
+
+      @bottom-center {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+
+      @bottom-right {
+        content: element(invoiceFooterInfo);
+      }
+    }
+
+
+    /*
+      ============================================================
+      2. 全局基础样式
+      ============================================================
+    */
+
+    body {
+      font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+      font-size: 10.8px;
+      color: var(--text-dark);
+      margin: 0;
+      padding: 0;
+      line-height: 1.35;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    /*
+      ============================================================
+      3. 固定页眉：PO 风格绿色页眉
+      ------------------------------------------------------------
+      .invoice-header:
+        使用 position: fixed，让每一页都有相同页眉。
+
+      top / left / right:
+        与 @page margin 对应：
+          top: -50mm
+          left: -18mm
+          right: -18mm
+
+        这样页眉能覆盖整张纸的宽度，而不是只覆盖正文宽度。
+
+      SVG:
+        用于绘制浅绿色背景和斜切曲线。
+      ============================================================
+    */
+
+    .invoice-header {
+      position: fixed;
+      top: -50mm;
+      left: -18mm;
+      right: -18mm;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .invoice-header-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .invoice-header-content {
+      position: relative;
+      z-index: 1;
+      height: 50mm;
+      width: 100%;
+    }
+
+    /*
+      Logo：
+        如果想继续放大或缩小，调整 width。
+    */
+    .invoice-header-logo {
+      position: absolute;
+      left: 18mm;
+      top: 9mm;
+      width: 240px;
+      height: auto;
+    }
+
+    /*
+      右上公司信息：
+        使用发票公司名称和地址。
+        数据来自 company_info.json。
+    */
+    .invoice-header-company {
+      position: absolute;
+      right: 18mm;
+      top: 8mm;
+      text-align: right;
+      font-size: 10.3px;
+      line-height: 1.42;
+      color: var(--text-dark);
+      max-width: 390px;
+    }
+
+    .invoice-header-company-name {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    /*
+      INVOICE 编号：
+        放在右下白色区域。
+        使用 PO 绿色。
+        不加粗，和你之前的要求一致。
+    */
+    .invoice-title {
+      position: absolute;
+      right: -8mm;
+      bottom: 3.5mm;
+      width: 45%;
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--po-green);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+
+    /*
+      ============================================================
+      4. 每页页脚
+      ------------------------------------------------------------
+      保留发票原来的页脚逻辑：
+        左侧 Bank Account
+        中间 Page x / y
+        右侧 Registration no. + VAT note
+      ============================================================
+    */
+
+    .footer-bank-box {
+      position: running(invoiceFooterBank);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.2;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .footer-info-box {
+      position: running(invoiceFooterInfo);
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: right;
+      line-height: 1.2;
+    }
+
+
+    /*
+      ============================================================
+      5. 正文整体容器
+      ============================================================
+    */
+
+    .document {
+      width: 100%;
+      max-width: 100%;
+    }
+
+
+    /*
+      ============================================================
+      6. 地址区域：Shipping Address / Invoice Address
+      ------------------------------------------------------------
+      地址区域无边框。
+      标题改成 PO 绿色。
+      ============================================================
+    */
+
+    .address-section {
+      display: grid;
+      grid-template-columns: 3fr 2fr;  /* 左侧 60%，右侧 40% */
+      column-gap: 18px;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .address-first-line {
+      white-space: nowrap;
+      font-size: 10.4px;
+    }
+
+    .address-box {
+      width: auto;
+      min-height: 100px;
+      border: none;
+      padding: 0 4px 0 4px;
+      line-height: 1.35;
+    }
+
+    .address-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: var(--text-dark);
+      font-size: 11.3px;
+    }
+
+
+    /*
+      ============================================================
+      7. Invoice Date / Due Date / Source 表格
+      ------------------------------------------------------------
+      三条横线风格：
+        1. 表格上边线
+        2. 表头下边线
+        3. 表格下边线
+
+      无背景色，无竖线。
+      标题使用 PO 绿色。
+      ============================================================
+    */
+
+    .info-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      table-layout: fixed;
+      border-top: 1px solid var(--line-dark);
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .info-table th {
+      text-align: left;
+      font-size: 11.5px;
+      padding: 6px 6px;
+      border: none;
+      border-bottom: 1px solid var(--line-dark);
+      background: transparent;
+      font-weight: 700;
+      color: var(--po-green);
+    }
+
+    .info-table td {
+      padding: 6px 6px;
+      border: none;
+      vertical-align: top;
+    }
+
+
+    /*
+      ============================================================
+      8. 产品表
+      ------------------------------------------------------------
+      无边框。
+      表头使用 PO 绿色。
+      产品表可以跨页，表头会重复。
+      ============================================================
+    */
+
+    .items-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      font-size: 10.4px;
+      table-layout: fixed;
+    }
+
+    .items-table thead {
+      display: table-header-group;
+    }
+
+    .items-table tbody {
+      display: table-row-group;
+    }
+
+    .items-table th {
+      border: none;
+      padding: 7px 5px 8px 5px;
+      background: transparent;
+      color: var(--po-green);
+      text-align: left;
+      font-size: 11.6px;
+      font-weight: 700;
+    }
+
+    .items-table td {
+      border: none;
+      padding: 6px 5px;
+      vertical-align: top;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .items-table tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .items-table .description-col {
+      width: 50%;
+    }
+
+    .items-table .price-col {
+      width: 18%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .items-table .qty-col {
+      width: 14%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .items-table .amount-col {
+      width: 18%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .product-code {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+
+    /*
+      ============================================================
+      9. Bank Details + Totals + Payment Reference 区域
+      ------------------------------------------------------------
+      左侧：
+        Bank Details 方框
+        Payment Reference
+        Payment terms
+        Final Payment Date
+
+      右侧：
+        Total Units
+        Untaxed Amount
+        VAT
+        Total
+
+      颜色统一使用 PO 绿色。
+      ============================================================
+    */
+
+    .bottom-section {
+      display: grid;
+      grid-template-columns: 62% 35%;
+      column-gap: 18px;
+      row-gap: 8px;
+      align-items: start;
+      margin-top: 12px;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .bank-details {
+      grid-column: 1;
+      grid-row: 1;
+      border: 1px solid var(--line-dark);
+      padding: 7px 8px;
+      font-size: 9.8px;
+      line-height: 1.4;
+      min-height: 82px;
+    }
+
+    .bank-details-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--po-green);
+    }
+
+    .bank-details div {
+      margin-bottom: 2px;
+    }
+
+
+    /*
+      ============================================================
+      10. Payment Reference / Payment Terms / Final Payment Date
+      ------------------------------------------------------------
+      三行统一行间距。
+      ============================================================
+    */
+
+    .payment-after-bank {
+      grid-column: 1;
+      grid-row: 2;
+      font-size: 9.8px;
+      line-height: 1.35;
+      padding-left: 1px;
+    }
+
+    .payment-reference,
+    .payment-terms,
+    .final-payment-date {
+      margin: 0;
+      padding: 0;
+      line-height: 1.35;
+    }
+
+
+    /*
+      ============================================================
+      11. 右侧 Totals 区域
+      ------------------------------------------------------------
+      Total Units / Untaxed Amount / Total 标签使用 PO 绿色。
+      VAT 0% 保持普通黑色。
+      Total 上下横线不加粗，保持 1px。
+      ============================================================
+    */
+
+    .totals-box {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+    }
+
+    .total-units-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-weight: bold;
+      table-layout: fixed;
+      margin-bottom: 3px;
+    }
+
+    .total-units-table td {
+      border: none;
+      border-bottom: 1px solid var(--line-dark);
+      padding: 0 2px 7px 2px;
+    }
+
+    .total-units-table .label {
+      width: 55%;
+      text-align: left;
+      color: var(--po-green);
+    }
+
+    .total-units-table .value {
+      width: 45%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .totals-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      table-layout: fixed;
+    }
+
+    .totals-table td {
+      border: none;
+      border-bottom: 1px solid var(--line-dark);
+      padding: 7px 2px;
+    }
+
+    .totals-table .label {
+      font-weight: bold;
+      text-align: left;
+      width: 55%;
+    }
+
+    .totals-table .value {
+      text-align: right;
+      white-space: nowrap;
+      width: 45%;
+    }
+
+    .untaxed-row .label {
+      color: var(--po-green);
+    }
+
+    .total-row .label {
+      color: var(--po-green);
+    }
+
+    .total-row td {
+      font-weight: bold;
+      font-size: 13px;
+      border-top: 1px solid var(--line-dark);
+      border-bottom: 1px solid var(--line-dark);
+      background: transparent;
+    }
+
+
+    /*
+      ============================================================
+      12. Serial / Lot Numbers 区域
+      ------------------------------------------------------------
+      从新页开始。
+      表格保留边框。
+      标题和表头使用 PO 绿色。
+      ============================================================
+    */
+
+    .serial-section {
+      break-before: page;
+      page-break-before: always;
+      margin-top: 8px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .serial-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--po-green);
+      margin: 0 0 12px 0;
+    }
+
+    .serial-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      font-size: 10.2px;
+      table-layout: fixed;
+    }
+
+    .serial-table thead {
+      display: table-header-group;
+    }
+
+    .serial-table tbody {
+      display: table-row-group;
+    }
+
+    .serial-table th {
+      border: 1px solid var(--line-dark);
+      padding: 6px 5px;
+      background: var(--po-light-green);
+      color: var(--po-green);
+      text-align: left;
+      font-size: 10.6px;
+      font-weight: 700;
+    }
+
+    .serial-table td {
+      border: 1px solid var(--line-dark);
+      padding: 6px 5px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .serial-table tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .serial-table .serial-product {
+      width: 24%;
+    }
+
+    .serial-table .serial-qty {
+      width: 16%;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .serial-table .serial-number {
+      width: 60%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!--
+    ============================================================
+    A. 固定绿色页眉
+    ------------------------------------------------------------
+    这个页眉会出现在每一页顶部。
+    SVG 用来生成 PO 风格的浅绿色斜切背景。
+    ============================================================
+  -->
+
+  <div class="invoice-header">
+
+    <svg class="invoice-header-bg" viewBox="0 0 1000 190" preserveAspectRatio="none">
+      <path
+        d="M0 0 H1000 V122 H570 C535 122 525 134 505 154 C488 172 468 182 430 182 H0 Z"
+        fill="#eef6ea"
+      />
+    </svg>
+
+    <div class="invoice-header-content">
+
+      <img class="invoice-header-logo" src="{{ company.logo_path }}" alt="Company Logo">
+
+      <div class="invoice-header-company">
+        <div class="invoice-header-company-name">{{ company.company_name }}</div>
+        {% for line in company.company_address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="invoice-title">
+        {{ invoice.invoice_number | upper }}
+      </div>
+
+    </div>
+  </div>
+
+
+  <!--
+    ============================================================
+    B. 每页页脚元素
+    ------------------------------------------------------------
+    这两个 div 通过 @page 放入每页页脚。
+    页码由 @bottom-center 自动生成。
+    ============================================================
+  -->
+
+  <div class="footer-bank-box">
+    Bank Account: {{ company.bank.account_number }}
+  </div>
+
+  <div class="footer-info-box">
+    <div>Registration no. {{ company.registration_no }}</div>
+    <div>{{ company.vat_note }}</div>
+  </div>
+
+
+  <!--
+    ============================================================
+    C. 发票正文
+    ============================================================
+  -->
+
+  <div class="document">
+
+    <!--
+      ============================================================
+      C1. 地址区域
+      ============================================================
+    -->
+
+    <div class="address-section">
+      <div class="address-box">
+        <div class="address-title">Shipping Address</div>
+        {% for line in addresses.shipping_address %}
+          {% if loop.first %}
+            <div class="address-first-line">{{ line }}</div>
+          {% else %}
+            <div>{{ line }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="address-box">
+        <div class="address-title">Invoice Address</div>
+        {% for line in addresses.invoice_address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <!--
+      ============================================================
+      C2. Invoice Date / Due Date / Source
+      ============================================================
+    -->
+
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th>Invoice Date</th>
+          <th>Due Date</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>{{ invoice.invoice_date }}</td>
+          <td>{{ invoice.due_date }}</td>
+          <td>{{ invoice.source }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+
+    <!--
+      ============================================================
+      C3. 产品明细表
+      ============================================================
+    -->
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th class="description-col">Description</th>
+          <th class="price-col">Unit Price (DDP)</th>
+          <th class="qty-col">Quantity</th>
+          <th class="amount-col">Amount</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td class="description-col">
+            <div class="product-code">{{ item.product_code }}</div>
+            <div>{{ item.description }}</div>
+          </td>
+          <td class="price-col">{{ item.unit_price }}</td>
+          <td class="qty-col">{{ item.quantity }}</td>
+          <td class="amount-col">{{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+
+    <!--
+      ============================================================
+      C4. Bank Details + Totals + Payment Information
+      ============================================================
+    -->
+
+    <div class="bottom-section">
+
+      <div class="bank-details">
+        <div class="bank-details-title">Bank Details for Payment:</div>
+        <div>Beneficiary Name: {{ company.bank.beneficiary_name }}</div>
+        <div>Beneficiary Bank: {{ company.bank.beneficiary_bank }}</div>
+        <div>Bank Address: {{ company.bank.bank_address }}</div>
+        <div>Account Number: {{ company.bank.account_number }}</div>
+        <div>SWIFT Code: {{ company.bank.swift_code }}</div>
+      </div>
+
+      <div class="totals-box">
+        <table class="total-units-table">
+          <tr>
+            <td class="label">Total Units</td>
+            <td class="value">{{ totals.total_units }} PCS</td>
+          </tr>
+        </table>
+
+        <table class="totals-table">
+          <tr class="untaxed-row">
+            <td class="label">Untaxed Amount</td>
+            <td class="value">{{ totals.untaxed_amount }}</td>
+          </tr>
+          <tr>
+            <td class="label">VAT 0%</td>
+            <td class="value">{{ totals.vat }}</td>
+          </tr>
+          <tr class="total-row">
+            <td class="label">Total</td>
+            <td class="value">{{ totals.total }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="payment-after-bank">
+        <div class="payment-reference">
+          Please use the following reference for your payment :
+          <strong>{{ invoice.payment_reference }}</strong>
+        </div>
+
+        <div class="payment-terms">
+          Payment termes: {{ invoice.payment_terms_days }}days
+        </div>
+
+        <div class="final-payment-date">
+          Final Payment Date: {{ invoice.due_date }}
+        </div>
+      </div>
+
+    </div>
+
+
+    <!--
+      ============================================================
+      C5. Serial / Lot Numbers
+      ============================================================
+    -->
+
+    <div class="serial-section">
+      <div class="serial-title">Serial / Lot Numbers</div>
+
+      <table class="serial-table">
+        <thead>
+          <tr>
+            <th class="serial-product">Product</th>
+            <th class="serial-qty">Quantity</th>
+            <th class="serial-number">Serial Number</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for serial in serial_items %}
+          <tr>
+            <td class="serial-product">{{ serial.product_code }}</td>
+            <td class="serial-qty">{{ serial.quantity }}</td>
+            <td class="serial-number">{{ serial.serial_number }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>

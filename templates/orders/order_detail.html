@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.bon_de_commande }}{% endblock %}
+
+{% block content %}
+  <h2>Order {{ order.bon_de_commande }}</h2>
+
+  <p>
+    <strong>Hospital:</strong>
+    {{ order.hospital_name }}
+  </p>
+
+  <p>
+    <strong>Status:</strong>
+    {{ order.get_status_display }}
+  </p>
+
+  <p>
+    <strong>Created by:</strong>
+    {{ order.created_by.username }}
+  </p>
+
+  <p>
+    <strong>Created at:</strong>
+    {{ order.created_at }}
+  </p>
+
+  <p>
+    <strong>Updated at:</strong>
+    {{ order.updated_at }}
+  </p>
+
+  <p>
+    <strong>Hospital order PDF:</strong>
+    {% if order.hospital_order_pdf %}
+      <a href="{{ order.hospital_order_pdf.url }}" target="_blank">
+        View uploaded PDF
+      </a>
+    {% else %}
+      No PDF uploaded.
+    {% endif %}
+  </p>
+
+  <p>
+    <strong>Notes:</strong>
+  </p>
+
+  <div>
+    {{ order.notes|linebreaks }}
+  </div>
+
+  <hr>
+
+  <h3>Next steps</h3>
+
+  <p>
+    Milestone 2 will add OCR extraction here.
+  </p>
+
+  <p>
+    <a href="{% url 'order_list' %}">Back to orders</a>
+  </p>
+{% endblock %}
