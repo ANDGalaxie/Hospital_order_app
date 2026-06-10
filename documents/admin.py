@@ -104,3 +104,7 @@ class FactoryPurchaseOrderDocumentAdmin(BaseGeneratedDocumentAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(document_type="factory_po")
+
+from config.admin_sidebar import patch_admin_sidebar
+
+patch_admin_sidebar()

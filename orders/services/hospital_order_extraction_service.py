@@ -12,6 +12,8 @@ from hospitals.models import Hospital
 from orders.models import Order, OrderItem
 from products.models import Product
 
+from factories.services.factory_matching_service import match_factory_from_data
+
 from legacy_services.hospital_order_extractor import (
     run_paddleocr_for_pdf,
     load_ocr_blocks,
@@ -97,6 +99,8 @@ def extract_order_from_ocr_with_django_db(ocr_dir: Path) -> Dict[str, Any]:
     hospitals = build_hospitals_from_db()
 
     blocks = load_ocr_blocks(ocr_dir)
+    factory_match = match_factory_from_data(blocks)
+    matched_factory = factory_match["factory"]
 
     header = extract_header(blocks)
     addresses = extract_addresses(blocks)
@@ -115,6 +119,13 @@ def extract_order_from_ocr_with_django_db(ocr_dir: Path) -> Dict[str, Any]:
     result: Dict[str, Any] = {
         "header": header,
         "hospital": hospital_match,
+        "factory": {
+            "matched_factory_id": matched_factory.id if matched_factory else None,
+            "matched_factory_name": str(matched_factory) if matched_factory else None,
+            "match_status": factory_match["status"],
+            "match_score": factory_match["score"],
+            "match_message": factory_match["message"],
+        },
         "addresses": {
             "shipping_address_from_order": addresses["shipping_address_from_order"],
             "billing_address_from_order": addresses["billing_address_from_order"],
@@ -337,6 +348,39 @@ def update_order_basic_fields_from_extracted_data(
     order.shipping_address_data = addresses.get("shipping_address_from_order")
     order.billing_address_data = addresses.get("billing_address_from_order")
 
+    factory_match = extracted_data.get("factory", {}) or {}
+
+    matched_factory_id = factory_match.get("matched_factory_id")
+    factory_match_status = factory_match.get("match_status")
+    factory_match_score = factory_match.get("match_score")
+    factory_match_message = factory_match.get("match_message", "")
+
+    matched_factory = None
+
+    if matched_factory_id:
+        from factories.models import Factory
+
+        matched_factory = Factory.objects.filter(id=matched_factory_id).first()
+
+    if matched_factory and factory_match_status == "ok":
+        order.factory = matched_factory
+        order.factory_match_status = Order.FactoryMatchStatus.OK
+        order.factory_match_message = (
+            f"Matched automatically from hospital order: {matched_factory}. "
+            f"Score: {factory_match_score}\n"
+            f"{factory_match_message}"
+        )
+    else:
+        order.factory = None
+        order.factory_match_status = Order.FactoryMatchStatus.NEEDS_REVIEW
+        order.factory_match_message = (
+            "Factory match needs manual review.\n"
+            f"matched_factory_id={matched_factory_id}\n"
+            f"match_status={factory_match_status}\n"
+            f"match_score={factory_match_score}\n"
+            f"{factory_match_message}"
+        )
+
 
 @transaction.atomic
 def extract_hospital_order_for_order(
@@ -415,6 +459,9 @@ def extract_hospital_order_for_order(
                 "extracted_at",
                 "status",
                 "updated_at",
+                "factory",
+                "factory_match_status",
+                "factory_match_message",
             ]
         )
 

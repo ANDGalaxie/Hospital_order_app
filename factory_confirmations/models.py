@@ -3,7 +3,7 @@ from django.db import models
 
 from orders.models import Order
 from products.models import Product
-
+from factories.models import Factory
 
 class FactoryConfirmation(models.Model):
     """
@@ -18,12 +18,39 @@ class FactoryConfirmation(models.Model):
         SUCCESS = "success", "Success"
         FAILED = "failed", "Failed"
 
+    class FactoryMatchStatus(models.TextChoices):
+        NOT_CHECKED = "not_checked", "Not checked"
+        OK = "ok", "OK"
+        NEEDS_REVIEW = "needs_review", "Needs review"
+        MANUALLY_CONFIRMED = "manually_confirmed", "Manually confirmed"
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
         related_name="factory_confirmations",
     )
 
+    factory = models.ForeignKey(
+        Factory,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="factory_confirmations",
+        help_text="匹配到的工厂库记录。",
+    )
+
+    factory_match_status = models.CharField(
+        max_length=50,
+        choices=FactoryMatchStatus.choices,
+        default=FactoryMatchStatus.NOT_CHECKED,
+        help_text="工厂匹配状态。",
+    )
+
+    factory_match_message = models.TextField(
+        blank=True,
+        help_text="工厂匹配说明。如果需要人工确认，会写在这里。",
+    )
+    
     confirmation_pdf = models.FileField(
         upload_to="factory_confirmations/%Y/%m/",
         help_text="工厂发来的含 serial number 和有效期的确认文件。",

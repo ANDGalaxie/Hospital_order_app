@@ -91,6 +91,30 @@ def prepare_factory_info(factory_info: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 
+def build_factory_info_from_model(factory) -> Dict[str, Any]:
+    """
+    从 Factory 模型构造 PO 模板需要的 factory_info。
+    """
+    if factory is None:
+        raise ValueError("Factory is missing. Cannot generate Factory PO.")
+
+    address_lines = split_text_lines(factory.address)
+
+    return {
+        "name": factory.name,
+        "display_name": factory.short_name or factory.name,
+        "factory_name": factory.name,
+        "legal_name": factory.legal_name,
+        "address": address_lines,
+        "factory_address": address_lines,
+        "buyer": factory.buyer,
+        "default_product_description": (
+            factory.default_product_description
+            or "HT-Supreme™ Drug Eluting Stent"
+        ),
+    }
+
+
 def format_date_display(d) -> str:
     """
     PO 中日期显示为 dd/mm/yyyy。
@@ -905,8 +929,8 @@ def generate_factory_po_for_order(
         Path(settings.BASE_DIR) / "config" / "company_info.json"
     )
 
-    factory_info = load_json_config(
-        Path(settings.BASE_DIR) / "config" / "factory_info.json"
+    factory_info = build_factory_info_from_model(
+        confirmation.factory or order.factory
     )
 
     po_data = build_factory_po_data(

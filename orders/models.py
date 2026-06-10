@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from hospitals.models import Hospital
 from products.models import Product
-
+from factories.models import Factory
 
 class Order(models.Model):
     """
@@ -37,6 +37,12 @@ class Order(models.Model):
         FAILED = "failed", "Failed"
 
     class HospitalMatchStatus(models.TextChoices):
+        NOT_CHECKED = "not_checked", "Not checked"
+        OK = "ok", "OK"
+        NEEDS_REVIEW = "needs_review", "Needs review"
+        MANUALLY_CONFIRMED = "manually_confirmed", "Manually confirmed"
+
+    class FactoryMatchStatus(models.TextChoices):
         NOT_CHECKED = "not_checked", "Not checked"
         OK = "ok", "OK"
         NEEDS_REVIEW = "needs_review", "Needs review"
@@ -99,6 +105,27 @@ class Order(models.Model):
         help_text="医院匹配说明。如果需要人工确认，会写在这里。",
     )
 
+    factory = models.ForeignKey(
+        Factory,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="orders",
+        help_text="从医院订单中的 supplier / fournisseur 区域匹配到的工厂。",
+    )
+
+    factory_match_status = models.CharField(
+        max_length=50,
+        choices=FactoryMatchStatus.choices,
+        default=FactoryMatchStatus.NOT_CHECKED,
+        help_text="工厂数据库匹配状态。",
+    )
+
+    factory_match_message = models.TextField(
+        blank=True,
+        help_text="工厂匹配说明。如果需要人工确认，会写在这里。",
+    )
+    
     confirmed_order_data = models.JSONField(
         null=True,
         blank=True,

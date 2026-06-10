@@ -113,6 +113,27 @@ def validate_order_for_document_generation(
         errors.append("Missing billing address information.")
 
     # ------------------------------------------------------------
+    # 工厂匹配检查：工厂应来自医院订单 supplier / fournisseur 区域
+    # ------------------------------------------------------------
+    if order.factory_match_status == Order.FactoryMatchStatus.OK:
+        if not order.factory:
+            errors.append(
+                "Factory match status is OK, but order.factory is empty."
+            )
+
+    elif order.factory_match_status == Order.FactoryMatchStatus.MANUALLY_CONFIRMED:
+        if not order.factory:
+            errors.append(
+                "Factory was manually confirmed, but order.factory is empty."
+            )
+
+    else:
+        errors.append(
+            "Factory needs review before document generation. "
+            f"Current factory_match_status={order.factory_match_status}."
+        )
+        
+    # ------------------------------------------------------------
     # 3. OrderItem 产品匹配检查
     # ------------------------------------------------------------
     order_items = list(order.items.all())

@@ -52,6 +52,8 @@ class OrderAdmin(admin.ModelAdmin):
         "bon_de_commande",
         "hospital_name",
         "hospital",
+        "factory",
+        "factory_match_status",
         "status",
         "extraction_status",
         "hospital_match_status",
@@ -64,6 +66,8 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "extraction_status",
         "hospital_match_status",
+        "factory",
+        "factory_match_status",
         "document_validation_status",
         "created_at",
     )
@@ -98,6 +102,9 @@ class OrderAdmin(admin.ModelAdmin):
                     "hospital",
                     "hospital_order_pdf",
                     "status",
+                    "factory",
+                    "factory_match_status",
+                    "factory_match_message",
                     "created_by",
                     "notes",
                 )
