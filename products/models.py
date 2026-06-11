@@ -103,14 +103,18 @@ class Product(models.Model):
     hospital_unit_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=270,
+        null=True,
+        blank=True,
+        default=None,
         help_text="卖给医院的单价。",
     )
 
     factory_unit_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=120,
+        null=True,
+        blank=True,
+        default=None,
         help_text="从工厂采购的单价。",
     )
 
