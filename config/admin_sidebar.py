@@ -32,7 +32,7 @@ def custom_get_app_list(self, request, app_label=None):
             "app_label": "library",
             "models": [
                 "hospitals.hospital",
-                "products.product",
+                "products.productbrowsercategory",
                 "factories.factory",
             ],
         },
