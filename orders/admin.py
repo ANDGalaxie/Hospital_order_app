@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 from .models import Order, OrderItem
+from documents.services.factory_order_request_service import generate_factory_order_request
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -90,6 +91,7 @@ class OrderAdmin(admin.ModelAdmin):
         "extract_selected_hospital_orders",
         "validate_selected_orders_for_documents",
         "generate_documents_for_selected_orders",
+        "generate_factory_order_request",
     ]
 
     fieldsets = (
@@ -289,3 +291,38 @@ class OrderAdmin(admin.ModelAdmin):
             ),
             level=messages.INFO,
         )
+
+    @admin.action(description="Generate Factory Order Request from hospital order")
+    def generate_factory_order_request(self, request, queryset):
+        success_count = 0
+        error_count = 0
+
+        for order in queryset:
+            try:
+                generate_factory_order_request(
+                    order=order,
+                    generated_by=request.user,
+                )
+                success_count += 1
+
+            except Exception as exc:
+                error_count += 1
+                self.message_user(
+                    request,
+                    f"Order {order.bon_de_commande}: {exc}",
+                    level=messages.ERROR,
+                )
+
+        if success_count:
+            self.message_user(
+                request,
+                f"Generated {success_count} Factory Order Request document(s).",
+                level=messages.SUCCESS,
+            )
+
+        if error_count:
+            self.message_user(
+                request,
+                f"{error_count} document(s) failed.",
+                level=messages.WARNING,
+            )

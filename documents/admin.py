@@ -6,6 +6,7 @@ from .models import (
     GeneratedDocument,
     HospitalInvoiceDocument,
     FactoryPurchaseOrderDocument,
+    FactoryOrderRequestDocument,
 )
 
 
@@ -104,6 +105,56 @@ class FactoryPurchaseOrderDocumentAdmin(BaseGeneratedDocumentAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(document_type="factory_po")
+
+
+@admin.register(FactoryOrderRequestDocument)
+class FactoryOrderRequestDocumentAdmin(admin.ModelAdmin):
+    list_display = (
+        "document_number",
+        "order",
+        "generated_by",
+        "generated_at",
+        "pdf_link",
+        "html_link",
+    )
+    search_fields = (
+        "document_number",
+        "order__bon_de_commande",
+    )
+    readonly_fields = (
+        "order",
+        "document_type",
+        "document_number",
+        "pdf_file",
+        "html_file",
+        "source_data",
+        "generated_by",
+        "generated_at",
+        "notes",
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(document_type="factory_order_request")
+
+    def pdf_link(self, obj):
+        if obj.pdf_file:
+            from django.utils.html import format_html
+            return format_html('<a href="{}" target="_blank">Open PDF</a>', obj.pdf_file.url)
+        return "-"
+
+    pdf_link.short_description = "PDF"
+
+    def html_link(self, obj):
+        if obj.html_file:
+            from django.utils.html import format_html
+            return format_html('<a href="{}" target="_blank">Open HTML</a>', obj.html_file.url)
+        return "-"
+
+    html_link.short_description = "HTML"
+
+    def has_add_permission(self, request):
+        return False
 
 from config.admin_sidebar import patch_admin_sidebar
 

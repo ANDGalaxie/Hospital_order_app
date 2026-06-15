@@ -66,6 +66,7 @@ class GeneratedDocument(models.Model):
     class DocumentType(models.TextChoices):
         HOSPITAL_INVOICE = "hospital_invoice", "Hospital Invoice"
         FACTORY_PO = "factory_po", "Factory Purchase Order"
+        FACTORY_ORDER_REQUEST = "factory_order_request", "Factory Order Request"
 
     order = models.ForeignKey(
         Order,
@@ -134,3 +135,9 @@ class FactoryPurchaseOrderDocument(GeneratedDocument):
         proxy = True
         verbose_name = "Factory purchase order"
         verbose_name_plural = "Factory purchase orders"
+
+class FactoryOrderRequestDocument(GeneratedDocument):
+    class Meta:
+        proxy = True
+        verbose_name = "Factory Order Request"
+        verbose_name_plural = "Factory Order Requests"

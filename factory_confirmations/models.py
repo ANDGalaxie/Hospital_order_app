@@ -97,6 +97,33 @@ class FactoryConfirmation(models.Model):
         auto_now=True,
     )
 
+    bon_de_commande_manual_confirmed = models.BooleanField(
+        default=False,
+        verbose_name="Bon de commande manually confirmed",
+        help_text="Use this when the factory confirmation has no bon de commande or a mismatched bon de commande, but a human confirmed it belongs to the linked order.",
+    )
+
+    bon_de_commande_manual_note = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="Manual confirmation note",
+    )
+
+    bon_de_commande_manual_confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Manually confirmed by",
+    )
+
+    bon_de_commande_manual_confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Manually confirmed at",
+    )
+
     notes = models.TextField(
         blank=True,
     )

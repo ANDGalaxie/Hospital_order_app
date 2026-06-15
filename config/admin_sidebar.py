@@ -56,6 +56,7 @@ def custom_get_app_list(self, request, app_label=None):
             "app_label": "documents_group",
             "models": [
                 "documents.documentsequence",
+                "documents.factoryorderrequestdocument",
                 "documents.hospitalinvoicedocument",
                 "documents.factorypurchaseorderdocument",
             ],

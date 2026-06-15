@@ -199,6 +199,7 @@ def validate_order_for_document_generation(
                 f"Current system will use the latest one unless later we add manual selection."
             )
 
+
     # ------------------------------------------------------------
     # 5. 检查工厂确认文件的订单号
     # ------------------------------------------------------------
@@ -213,18 +214,41 @@ def validate_order_for_document_generation(
         else:
             factory_bon = get_factory_bon_de_commande(factory_data)
 
+            manual_confirmed = getattr(
+                selected_confirmation,
+                "bon_de_commande_manual_confirmed",
+                False,
+            )
+
             if not factory_bon:
-                errors.append(
-                    f"FactoryConfirmation {selected_confirmation.id}: "
-                    f"cannot find bon_de_commande in extracted data."
-                )
+                if manual_confirmed:
+                    warnings.append(
+                        f"FactoryConfirmation {selected_confirmation.id}: "
+                        f"bon_de_commande is missing, but it was manually confirmed "
+                        f"for Order {order_bon}."
+                    )
+                else:
+                    errors.append(
+                        f"FactoryConfirmation {selected_confirmation.id}: "
+                        f"cannot find bon_de_commande in extracted data. "
+                        f"Manual confirmation is required."
+                    )
 
             elif factory_bon != order_bon:
-                errors.append(
-                    f"FactoryConfirmation {selected_confirmation.id}: "
-                    f"bon_de_commande mismatch. "
-                    f"Order={order_bon}, FactoryConfirmation={factory_bon}."
-                )
+                if manual_confirmed:
+                    warnings.append(
+                        f"FactoryConfirmation {selected_confirmation.id}: "
+                        f"bon_de_commande mismatch "
+                        f"(Order={order_bon}, confirmation={factory_bon}), "
+                        f"but it was manually confirmed."
+                    )
+                else:
+                    errors.append(
+                        f"FactoryConfirmation {selected_confirmation.id}: "
+                        f"bon_de_commande mismatch. "
+                        f"Order={order_bon}, confirmation={factory_bon}. "
+                        f"Manual confirmation is required."
+                    )
 
     # ------------------------------------------------------------
     # 6. SerialItem 检查

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ document.document_number }}</title>
+
+  <style>
+    :root {
+      --po-green: #3a8d24;
+      --po-light-green: #eef6ea;
+      --po-line-green: #7ab65a;
+      --text-dark: #1f2933;
+      --text-muted: #4b5563;
+      --line-dark: #333333;
+    }
+
+    @page {
+      size: A4;
+      margin: 50mm 16mm 20mm 16mm;
+
+      @bottom-left {
+        content: element(orderRequestFooterLeft);
+      }
+
+      @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+        font-size: 9.5px;
+        color: #777777;
+      }
+    }
+
+    body {
+      font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+      font-size: 11.5px;
+      color: var(--text-dark);
+      margin: 0;
+      padding: 0;
+      line-height: 1.38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .request-header {
+      position: fixed;
+      top: -50mm;
+      left: -16mm;
+      right: -16mm;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .request-header-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50mm;
+      z-index: 0;
+    }
+
+    .request-header-content {
+      position: relative;
+      z-index: 1;
+      height: 50mm;
+      width: 100%;
+    }
+
+    .request-header-logo {
+      position: absolute;
+      left: 16mm;
+      top: 10mm;
+      width: 230px;
+      height: auto;
+    }
+
+    .request-header-company {
+      position: absolute;
+      right: 16mm;
+      top: 9mm;
+      text-align: right;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #111827;
+      max-width: 360px;
+    }
+
+    .request-header-company-name {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .request-title {
+      position: absolute;
+      right: -8mm;
+      bottom: 3.5mm;
+      width: 48%;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--po-green);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .request-title .request-number {
+      font-weight: 400;
+    }
+
+    .request-footer-left {
+      position: running(orderRequestFooterLeft);
+      font-size: 9.5px;
+      line-height: 1.35;
+      color: var(--text-dark);
+    }
+
+    .request-footer-company-name {
+      color: var(--po-green);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .request-footer-registration {
+      color: var(--text-muted);
+      font-size: 8.8px;
+    }
+
+    .document {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .factory-section {
+      width: 100%;
+      margin-bottom: 25px;
+      line-height: 1.38;
+      font-size: 11.3px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: var(--text-dark);
+    }
+
+    .source-line {
+      margin-top: 16px;
+      margin-bottom: 20px;
+      font-size: 11.2px;
+      color: var(--text-muted);
+    }
+
+    .source-line strong {
+      color: var(--text-dark);
+    }
+
+    .request-items-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11.2px;
+      margin-top: 4px;
+      margin-bottom: 15px;
+    }
+
+    .request-items-table thead {
+      display: table-header-group;
+    }
+
+    .request-items-table tbody {
+      display: table-row-group;
+    }
+
+    .col-description {
+      width: 78%;
+    }
+
+    .col-qty {
+      width: 22%;
+    }
+
+    .request-items-table th {
+      color: var(--po-green);
+      font-weight: 700;
+      padding: 7px 4px;
+      border-top: 2px solid var(--po-green);
+      border-bottom: 2px solid var(--po-green);
+      background: transparent;
+    }
+
+    .request-items-table td {
+      padding: 8px 4px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--po-line-green);
+    }
+
+    .request-items-table tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .request-items-table th:nth-child(1),
+    .request-items-table td:nth-child(1) {
+      text-align: left;
+    }
+
+    .request-items-table th:nth-child(2),
+    .request-items-table td:nth-child(2) {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .product-code {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .product-description {
+      color: var(--text-dark);
+    }
+
+    .note-section {
+      margin-top: 18px;
+      font-size: 10.2px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .total-section {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    }
+
+    .total-box {
+    width: 28%;
+    border-bottom: 1px solid var(--po-green);
+    padding-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--po-green);
+    display: flex;
+    justify-content: space-between;
+    }
+
+    .total-label {
+    text-align: left;
+    }
+
+    .total-value {
+    text-align: right;
+    white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="request-header">
+
+    <svg class="request-header-bg" viewBox="0 0 1000 190" preserveAspectRatio="none">
+      <path
+        d="M0 0 H1000 V122 H570 C535 122 525 134 505 154 C488 172 468 182 430 182 H0 Z"
+        fill="#eef6ea"
+      />
+    </svg>
+
+    <div class="request-header-content">
+
+      <img class="request-header-logo" src="{{ company.logo_path }}" alt="Company Logo">
+
+      <div class="request-header-company">
+        <div class="request-header-company-name">{{ company.po_company.display_name }}</div>
+        {% for line in company.po_company.address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="request-title">
+        Order Request #<span class="request-number">{{ document.bon_de_commande }}</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="request-footer-left">
+    <div class="request-footer-company-name">{{ company.company_name }}</div>
+    <div class="request-footer-registration">
+      Business Registration NO.{{ company.registration_no }}
+    </div>
+  </div>
+
+  <div class="document">
+
+    <div class="factory-section">
+      <div class="section-title">ATTN:</div>
+      <div>{{ factory.factory_name }}</div>
+      {% for line in factory.factory_address %}
+        <div>{{ line }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="source-line">
+    Source:
+    <strong>N° {{ document.bon_de_commande }}</strong>
+    {% if document.order_date %}
+        &nbsp;&nbsp; Order Date: <strong>{{ document.order_date }}</strong>
+    {% endif %}
+    </div>
+
+    <table class="request-items-table">
+
+      <colgroup>
+        <col class="col-description">
+        <col class="col-qty">
+      </colgroup>
+
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Qty</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div class="product-code">{{ item.product_code }}</div>
+            <div class="product-description">{{ item.description }}</div>
+          </td>
+          <td>{{ item.quantity }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="total-section">
+    <div class="total-box">
+        <div class="total-label">Total Units</div>
+        <div class="total-value">{{ totals.total_units }}</div>
+    </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

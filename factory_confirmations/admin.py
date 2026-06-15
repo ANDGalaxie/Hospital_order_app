@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-
+from django.utils import timezone
 from .models import FactoryConfirmation, SerialItem
 
 
@@ -19,6 +19,9 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
         "shipping_date",
         "created_by",
         "created_at",
+        "bon_de_commande_manual_confirmed",
+        "bon_de_commande_manual_confirmed_by",
+        "bon_de_commande_manual_confirmed_at",
     )
 
     list_filter = (
@@ -39,6 +42,7 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
 
     actions = [
         "extract_selected_factory_confirmations",
+        "manually_confirm_bon_de_commande_match",
     ]
 
     fieldsets = (
@@ -126,6 +130,35 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
             request,
             f"Factory extraction finished. Success: {success_count}, Failed: {failed_count}.",
             level=messages.INFO,
+        )
+    @admin.action(description="Manually confirm selected confirmations belong to their linked orders")
+    def manually_confirm_bon_de_commande_match(self, request, queryset):
+        count = 0
+
+        for confirmation in queryset:
+            confirmation.bon_de_commande_manual_confirmed = True
+            confirmation.bon_de_commande_manual_confirmed_by = request.user
+            confirmation.bon_de_commande_manual_confirmed_at = timezone.now()
+
+            if not confirmation.bon_de_commande_manual_note:
+                confirmation.bon_de_commande_manual_note = (
+                    "Manually confirmed in Django admin."
+                )
+
+            confirmation.save(update_fields=[
+                "bon_de_commande_manual_confirmed",
+                "bon_de_commande_manual_confirmed_by",
+                "bon_de_commande_manual_confirmed_at",
+                "bon_de_commande_manual_note",
+                "updated_at",
+            ])
+
+            count += 1
+
+        self.message_user(
+            request,
+            f"{count} factory confirmation(s) manually confirmed.",
+            level=messages.SUCCESS,
         )
 
 

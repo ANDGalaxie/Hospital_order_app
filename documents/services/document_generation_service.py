@@ -122,6 +122,161 @@ def format_date_display(d) -> str:
     return d.strftime("%d/%m/%Y")
 
 
+def try_parse_business_date(value):
+    """
+    尝试把任意日期值转成 date。
+    支持:
+        date
+        datetime
+        YYYY-MM-DD
+        DD/MM/YYYY
+        DD-MM-YYYY
+    """
+    if not value:
+        return None
+
+    try:
+        return parse_document_date(value)
+    except Exception:
+        return None
+
+
+def get_hospital_order_date(order: Order):
+    """
+    从医院订单提取结果中读取 Date de commande。
+
+    优先级：
+        1. order.extracted_order_data["header"]["order_date"]
+        2. order.extracted_order_data["summary"]["order_date"]
+    """
+    data = getattr(order, "extracted_order_data", None) or {}
+
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            data = {}
+
+    raw_date = (
+        data.get("header", {}).get("order_date")
+        or data.get("summary", {}).get("order_date")
+    )
+
+    parsed = try_parse_business_date(raw_date)
+
+    if parsed:
+        return parsed, "hospital_order_date"
+
+    return None, ""
+
+
+def get_factory_shipping_date(confirmation: FactoryConfirmation):
+    """
+    优先从 confirmation.shipping_date 读取工厂发货日期。
+    如果没有，再从 extracted_confirmation_data 里读取。
+    """
+    if confirmation and confirmation.shipping_date:
+        return confirmation.shipping_date, "factory_confirmation.shipping_date"
+
+    data = getattr(confirmation, "extracted_confirmation_data", None) or {}
+
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            data = {}
+
+    factory_document = data.get("factory_document", {}) or {}
+
+    raw_date = (
+        factory_document.get("shipping_date_only_iso")
+        or factory_document.get("shipping_date")
+        or factory_document.get("date")
+    )
+
+    parsed = try_parse_business_date(raw_date)
+
+    if parsed:
+        return parsed, "factory_confirmation.extracted_confirmation_data"
+
+    return None, ""
+
+
+def resolve_invoice_po_document_date(
+    order: Order,
+    confirmation: FactoryConfirmation,
+    manual_date: Optional[Any] = None,
+):
+    """
+    Invoice / Factory PO 的业务日期规则：
+
+    1. 手动日期优先
+    2. 否则使用工厂确认文件 shipping_date
+    3. 再没有才使用今天日期，并给 warning
+    """
+    warnings = []
+
+    if manual_date:
+        parsed = parse_document_date(manual_date)
+        return parsed, "manual_document_date", warnings
+
+    shipping_date, source = get_factory_shipping_date(confirmation)
+
+    if shipping_date:
+        return shipping_date, source, warnings
+
+    fallback_date = timezone.localdate()
+    warnings.append(
+        f"Order {order.bon_de_commande}: factory shipping_date is missing. "
+        f"Fallback to today's date {fallback_date.isoformat()}."
+    )
+
+    return fallback_date, "fallback_today", warnings
+
+
+def resolve_factory_po_document_date(
+    order: Order,
+    confirmation: FactoryConfirmation,
+    manual_date: Optional[Any] = None,
+):
+    """
+    Factory PO 的业务日期规则：
+
+    1. 手动日期优先
+    2. 否则使用医院订单 Date de commande
+    3. 如果医院订单日期缺失，再 fallback 到工厂确认 shipping_date
+    4. 如果 shipping_date 也缺失，再用今天，并给 warning
+    """
+    warnings = []
+
+    if manual_date:
+        parsed = parse_document_date(manual_date)
+        return parsed, "manual_document_date", warnings
+
+    hospital_order_date, source = get_hospital_order_date(order)
+
+    if hospital_order_date:
+        return hospital_order_date, source, warnings
+
+    shipping_date, shipping_source = get_factory_shipping_date(confirmation)
+
+    if shipping_date:
+        warnings.append(
+            f"Order {order.bon_de_commande}: hospital order date is missing. "
+            f"Factory PO uses factory shipping_date {shipping_date.isoformat()} instead."
+        )
+        return shipping_date, shipping_source, warnings
+
+    fallback_date = timezone.localdate()
+    warnings.append(
+        f"Order {order.bon_de_commande}: hospital order date and factory shipping_date "
+        f"are both missing. Factory PO falls back to today's date "
+        f"{fallback_date.isoformat()}."
+    )
+
+    return fallback_date, "fallback_today", warnings
+
+
 def format_po_quantity(value: float) -> str:
     return f"{float(value):.2f}"
 
@@ -450,7 +605,10 @@ def build_invoice_items_from_order(order: Order) -> Tuple[List[Dict[str, Any]], 
         if quantity <= 0:
             continue
 
-        unit_price = Decimal(item.hospital_unit_price or 0)
+        if item.product and item.product.hospital_unit_price is not None:
+            unit_price = Decimal(item.product.hospital_unit_price)
+        else:
+            unit_price = Decimal(item.hospital_unit_price or 0)
 
         if unit_price <= 0:
             warnings.append(
@@ -517,12 +675,13 @@ def build_hospital_invoice_data(
     confirmation: FactoryConfirmation,
     company_info: Dict[str, Any],
     numbers: Dict[str, Any],
+    invoice_date,
 ) -> Dict[str, Any]:
-    document_date = parse_document_date(numbers["document_date"])
-    invoice_date_dt = datetime.combine(document_date, datetime.min.time())
+    invoice_date = parse_document_date(invoice_date)
+    invoice_date_dt = datetime.combine(invoice_date, datetime.min.time())
 
     payment_terms_days = int(company_info.get("payment_terms_days", 30))
-    due_date = document_date + timedelta(days=payment_terms_days)
+    due_date = invoice_date + timedelta(days=payment_terms_days)
     due_date_dt = datetime.combine(due_date, datetime.min.time())
 
     items, warnings = build_invoice_items_from_order(order)
@@ -764,9 +923,12 @@ def build_factory_po_data(
     company_info: Dict[str, Any],
     factory_info: Dict[str, Any],
     numbers: Dict[str, Any],
+    po_order_date,
+    shipping_date,
 ) -> Dict[str, Any]:
-    document_date = parse_document_date(numbers["document_date"])
-    expected_arrival = document_date + timedelta(days=EXPECTED_ARRIVAL_DAYS)
+    po_order_date = parse_document_date(po_order_date)
+    shipping_date = parse_document_date(shipping_date)
+    expected_arrival = shipping_date + timedelta(days=EXPECTED_ARRIVAL_DAYS)
 
     company = prepare_company_info(company_info)
     factory = prepare_factory_info(factory_info)
@@ -775,7 +937,7 @@ def build_factory_po_data(
         order=order,
         confirmation=confirmation,
         factory_info=factory_info,
-        document_date=document_date,
+        document_date=shipping_date,
     )
 
     total_raw = sum(
@@ -786,9 +948,10 @@ def build_factory_po_data(
     po_data = {
         "po": {
             "po_number": numbers["po_number"],
-            "order_date": format_date_display(document_date),
+            "order_date": format_date_display(po_order_date),
             "expected_arrival": format_date_display(expected_arrival),
-            "order_date_iso": document_date.isoformat(),
+            "order_date_iso": po_order_date.isoformat(),
+            "shipping_date_iso": shipping_date.isoformat(),
             "expected_arrival_iso": expected_arrival.isoformat(),
         },
         "company": company,
@@ -846,9 +1009,21 @@ def generate_hospital_invoice_for_order(
     validation = ensure_order_can_generate(order)
     confirmation = get_successful_factory_confirmation(order)
 
+    sequence_date, sequence_date_source, sequence_date_warnings = resolve_factory_po_document_date(
+        order=order,
+        confirmation=confirmation,
+        manual_date=document_date,
+    )
+
+    invoice_date, invoice_date_source, invoice_date_warnings = resolve_invoice_po_document_date(
+        order=order,
+        confirmation=confirmation,
+        manual_date=None,
+    )
+
     numbers = get_or_create_document_numbers(
         bon_de_commande=order.bon_de_commande,
-        document_date=document_date,
+        document_date=sequence_date,
     )
 
     company_info = load_json_config(
@@ -860,7 +1035,16 @@ def generate_hospital_invoice_for_order(
         confirmation=confirmation,
         company_info=company_info,
         numbers=numbers,
+        invoice_date=invoice_date,
     )
+
+    invoice_data.setdefault("warnings", []).extend(sequence_date_warnings)
+    invoice_data.setdefault("warnings", []).extend(invoice_date_warnings)
+    invoice_data.setdefault("debug", {})
+    invoice_data["debug"]["sequence_date_source"] = sequence_date_source
+    invoice_data["debug"]["invoice_date_source"] = invoice_date_source
+    invoice_data["debug"]["sequence_date"] = sequence_date.isoformat()
+    invoice_data["debug"]["invoice_date"] = invoice_date.isoformat()
 
     workspace = get_order_document_workspace(order) / "invoices"
     filename_base = sanitize_filename(numbers["invoice_number"])
@@ -920,9 +1104,21 @@ def generate_factory_po_for_order(
     validation = ensure_order_can_generate(order)
     confirmation = get_successful_factory_confirmation(order)
 
+    po_order_date, po_order_date_source, po_order_date_warnings = resolve_factory_po_document_date(
+        order=order,
+        confirmation=confirmation,
+        manual_date=document_date,
+    )
+
+    shipping_date, shipping_date_source, shipping_date_warnings = resolve_invoice_po_document_date(
+        order=order,
+        confirmation=confirmation,
+        manual_date=None,
+    )
+
     numbers = get_or_create_document_numbers(
         bon_de_commande=order.bon_de_commande,
-        document_date=document_date,
+        document_date=po_order_date,
     )
 
     company_info = load_json_config(
@@ -939,7 +1135,18 @@ def generate_factory_po_for_order(
         company_info=company_info,
         factory_info=factory_info,
         numbers=numbers,
+        po_order_date=po_order_date,
+        shipping_date=shipping_date,
     )
+
+    po_data.setdefault("warnings", []).extend(po_order_date_warnings)
+    po_data.setdefault("warnings", []).extend(shipping_date_warnings)
+    po_data.setdefault("debug", {})
+    po_data["debug"]["po_order_date_source"] = po_order_date_source
+    po_data["debug"]["shipping_date_source"] = shipping_date_source
+    po_data["debug"]["po_order_date"] = po_order_date.isoformat()
+    po_data["debug"]["shipping_date"] = shipping_date.isoformat()
+    po_data["debug"]["discount_reference_date"] = shipping_date.isoformat()
 
     workspace = get_order_document_workspace(order) / "purchase_orders"
     filename_base = sanitize_filename(f"Purchase_Order_{numbers['po_number']}")
