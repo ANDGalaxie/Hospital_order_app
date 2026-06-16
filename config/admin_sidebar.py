@@ -64,6 +64,13 @@ def custom_get_app_list(self, request, app_label=None):
                 "documents.factorypurchaseorderdocument",
             ],
         },
+        {
+            "name": "财务分析",
+            "app_label": "finance_group",
+            "models": [
+                "finance.financedashboard",
+            ],
+        },
     ]
 
     used_model_keys = set()

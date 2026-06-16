@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "factory_confirmations",
     "pricing",
     "backorders",
+    "finance.apps.FinanceConfig",
 ]
 
 MIDDLEWARE = [
