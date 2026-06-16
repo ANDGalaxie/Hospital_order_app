@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     "hospitals",
     "products",
+    "shipments",
     "factories",
     "factory_confirmations",
 ]
