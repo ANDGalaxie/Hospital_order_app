@@ -191,3 +191,6 @@ class ProductAdmin(admin.ModelAdmin):
         return "-"
 
     category_path.short_description = "Category"
+
+    def has_module_permission(self, request):
+        return False

@@ -18,8 +18,6 @@ from legacy_services.factory_confirmation_extractor import (
 )
 
 from shipments.services.shipment_tracking_service import sync_shipment_batch_from_factory_confirmation
-from backorders.services.backorder_sync_service import sync_backorders_for_order
-
 
 def get_factory_confirmation_workspace(
     confirmation: FactoryConfirmation,
@@ -313,7 +311,6 @@ def extract_factory_confirmation_for_confirmation(
         )
 
         sync_shipment_batch_from_factory_confirmation(confirmation)
-        sync_backorders_for_order(confirmation.order)
 
         return factory_data
 

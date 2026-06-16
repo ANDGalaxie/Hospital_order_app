@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     "factories",
     "factory_confirmations",
     "pricing",
-    "backorders",
 ]
 
 MIDDLEWARE = [
