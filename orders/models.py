@@ -289,6 +289,44 @@ class OrderItem(models.Model):
         default=0,
     )
 
+    factory_unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Factory unit price snapshot",
+    )
+
+    expiration_discount_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name="Expiration discount rate snapshot",
+        help_text="Example: 0.30 means 30% discount, i.e. 70% final price.",
+    )
+
+    price_policy = models.ForeignKey(
+        "pricing.PricePolicy",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="order_items",
+        verbose_name="Applied price policy",
+    )
+
+    price_policy_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Price policy date",
+    )
+
+    price_policy_message = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="Price policy message",
+    )
+
     status = models.CharField(
         max_length=50,
         choices=Status.choices,

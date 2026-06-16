@@ -13,6 +13,7 @@ from orders.models import Order, OrderItem
 from products.models import Product
 
 from factories.services.factory_matching_service import match_factory_from_data
+from pricing.services.price_policy_service import apply_price_policy_to_order
 
 from legacy_services.hospital_order_extractor import (
     run_paddleocr_for_pdf,
@@ -431,7 +432,11 @@ def extract_hospital_order_for_order(
             extracted_data=extracted_data,
         )
 
+        price_policy_result = apply_price_policy_to_order(order)
+
         extracted_data.setdefault("django", {})
+        extracted_data["django"]["price_policy_result"] = price_policy_result
+
         extracted_data["django"]["order_id"] = order.id
         extracted_data["django"]["order_item_count_created"] = item_count
         extracted_data["django"]["workspace"] = str(workspace)

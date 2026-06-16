@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "shipments",
     "factories",
     "factory_confirmations",
+    "pricing",
 ]
 
 MIDDLEWARE = [

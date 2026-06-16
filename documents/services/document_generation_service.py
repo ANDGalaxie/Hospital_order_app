@@ -605,10 +605,7 @@ def build_invoice_items_from_order(order: Order) -> Tuple[List[Dict[str, Any]], 
         if quantity <= 0:
             continue
 
-        if item.product and item.product.hospital_unit_price is not None:
-            unit_price = Decimal(item.product.hospital_unit_price)
-        else:
-            unit_price = Decimal(item.hospital_unit_price or 0)
+        unit_price = Decimal(item.hospital_unit_price or 0)
 
         if unit_price <= 0:
             warnings.append(
@@ -787,8 +784,15 @@ def build_factory_po_items_from_serials(
             )
             continue
 
+        order_item = order_items_by_code.get(code)
+
+        policy_discount_rate = EXPIRATION_DISCOUNT_RATE
+
+        if order_item and order_item.expiration_discount_rate is not None:
+            policy_discount_rate = Decimal(order_item.expiration_discount_rate)
+
         discount_rate = (
-            EXPIRATION_DISCOUNT_RATE
+            policy_discount_rate
             if should_apply_expiration_discount(
                 serial.expiration_date,
                 document_date,
@@ -796,17 +800,13 @@ def build_factory_po_items_from_serials(
             else Decimal("0.00")
         )
 
-        order_item = order_items_by_code.get(code)
+        if order_item and order_item.factory_unit_price is not None:
+            unit_price = Decimal(order_item.factory_unit_price)
 
-        if order_item and order_item.product:
+        elif order_item and order_item.product:
             unit_price = Decimal(order_item.product.factory_unit_price or 0)
-        else:
-            unit_price = DEFAULT_FACTORY_UNIT_PRICE
 
-        if unit_price <= 0:
-            warnings.append(
-                f"{code}: factory_unit_price is missing or zero, fallback to 120."
-            )
+        else:
             unit_price = DEFAULT_FACTORY_UNIT_PRICE
 
         key = (code, discount_rate)

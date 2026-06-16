@@ -35,6 +35,7 @@ def custom_get_app_list(self, request, app_label=None):
                 "products.productbrowsercategory",
                 "factories.factory",
                 "shipments.shipmentmonth",
+                "pricing.pricepolicy",
             ],
         },
         {

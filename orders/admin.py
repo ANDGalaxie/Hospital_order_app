@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 from .models import Order, OrderItem
+from pricing.services.price_policy_service import apply_price_policy_to_order
 from documents.services.factory_order_request_service import generate_factory_order_request
 
 class OrderItemInline(admin.TabularInline):
@@ -92,6 +93,7 @@ class OrderAdmin(admin.ModelAdmin):
         "validate_selected_orders_for_documents",
         "generate_documents_for_selected_orders",
         "generate_factory_order_request",
+        "apply_price_policy_to_selected_orders",
     ]
 
     fieldsets = (
@@ -324,5 +326,42 @@ class OrderAdmin(admin.ModelAdmin):
             self.message_user(
                 request,
                 f"{error_count} document(s) failed.",
+                level=messages.WARNING,
+            )
+
+    @admin.action(description="Apply price policy to selected orders")
+    def apply_price_policy_to_selected_orders(self, request, queryset):
+        success_count = 0
+        error_count = 0
+
+        for order in queryset:
+            result = apply_price_policy_to_order(order)
+
+            if result["errors"]:
+                error_count += 1
+                self.message_user(
+                    request,
+                    f"Order {order.bon_de_commande}: " + "; ".join(result["errors"]),
+                    level=messages.ERROR,
+                )
+            else:
+                success_count += 1
+                warning_text = "; ".join(result["warnings"][:3])
+
+                msg = (
+                    f"Order {order.bon_de_commande}: applied price policy to "
+                    f"{result['updated_count']} item(s). "
+                    f"Date={result['price_policy_date']} Source={result['date_source']}."
+                )
+
+                if warning_text:
+                    msg += f" Warnings: {warning_text}"
+
+                self.message_user(request, msg, level=messages.SUCCESS)
+
+        if error_count:
+            self.message_user(
+                request,
+                f"{error_count} order(s) failed when applying price policy.",
                 level=messages.WARNING,
             )
