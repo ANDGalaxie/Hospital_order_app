@@ -11,9 +11,10 @@ from django.utils import timezone
 
 from legacy_services.factory_confirmation_extractor import extract_factory_confirmation
 from products.models import Product
-
+from orders.models import Order
 from backorders.models import (
     BackorderLine,
+    InventoryAllocation,
     InventoryBatch,
     InventoryItem,
     InventoryProductFolder,
@@ -324,3 +325,153 @@ def extract_inventory_batch(batch: InventoryBatch) -> Dict[str, Any]:
         )
 
         raise
+
+@transaction.atomic
+def allocate_inventory_to_order(
+    product_code: str,
+    order: Order,
+    quantity: int,
+    created_by=None,
+    notes: str = "",
+) -> InventoryAllocation:
+    """
+    将某个产品的库存 Serial Number 预留给一个订单。
+
+    安全规则：
+      1. 只能分配给仍有待发数量的订单
+      2. 预留数量不能超过待发数量
+      3. 可用库存必须足够
+      4. 自动选择有效期最早的 serial number
+      5. 这里只预留，不生成 ShipmentBatch
+    """
+    product_code = str(product_code or "").strip()
+
+    if not product_code:
+        raise ValueError("缺少 product_code。")
+
+    try:
+        quantity = int(quantity)
+    except Exception:
+        raise ValueError("预留数量必须是整数。")
+
+    if quantity <= 0:
+        raise ValueError("预留数量必须大于 0。")
+
+    backorder_line = (
+        BackorderLine.objects
+        .select_for_update()
+        .filter(
+            order=order,
+            product_code=product_code,
+            is_active=True,
+            remaining_quantity__gt=0,
+        )
+        .first()
+    )
+
+    if not backorder_line:
+        raise ValueError(
+            f"Order {order.bon_de_commande} 当前没有待发产品 {product_code}。"
+        )
+
+    remaining_quantity = int(backorder_line.remaining_quantity or 0)
+
+    if quantity > remaining_quantity:
+        raise ValueError(
+            f"预留数量 {quantity} 超过订单待发数量 {remaining_quantity}。"
+        )
+
+    available_items = list(
+        InventoryItem.objects
+        .select_for_update()
+        .filter(
+            product_code=product_code,
+            status=InventoryItem.Status.AVAILABLE,
+        )
+        .order_by("expiration_date", "serial_number")[:quantity]
+    )
+
+    if len(available_items) < quantity:
+        raise ValueError(
+            f"库存不足：产品 {product_code} 需要预留 {quantity}，"
+            f"但当前可用库存只有 {len(available_items)}。"
+        )
+
+    product = Product.objects.filter(code=product_code).first()
+
+    allocation = InventoryAllocation.objects.create(
+        order=order,
+        product=product,
+        product_code=product_code,
+        quantity_requested=quantity,
+        allocated_count=len(available_items),
+        status=InventoryAllocation.Status.RESERVED,
+        notes=notes or "",
+        created_by=created_by,
+    )
+
+    now = timezone.now()
+
+    for item in available_items:
+        item.status = InventoryItem.Status.RESERVED
+        item.allocated_order = order
+        item.allocation = allocation
+        item.allocated_at = now
+        item.save(
+            update_fields=[
+                "status",
+                "allocated_order",
+                "allocation",
+                "allocated_at",
+            ]
+        )
+
+    rebuild_inventory_product_folders()
+
+    return allocation
+
+
+@transaction.atomic
+def cancel_inventory_allocation(
+    allocation: InventoryAllocation,
+) -> InventoryAllocation:
+    """
+    取消一个库存预留记录。
+
+    只有“已预留”状态可以取消。
+    已经生成 ShipmentBatch 的记录不能取消。
+    """
+    if allocation.status != InventoryAllocation.Status.RESERVED:
+        raise ValueError(
+            "只有“已预留”的库存记录可以取消。"
+        )
+
+    items = list(
+        allocation.items.select_for_update().all()
+    )
+
+    for item in items:
+        item.status = InventoryItem.Status.AVAILABLE
+        item.allocated_order = None
+        item.allocation = None
+        item.allocated_at = None
+        item.save(
+            update_fields=[
+                "status",
+                "allocated_order",
+                "allocation",
+                "allocated_at",
+            ]
+        )
+
+    allocation.status = InventoryAllocation.Status.CANCELLED
+    allocation.save(
+        update_fields=[
+            "status",
+            "updated_at",
+        ]
+    )
+
+    rebuild_inventory_product_folders()
+
+    return allocation

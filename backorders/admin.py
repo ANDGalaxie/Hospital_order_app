@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
+from urllib.parse import urlencode
 
 from backorders.models import (
     BackorderRootFolder,
@@ -9,18 +10,23 @@ from backorders.models import (
     BackorderLine,
     ExpectedShippingMonthFolder,
     ExpectedShippingProductFolder,
+    InventoryAllocation,
     InventoryBatch,
     InventoryItem,
     InventoryProductFolder,
 )
+
 from backorders.services.backorder_sync_service import (
     sync_backorders_for_all_orders,
     rebuild_expected_shipping_folders,
 )
+
 from backorders.services.inventory_service import (
     extract_inventory_batch,
     rebuild_inventory_product_folders,
     get_allocatable_orders_for_product,
+    allocate_inventory_to_order,
+    cancel_inventory_allocation,
 )
 
 
@@ -57,14 +63,17 @@ class BackorderRootFolderAdmin(admin.ModelAdmin):
         if obj.code == BackorderRootFolder.FolderCode.INVENTORY_PRODUCTS:
             product_url = reverse("admin:backorders_inventoryproductfolder_changelist")
             batch_url = reverse("admin:backorders_inventorybatch_changelist")
+            allocation_url = reverse("admin:backorders_inventoryallocation_changelist")
             add_batch_url = reverse("admin:backorders_inventorybatch_add")
 
             return format_html(
                 '<a href="{}">查看库存产品</a> &nbsp;|&nbsp; '
                 '<a href="{}">查看库存批次</a> &nbsp;|&nbsp; '
+                '<a href="{}">查看预留记录</a> &nbsp;|&nbsp; '
                 '<a href="{}">新增库存批次</a>',
                 product_url,
                 batch_url,
+                allocation_url,
                 add_batch_url,
             )
 
@@ -560,6 +569,18 @@ class InventoryProductFolderAdmin(admin.ModelAdmin):
         rows = ""
 
         for order in orders:
+            params = urlencode(
+                {
+                    "product_code": obj.product_code,
+                    "order": order["order_id"],
+                }
+            )
+
+            allocation_url = (
+                reverse("admin:backorders_inventoryallocation_add")
+                + f"?{params}"
+            )
+
             rows += (
                 "<tr>"
                 f"<td>Order {order['bon_de_commande']}</td>"
@@ -567,6 +588,7 @@ class InventoryProductFolderAdmin(admin.ModelAdmin):
                 f"<td>{order['hospital_name']}</td>"
                 f"<td>{order['remaining_quantity']}</td>"
                 f"<td>{order['expected_shipping_date_display']}</td>"
+                f'<td><a class="button" href="{allocation_url}">创建预留</a></td>'
                 "</tr>"
             )
 
@@ -582,6 +604,7 @@ class InventoryProductFolderAdmin(admin.ModelAdmin):
                     <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">医院</th>
                     <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">待发数量</th>
                     <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">预计发货时间</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">操作</th>
                 </tr>
             </thead>
             <tbody>{rows}</tbody>
@@ -617,6 +640,7 @@ class InventoryItemAdmin(admin.ModelAdmin):
         "status",
         "batch",
         "allocated_order",
+        "allocation",
         "allocated_at",
     )
 
@@ -641,6 +665,7 @@ class InventoryItemAdmin(admin.ModelAdmin):
         "expiration_date",
         "status",
         "allocated_order",
+        "allocation",
         "allocated_at",
         "raw_data",
         "created_at",
@@ -650,4 +675,172 @@ class InventoryItemAdmin(admin.ModelAdmin):
         return False
 
     def has_add_permission(self, request):
+        return False
+
+class InventoryAllocationItemInline(admin.TabularInline):
+    model = InventoryItem
+    fk_name = "allocation"
+    extra = 0
+    can_delete = False
+
+    readonly_fields = (
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "batch",
+    )
+
+    fields = (
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "batch",
+    )
+
+
+@admin.register(InventoryAllocation)
+class InventoryAllocationAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "order",
+        "order_date_display",
+        "product_code",
+        "quantity_requested",
+        "allocated_count",
+        "status",
+        "created_by",
+        "created_at",
+    )
+
+    list_filter = (
+        "status",
+        "product_code",
+        "created_at",
+    )
+
+    search_fields = (
+        "order__bon_de_commande",
+        "product_code",
+        "items__serial_number",
+    )
+
+    readonly_fields = (
+        "product",
+        "allocated_count",
+        "status",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
+
+    fields = (
+        "order",
+        "product_code",
+        "quantity_requested",
+        "notes",
+        "product",
+        "allocated_count",
+        "status",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
+
+    raw_id_fields = (
+        "order",
+    )
+
+    actions = [
+        "cancel_selected_allocations",
+    ]
+
+    inlines = [
+        InventoryAllocationItemInline,
+    ]
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+
+        product_code = request.GET.get("product_code")
+        order_id = request.GET.get("order")
+
+        if product_code:
+            initial["product_code"] = product_code
+
+        if order_id:
+            initial["order"] = order_id
+
+        return initial
+
+    def order_date_display(self, obj):
+        order = obj.order
+
+        try:
+            from backorders.services.inventory_service import get_order_date_for_display
+
+            order_date = get_order_date_for_display(order)
+            if order_date:
+                return order_date.strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
+        return "-"
+
+    order_date_display.short_description = "医院下单日期"
+
+    def save_model(self, request, obj, form, change):
+        """
+        新增时，不直接保存 obj。
+        而是调用 allocate_inventory_to_order，让系统自动选择 serial number。
+        """
+        if change:
+            super().save_model(request, obj, form, change)
+            return
+
+        allocation = allocate_inventory_to_order(
+            product_code=obj.product_code,
+            order=obj.order,
+            quantity=obj.quantity_requested,
+            created_by=request.user,
+            notes=obj.notes,
+        )
+
+        obj.pk = allocation.pk
+        obj.id = allocation.id
+
+        self.message_user(
+            request,
+            (
+                f"已成功为 Order {allocation.order.bon_de_commande} "
+                f"预留 {allocation.product_code} x {allocation.allocated_count}。"
+            ),
+            level=messages.SUCCESS,
+        )
+
+    @admin.action(description="取消所选库存预留")
+    def cancel_selected_allocations(self, request, queryset):
+        success = 0
+        failed = 0
+
+        for allocation in queryset:
+            try:
+                cancel_inventory_allocation(allocation)
+                success += 1
+            except Exception as exc:
+                failed += 1
+                self.message_user(
+                    request,
+                    f"预留记录 {allocation.id} 取消失败：{exc}",
+                    level=messages.ERROR,
+                )
+
+        self.message_user(
+            request,
+            f"取消完成：成功 {success}，失败 {failed}。",
+            level=messages.INFO,
+        )
+
+    def has_module_permission(self, request):
         return False

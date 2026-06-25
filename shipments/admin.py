@@ -164,6 +164,7 @@ class ShipmentBatchAdmin(admin.ModelAdmin):
         "month_key",
         "order",
         "batch_number",
+        "confirmation_type_display",
         "batch_date",
         "status",
         "shipped_this_batch_quantity",
@@ -205,6 +206,19 @@ class ShipmentBatchAdmin(admin.ModelAdmin):
         ShipmentBatchItemInline,
         BackorderSnapshotItemInline,
     ]
+
+    def confirmation_type_display(self, obj):
+        confirmation = getattr(obj, "factory_confirmation", None)
+
+        if not confirmation:
+            return "-"
+
+        if hasattr(confirmation, "get_confirmation_type_display"):
+            return confirmation.get_confirmation_type_display()
+
+        return getattr(confirmation, "confirmation_type", "-")
+
+    confirmation_type_display.short_description = "发货类型"
 
     def open_shipped_items(self, obj):
         url = (

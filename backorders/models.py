@@ -349,6 +349,92 @@ class InventoryBatch(models.Model):
         return f"库存批次 {self.id}"
 
 
+class InventoryAllocation(models.Model):
+    """
+    库存分配 / 预留记录。
+
+    Phase 2：
+        只把库存 Serial Number 预留给某个订单。
+        不生成 ShipmentBatch。
+        不更新 OrderItem.confirmed_quantity。
+
+    Phase 3：
+        再从这个 allocation 生成真正的补发 ShipmentBatch。
+    """
+
+    class Status(models.TextChoices):
+        RESERVED = "reserved", "已预留"
+        SHIPMENT_CREATED = "shipment_created", "已生成发货批次"
+        CANCELLED = "cancelled", "已取消"
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="inventory_allocations",
+        verbose_name="目标订单",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="产品",
+    )
+
+    product_code = models.CharField(
+        max_length=100,
+        db_index=True,
+        verbose_name="产品号",
+    )
+
+    quantity_requested = models.PositiveIntegerField(
+        default=1,
+        verbose_name="预留数量",
+    )
+
+    allocated_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="实际预留数量",
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.RESERVED,
+        verbose_name="状态",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="备注",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_inventory_allocations",
+        verbose_name="创建人",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "库存预留记录"
+        verbose_name_plural = "库存预留记录"
+
+    def __str__(self):
+        return (
+            f"{self.product_code} x {self.allocated_count} "
+            f"→ Order {self.order.bon_de_commande}"
+        )
+
+
 class InventoryItem(models.Model):
     """
     库存里的每一个 Serial Number。
@@ -409,6 +495,15 @@ class InventoryItem(models.Model):
         on_delete=models.SET_NULL,
         related_name="allocated_inventory_items",
         verbose_name="已分配订单",
+    )
+
+    allocation = models.ForeignKey(
+        "InventoryAllocation",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="items",
+        verbose_name="库存预留记录",
     )
 
     allocated_at = models.DateTimeField(

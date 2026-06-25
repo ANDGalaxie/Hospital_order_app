@@ -20,6 +20,12 @@ from legacy_services.factory_confirmation_extractor import (
 
 from shipments.services.shipment_tracking_service import sync_shipment_batch_from_factory_confirmation
 from backorders.services.backorder_sync_service import sync_backorders_for_order
+from shipments.models import ShipmentBatch, ShipmentBatchItem
+
+try:
+    from backorders.services.backorder_sync_service import sync_backorders_for_order
+except Exception:
+    sync_backorders_for_order = None
 
 
 def get_factory_confirmation_workspace(
@@ -76,6 +82,50 @@ def parse_iso_date(value: Optional[str]):
 
 EXPIRATION_DISCOUNT_RATE = Decimal("0.30")
 EXPIRATION_THRESHOLD_DAYS = 365
+
+
+def validate_confirmation_batch_sequence(
+    confirmation: FactoryConfirmation,
+) -> None:
+    """
+    保护 FactoryConfirmation 和 ShipmentBatch 的顺序关系。
+
+    规则：
+      1. 一个订单的第一份发货文件应该是 initial。
+      2. 已经有其他批次后，新文件不应该再是 initial。
+      3. 同一个 confirmation 重新 extract 时，不重复创建新批次。
+    """
+    order = confirmation.order
+
+    own_batch_exists = ShipmentBatch.objects.filter(
+        factory_confirmation=confirmation,
+    ).exists()
+
+    other_batches_exist = ShipmentBatch.objects.filter(
+        order=order,
+    ).exclude(
+        factory_confirmation=confirmation,
+    ).exists()
+
+    confirmation_type = getattr(
+        confirmation,
+        "confirmation_type",
+        "initial",
+    )
+
+    if not own_batch_exists and not other_batches_exist:
+        if confirmation_type == FactoryConfirmation.ConfirmationType.REPLENISHMENT:
+            raise ValueError(
+                f"Order {order.bon_de_commande} 还没有任何发货批次，"
+                f"第一份工厂确认文件不能选择“补发货”。请改成“首批发货”。"
+            )
+
+    if not own_batch_exists and other_batches_exist:
+        if confirmation_type == FactoryConfirmation.ConfirmationType.INITIAL:
+            raise ValueError(
+                f"Order {order.bon_de_commande} 已经存在发货批次，"
+                f"新的工厂确认文件不能再选择“首批发货”。请改成“补发货”。"
+            )
 
 
 def calculate_preliminary_discount_rate(expiration_date):
@@ -313,6 +363,10 @@ def extract_factory_confirmation_for_confirmation(
 
     try:
         factory_data = extract_factory_confirmation(pdf_path)
+        warnings = factory_data.setdefault("warnings", [])
+
+        # 先检查批次类型是否合理。
+        validate_confirmation_batch_sequence(confirmation)
 
         serial_count = create_serial_items_from_factory_data(
             confirmation=confirmation,
@@ -354,20 +408,24 @@ def extract_factory_confirmation_for_confirmation(
             ]
         )
 
-        # 1. 创建 / 更新 Shipment Batch。
-        sync_shipment_batch_from_factory_confirmation(confirmation)
-
-        # 2. 重新累计更新 OrderItem confirmed / backordered 数量。
-        update_order_items_from_factory_data(
-            confirmation=confirmation,
-            factory_data=factory_data,
+        # 1. FactoryConfirmation → ShipmentBatch。
+        shipment_batch = sync_shipment_batch_from_factory_confirmation(
+            confirmation
         )
 
-        # 3. 重新同步当前待发产品库。
+        # 2. 从所有 ShipmentBatchItem 累计更新 OrderItem。
+        recalculate_order_items_from_shipment_batches(
+            order=confirmation.order,
+            warnings=warnings,
+        )
+
+        # 3. 同步当前待发产品库。
         if sync_backorders_for_order:
             sync_backorders_for_order(confirmation.order)
 
-        # 4. 因为 warnings 可能在累计检查时新增，所以再保存一次 extracted data。
+        # 4. 因为上面可能新增 warnings，所以再保存一次提取结果。
+        factory_data["django"]["shipment_batch_id"] = shipment_batch.id
+
         confirmation.extracted_confirmation_data = factory_data
         confirmation.save(
             update_fields=[
@@ -393,3 +451,89 @@ def extract_factory_confirmation_for_confirmation(
         )
 
         raise exc
+
+
+def recalculate_order_items_from_shipment_batches(
+    order,
+    warnings=None,
+) -> None:
+    """
+    从 ShipmentBatchItem 累计计算 OrderItem 的 confirmed / backordered。
+
+    注意：
+    OrderItem.confirmed_quantity 是累计已发数量。
+    ShipmentBatchItem.shipped_quantity 是当前批次数量。
+    """
+    if warnings is None:
+        warnings = []
+
+    shipped_map = Counter()
+
+    batch_items = ShipmentBatchItem.objects.filter(
+        batch__order=order,
+    )
+
+    for batch_item in batch_items:
+        product_code = str(batch_item.product_code or "").strip()
+
+        if not product_code:
+            continue
+
+        shipped_quantity = int(
+            getattr(batch_item, "shipped_quantity", 0) or 0
+        )
+
+        shipped_map[product_code] += shipped_quantity
+
+    order_product_codes = set(
+        order.items.values_list("product_code", flat=True)
+    )
+
+    extra_codes = [
+        code for code in shipped_map.keys()
+        if code not in order_product_codes
+    ]
+
+    if extra_codes:
+        warnings.append(
+            "发货批次中出现了医院订单里没有的产品，需要人工确认："
+            + ", ".join(extra_codes)
+        )
+
+    for order_item in order.items.all():
+        product_code = str(order_item.product_code or "").strip()
+        requested_quantity = int(order_item.requested_quantity or 0)
+        confirmed_quantity = int(shipped_map.get(product_code, 0))
+
+        backordered_quantity = max(
+            requested_quantity - confirmed_quantity,
+            0,
+        )
+
+        order_item.confirmed_quantity = confirmed_quantity
+        order_item.backordered_quantity = backordered_quantity
+
+        if confirmed_quantity <= 0:
+            order_item.status = OrderItem.Status.BACKORDERED
+
+        elif confirmed_quantity < requested_quantity:
+            order_item.status = OrderItem.Status.PARTIALLY_CONFIRMED
+
+        else:
+            order_item.status = OrderItem.Status.CONFIRMED
+
+        if confirmed_quantity > requested_quantity:
+            warnings.append(
+                f"产品 {product_code}: 累计已发数量 {confirmed_quantity} "
+                f"大于医院订单数量 {requested_quantity}，可能存在超发。"
+            )
+
+        order_item.save(
+            update_fields=[
+                "confirmed_quantity",
+                "backordered_quantity",
+                "status",
+                "updated_at",
+            ]
+        )
+
