@@ -9,10 +9,18 @@ from backorders.models import (
     BackorderLine,
     ExpectedShippingMonthFolder,
     ExpectedShippingProductFolder,
+    InventoryBatch,
+    InventoryItem,
+    InventoryProductFolder,
 )
 from backorders.services.backorder_sync_service import (
     sync_backorders_for_all_orders,
     rebuild_expected_shipping_folders,
+)
+from backorders.services.inventory_service import (
+    extract_inventory_batch,
+    rebuild_inventory_product_folders,
+    get_allocatable_orders_for_product,
 )
 
 
@@ -45,6 +53,20 @@ class BackorderRootFolderAdmin(admin.ModelAdmin):
         if obj.code == BackorderRootFolder.FolderCode.EXPECTED_SHIPPING:
             url = reverse("admin:backorders_expectedshippingmonthfolder_changelist")
             return format_html('<a href="{}">Open</a>', url)
+
+        if obj.code == BackorderRootFolder.FolderCode.INVENTORY_PRODUCTS:
+            product_url = reverse("admin:backorders_inventoryproductfolder_changelist")
+            batch_url = reverse("admin:backorders_inventorybatch_changelist")
+            add_batch_url = reverse("admin:backorders_inventorybatch_add")
+
+            return format_html(
+                '<a href="{}">查看库存产品</a> &nbsp;|&nbsp; '
+                '<a href="{}">查看库存批次</a> &nbsp;|&nbsp; '
+                '<a href="{}">新增库存批次</a>',
+                product_url,
+                batch_url,
+                add_batch_url,
+            )
 
         return "-"
 
@@ -285,6 +307,344 @@ class ExpectedShippingProductFolderAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">Open orders</a>', url)
 
     open_orders.short_description = "Orders"
+
+    def has_module_permission(self, request):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+class InventoryItemInline(admin.TabularInline):
+    model = InventoryItem
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        "product",
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "allocated_order",
+        "allocated_at",
+    )
+
+    fields = (
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "allocated_order",
+        "allocated_at",
+    )
+
+
+@admin.register(InventoryBatch)
+class InventoryBatchAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "batch_name",
+        "factory",
+        "batch_date",
+        "extraction_status",
+        "item_count",
+        "created_by",
+        "created_at",
+    )
+
+    list_filter = (
+        "extraction_status",
+        "factory",
+        "batch_date",
+        "created_at",
+    )
+
+    search_fields = (
+        "batch_name",
+        "factory__name",
+        "factory__short_name",
+        "items__product_code",
+        "items__serial_number",
+    )
+
+    readonly_fields = (
+        "extraction_status",
+        "extracted_data",
+        "extraction_error",
+        "extracted_at",
+        "created_at",
+        "updated_at",
+    )
+
+    fields = (
+        "batch_name",
+        "factory",
+        "source_pdf",
+        "batch_date",
+        "notes",
+        "created_by",
+        "extraction_status",
+        "extracted_data",
+        "extraction_error",
+        "extracted_at",
+        "created_at",
+        "updated_at",
+    )
+
+    actions = [
+        "extract_selected_inventory_batches",
+        "rebuild_inventory_summary",
+    ]
+
+    inlines = [
+        InventoryItemInline,
+    ]
+
+    def item_count(self, obj):
+        return obj.items.count()
+
+    item_count.short_description = "库存数量"
+
+    @admin.action(description="提取所选库存批次")
+    def extract_selected_inventory_batches(self, request, queryset):
+        success = 0
+        failed = 0
+
+        for batch in queryset:
+            try:
+                extract_inventory_batch(batch)
+                success += 1
+                self.message_user(
+                    request,
+                    f"库存批次 {batch.id} 提取成功。",
+                    level=messages.SUCCESS,
+                )
+            except Exception as exc:
+                failed += 1
+                self.message_user(
+                    request,
+                    f"库存批次 {batch.id} 提取失败：{exc}",
+                    level=messages.ERROR,
+                )
+
+        self.message_user(
+            request,
+            f"库存批次提取完成：成功 {success}，失败 {failed}。",
+            level=messages.INFO,
+        )
+
+    @admin.action(description="重建库存产品汇总")
+    def rebuild_inventory_summary(self, request, queryset):
+        rebuild_inventory_product_folders()
+        self.message_user(
+            request,
+            "库存产品汇总已重建。",
+            level=messages.SUCCESS,
+        )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by:
+            obj.created_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+    def has_module_permission(self, request):
+        return False
+
+
+@admin.register(InventoryProductFolder)
+class InventoryProductFolderAdmin(admin.ModelAdmin):
+    list_display = (
+        "product_code",
+        "available_quantity",
+        "allocated_quantity",
+        "reserved_quantity",
+        "cancelled_quantity",
+        "total_quantity",
+        "earliest_expiration_date",
+        "open_inventory_items",
+    )
+
+    search_fields = (
+        "product_code",
+        "product__description",
+    )
+
+    readonly_fields = (
+        "product",
+        "product_code",
+        "total_quantity",
+        "available_quantity",
+        "reserved_quantity",
+        "allocated_quantity",
+        "cancelled_quantity",
+        "earliest_expiration_date",
+        "last_calculated_at",
+        "available_serials_table",
+        "allocatable_orders_table",
+    )
+
+    fields = (
+        "product",
+        "product_code",
+        "total_quantity",
+        "available_quantity",
+        "reserved_quantity",
+        "allocated_quantity",
+        "cancelled_quantity",
+        "earliest_expiration_date",
+        "last_calculated_at",
+        "available_serials_table",
+        "allocatable_orders_table",
+    )
+
+    actions = [
+        "rebuild_inventory_summary",
+    ]
+
+    def open_inventory_items(self, obj):
+        url = (
+            reverse("admin:backorders_inventoryitem_changelist")
+            + f"?product_code__exact={obj.product_code}&status__exact=available"
+        )
+        return format_html('<a href="{}">查看可用 Serials</a>', url)
+
+    open_inventory_items.short_description = "库存明细"
+
+    def available_serials_table(self, obj):
+        items = (
+            InventoryItem.objects
+            .filter(
+                product_code=obj.product_code,
+                status=InventoryItem.Status.AVAILABLE,
+            )
+            .order_by("expiration_date", "serial_number")[:50]
+        )
+
+        if not items:
+            return "当前没有可用库存。"
+
+        rows = ""
+
+        for item in items:
+            rows += (
+                "<tr>"
+                f"<td>{item.serial_number}</td>"
+                f"<td>{item.expiration_date or '-'}</td>"
+                f"<td>{item.batch}</td>"
+                "</tr>"
+            )
+
+        html = f"""
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Serial Number</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">有效期</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">库存批次</th>
+                </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+        </table>
+        """
+
+        return format_html(html)
+
+    available_serials_table.short_description = "可用库存 Serials"
+
+    def allocatable_orders_table(self, obj):
+        orders = get_allocatable_orders_for_product(obj.product_code)
+
+        if not orders:
+            return "当前没有待发该产品的订单。"
+
+        rows = ""
+
+        for order in orders:
+            rows += (
+                "<tr>"
+                f"<td>Order {order['bon_de_commande']}</td>"
+                f"<td>{order['order_date_display']}</td>"
+                f"<td>{order['hospital_name']}</td>"
+                f"<td>{order['remaining_quantity']}</td>"
+                f"<td>{order['expected_shipping_date_display']}</td>"
+                "</tr>"
+            )
+
+        html = f"""
+        <div style="margin-bottom:8px;">
+            <strong>建议优先补发下单日期更早的订单。</strong>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">订单</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">医院下单日期</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">医院</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">待发数量</th>
+                    <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">预计发货时间</th>
+                </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+        </table>
+        """
+
+        return format_html(html)
+
+    allocatable_orders_table.short_description = "可分配订单"
+
+    @admin.action(description="重建库存产品汇总")
+    def rebuild_inventory_summary(self, request, queryset):
+        rebuild_inventory_product_folders()
+        self.message_user(
+            request,
+            "库存产品汇总已重建。",
+            level=messages.SUCCESS,
+        )
+
+    def has_module_permission(self, request):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(InventoryItem)
+class InventoryItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "batch",
+        "allocated_order",
+        "allocated_at",
+    )
+
+    list_filter = (
+        "status",
+        "product_code",
+        "expiration_date",
+        "batch",
+    )
+
+    search_fields = (
+        "product_code",
+        "serial_number",
+        "allocated_order__bon_de_commande",
+    )
+
+    readonly_fields = (
+        "batch",
+        "product",
+        "product_code",
+        "serial_number",
+        "expiration_date",
+        "status",
+        "allocated_order",
+        "allocated_at",
+        "raw_data",
+        "created_at",
+    )
 
     def has_module_permission(self, request):
         return False

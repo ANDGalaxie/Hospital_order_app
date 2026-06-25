@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from factories.models import Factory
 from orders.models import Order
 from products.models import Product
 
@@ -15,6 +17,7 @@ class BackorderRootFolder(models.Model):
     class FolderCode(models.TextChoices):
         BACKORDER_ORDERS = "backorder_orders", "待发产品"
         EXPECTED_SHIPPING = "expected_shipping", "预计可发产品"
+        INVENTORY_PRODUCTS = "inventory_products", "库存产品"
 
     code = models.CharField(
         max_length=50,
@@ -249,3 +252,232 @@ class ExpectedShippingProductFolder(models.Model):
 
     def __str__(self):
         return f"{self.month_folder.display_name} / {self.product_code}"
+
+class InventoryBatch(models.Model):
+    """
+    工厂新生产 / 新提供的一批库存文件。
+
+    注意：
+    这不是某一个医院订单的 FactoryConfirmation。
+    它是一个库存批次，可以后续分配给多个订单。
+    """
+
+    class ExtractionStatus(models.TextChoices):
+        PENDING = "pending", "待提取"
+        SUCCESS = "success", "提取成功"
+        FAILED = "failed", "提取失败"
+
+    factory = models.ForeignKey(
+        Factory,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="inventory_batches",
+        verbose_name="工厂",
+    )
+
+    batch_name = models.CharField(
+        max_length=200,
+        blank=True,
+        default="",
+        verbose_name="库存批次名称",
+        help_text="例如：SINOMED 2026-09 生产批次",
+    )
+
+    source_pdf = models.FileField(
+        upload_to="inventory_batches/",
+        null=True,
+        blank=True,
+        verbose_name="工厂 Serial Number 文件",
+    )
+
+    batch_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="库存批次日期",
+        help_text="可以理解为工厂发货日期或生产批次日期。",
+    )
+
+    extraction_status = models.CharField(
+        max_length=20,
+        choices=ExtractionStatus.choices,
+        default=ExtractionStatus.PENDING,
+        verbose_name="提取状态",
+    )
+
+    extracted_data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="提取结果",
+    )
+
+    extraction_error = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="提取错误",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="备注",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_inventory_batches",
+        verbose_name="创建人",
+    )
+
+    extracted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-batch_date", "-created_at"]
+        verbose_name = "库存批次"
+        verbose_name_plural = "库存批次"
+
+    def __str__(self):
+        if self.batch_name:
+            return self.batch_name
+        if self.batch_date:
+            return f"库存批次 {self.batch_date}"
+        return f"库存批次 {self.id}"
+
+
+class InventoryItem(models.Model):
+    """
+    库存里的每一个 Serial Number。
+    """
+
+    class Status(models.TextChoices):
+        AVAILABLE = "available", "可用"
+        RESERVED = "reserved", "已预留"
+        ALLOCATED = "allocated", "已分配"
+        CANCELLED = "cancelled", "作废"
+
+    batch = models.ForeignKey(
+        InventoryBatch,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="库存批次",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="产品",
+    )
+
+    product_code = models.CharField(
+        max_length=100,
+        db_index=True,
+        verbose_name="产品号",
+    )
+
+    serial_number = models.CharField(
+        max_length=200,
+        unique=True,
+        db_index=True,
+        verbose_name="Serial Number",
+        help_text="Serial Number 全局唯一，防止重复入库或重复发货。",
+    )
+
+    expiration_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="有效期",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.AVAILABLE,
+        verbose_name="库存状态",
+    )
+
+    allocated_order = models.ForeignKey(
+        Order,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="allocated_inventory_items",
+        verbose_name="已分配订单",
+    )
+
+    allocated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="分配时间",
+    )
+
+    raw_data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="原始提取数据",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["product_code", "expiration_date", "serial_number"]
+        verbose_name = "库存 Serial"
+        verbose_name_plural = "库存 Serials"
+
+    def __str__(self):
+        return f"{self.product_code} / {self.serial_number}"
+
+
+class InventoryProductFolder(models.Model):
+    """
+    库存产品虚拟文件夹。
+
+    一行代表一个产品号的库存汇总。
+    """
+
+    product = models.ForeignKey(
+        Product,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="产品",
+    )
+
+    product_code = models.CharField(
+        max_length=100,
+        unique=True,
+        db_index=True,
+        verbose_name="产品号",
+    )
+
+    total_quantity = models.PositiveIntegerField(default=0)
+    available_quantity = models.PositiveIntegerField(default=0)
+    reserved_quantity = models.PositiveIntegerField(default=0)
+    allocated_quantity = models.PositiveIntegerField(default=0)
+    cancelled_quantity = models.PositiveIntegerField(default=0)
+
+    earliest_expiration_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="最早有效期",
+    )
+
+    last_calculated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="最后计算时间",
+    )
+
+    class Meta:
+        ordering = ["product_code"]
+        verbose_name = "库存产品"
+        verbose_name_plural = "库存产品"
+
+    def __str__(self):
+        return f"{self.product_code} / 可用 {self.available_quantity}"

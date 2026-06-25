@@ -36,6 +36,14 @@ def ensure_backorder_root_folders():
         },
     )
 
+    BackorderRootFolder.objects.update_or_create(
+        code=BackorderRootFolder.FolderCode.INVENTORY_PRODUCTS,
+        defaults={
+            "name": "库存产品",
+            "sort_order": 3,
+        },
+    )
+
 
 def aggregate_requested_by_order(order):
     """
