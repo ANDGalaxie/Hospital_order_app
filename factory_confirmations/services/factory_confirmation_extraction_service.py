@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, Optional
+from collections import Counter
 
 from django.conf import settings
 from django.db import transaction
@@ -104,20 +105,31 @@ def create_serial_items_from_factory_data(
     """
     根据 extracted factory confirmation data 创建 SerialItem。
 
-    注意：
-        当前阶段如果重新提取同一个 FactoryConfirmation，
-        会先删除该 confirmation 下已有的 SerialItem，再重建。
+    安全检查：
+      1. 同一份文件里重复 serial_number：跳过并 warning
+      2. 系统里已经存在的 serial_number：跳过并 warning
+      3. 产品号不在原医院订单中：允许记录，但 warning
     """
     confirmation.serial_items.all().delete()
 
     serial_items = factory_data.get("serial_items", [])
+    warnings = factory_data.setdefault("warnings", [])
+
+    order = confirmation.order
+    order_product_codes = set(
+        order.items.values_list("product_code", flat=True)
+    )
 
     created_count = 0
+    seen_serials_in_this_file = set()
 
     for item in serial_items:
         product_code = str(item.get("product_code") or "").strip()
 
         if not product_code:
+            warnings.append(
+                "工厂确认文件中有一行缺少 product_code，已跳过。"
+            )
             continue
 
         product = Product.objects.filter(code=product_code).first()
@@ -125,7 +137,42 @@ def create_serial_items_from_factory_data(
         serial_number = str(item.get("serial_number") or "").strip()
 
         if not serial_number:
+            warnings.append(
+                f"产品 {product_code}: 缺少 serial_number，已跳过。"
+            )
             continue
+
+        if serial_number in seen_serials_in_this_file:
+            warnings.append(
+                f"Serial Number {serial_number} 在当前文件中重复，已跳过重复行。"
+            )
+            continue
+
+        seen_serials_in_this_file.add(serial_number)
+
+        existing_serial = (
+            SerialItem.objects
+            .filter(serial_number=serial_number)
+            .exclude(factory_confirmation=confirmation)
+            .select_related("order", "factory_confirmation")
+            .first()
+        )
+
+        if existing_serial:
+            warnings.append(
+                f"Serial Number {serial_number} 已经存在，"
+                f"属于 Order {existing_serial.order.bon_de_commande} / "
+                f"FactoryConfirmation {existing_serial.factory_confirmation_id}，"
+                f"本次已跳过，避免重复计算发货数量。"
+            )
+            continue
+
+        if product_code not in order_product_codes:
+            warnings.append(
+                f"产品 {product_code} 出现在工厂确认文件中，"
+                f"但不在医院订单 {order.bon_de_commande} 的产品列表里，"
+                f"需要人工检查。"
+            )
 
         expiration_date = parse_iso_date(
             item.get("expiration_date_iso")
@@ -152,48 +199,58 @@ def create_serial_items_from_factory_data(
 
     return created_count
 
-
 def update_order_items_from_factory_data(
     confirmation: FactoryConfirmation,
     factory_data: Dict[str, Any],
 ) -> None:
     """
-    根据工厂确认结果更新 OrderItem：
+    根据同一个 Order 下所有提取成功的 FactoryConfirmation，
+    累计更新 OrderItem：
 
-    - confirmed_quantity
-    - backordered_quantity
-    - status
+      confirmed_quantity = 所有成功发货批次中该产品的 SerialItem 数量总和
+      backordered_quantity = max(requested_quantity - confirmed_quantity, 0)
 
-    规则：
-        requested_quantity = 医院订单请求数量
-        confirmed_quantity = 工厂确认数量
-        backordered_quantity = max(requested - confirmed, 0)
+    这一步是支持补发货的核心。
+    不能再用“最新工厂文件”覆盖 confirmed_quantity。
     """
     order = confirmation.order
+    warnings = factory_data.setdefault("warnings", [])
 
-    summary_by_product = factory_data.get("summary_by_product", [])
+    successful_serial_items = (
+        SerialItem.objects
+        .filter(
+            order=order,
+            factory_confirmation__extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
+        )
+        .select_related("factory_confirmation")
+    )
 
-    confirmed_map = {}
+    confirmed_map = Counter()
 
-    for item in summary_by_product:
-        product_code = str(item.get("product_code") or "").strip()
+    for serial in successful_serial_items:
+        product_code = str(serial.product_code or "").strip()
 
-        if not product_code:
-            continue
+        if product_code:
+            confirmed_map[product_code] += 1
 
-        confirmed_quantity = item.get("confirmed_quantity", 0)
+    order_codes = set(
+        order.items.values_list("product_code", flat=True)
+    )
 
-        try:
-            confirmed_quantity = int(float(confirmed_quantity))
-        except (TypeError, ValueError):
-            confirmed_quantity = 0
+    extra_codes = [
+        code for code in confirmed_map.keys()
+        if code not in order_codes
+    ]
 
-        confirmed_map[product_code] = confirmed_quantity
+    if extra_codes:
+        warnings.append(
+            "所有成功工厂确认文件中出现了医院订单里没有的产品，需要人工确认："
+            + ", ".join(extra_codes)
+        )
 
     for order_item in order.items.all():
-        confirmed_quantity = confirmed_map.get(
-            order_item.product_code,
-            0,
+        confirmed_quantity = int(
+            confirmed_map.get(order_item.product_code, 0)
         )
 
         requested_quantity = int(order_item.requested_quantity or 0)
@@ -215,6 +272,13 @@ def update_order_items_from_factory_data(
         else:
             order_item.status = OrderItem.Status.CONFIRMED
 
+        if confirmed_quantity > requested_quantity:
+            warnings.append(
+                f"产品 {order_item.product_code}: 累计已发数量 "
+                f"{confirmed_quantity} 大于医院订单数量 {requested_quantity}，"
+                f"可能存在超发，需要人工检查。"
+            )
+
         order_item.save(
             update_fields=[
                 "confirmed_quantity",
@@ -222,23 +286,6 @@ def update_order_items_from_factory_data(
                 "status",
                 "updated_at",
             ]
-        )
-
-    # 如果工厂确认文件里出现了医院订单中没有的产品，先写 warning。
-    order_codes = set(
-        order.items.values_list("product_code", flat=True)
-    )
-
-    extra_codes = [
-        code for code in confirmed_map.keys()
-        if code not in order_codes
-    ]
-
-    if extra_codes:
-        warnings = factory_data.setdefault("warnings", [])
-        warnings.append(
-            "工厂确认文件中出现医院订单里没有的产品，需要人工确认："
-            + ", ".join(extra_codes)
         )
 
 
@@ -268,11 +315,6 @@ def extract_factory_confirmation_for_confirmation(
         factory_data = extract_factory_confirmation(pdf_path)
 
         serial_count = create_serial_items_from_factory_data(
-            confirmation=confirmation,
-            factory_data=factory_data,
-        )
-
-        update_order_items_from_factory_data(
             confirmation=confirmation,
             factory_data=factory_data,
         )
@@ -312,8 +354,27 @@ def extract_factory_confirmation_for_confirmation(
             ]
         )
 
+        # 1. 创建 / 更新 Shipment Batch。
         sync_shipment_batch_from_factory_confirmation(confirmation)
-        sync_backorders_for_order(confirmation.order)
+
+        # 2. 重新累计更新 OrderItem confirmed / backordered 数量。
+        update_order_items_from_factory_data(
+            confirmation=confirmation,
+            factory_data=factory_data,
+        )
+
+        # 3. 重新同步当前待发产品库。
+        if sync_backorders_for_order:
+            sync_backorders_for_order(confirmation.order)
+
+        # 4. 因为 warnings 可能在累计检查时新增，所以再保存一次 extracted data。
+        confirmation.extracted_confirmation_data = factory_data
+        confirmation.save(
+            update_fields=[
+                "extracted_confirmation_data",
+                "updated_at",
+            ]
+        )
 
         return factory_data
 

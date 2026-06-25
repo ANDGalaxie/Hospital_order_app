@@ -13,6 +13,18 @@ class FactoryConfirmation(models.Model):
     第一版通常是一对一，但后续缺货补发时可能一对多。
     """
 
+    class ConfirmationType(models.TextChoices):
+        INITIAL = "initial", "首批发货"
+        REPLENISHMENT = "replenishment", "补发货"
+        ADJUSTMENT = "adjustment", "调整 / 特殊情况"
+    confirmation_type = models.CharField(
+        max_length=30,
+        choices=ConfirmationType.choices,
+        default=ConfirmationType.INITIAL,
+        verbose_name="发货类型",
+        help_text="首批发货、补发货或特殊调整。",
+    )
+
     class ExtractionStatus(models.TextChoices):
         NOT_STARTED = "not_started", "Not started"
         SUCCESS = "success", "Success"

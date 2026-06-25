@@ -15,6 +15,7 @@ class SerialItemInline(admin.TabularInline):
 class FactoryConfirmationAdmin(admin.ModelAdmin):
     list_display = (
         "order",
+        "confirmation_type",
         "extraction_status",
         "shipping_date",
         "created_by",
@@ -25,6 +26,7 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        "confirmation_type",
         "extraction_status",
         "shipping_date",
         "created_at",
@@ -32,6 +34,7 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
 
     search_fields = (
         "order__bon_de_commande",
+        "confirmation_type",
     )
 
     readonly_fields = (
@@ -51,6 +54,7 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "order",
+                    "confirmation_type",
                     "confirmation_pdf",
                     "shipping_date",
                     "created_by",
