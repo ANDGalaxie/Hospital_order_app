@@ -163,6 +163,7 @@ class ShipmentBatchAdmin(admin.ModelAdmin):
     list_display = (
         "month_key",
         "order",
+        "source_display",
         "batch_number",
         "confirmation_type_display",
         "batch_date",
@@ -207,6 +208,7 @@ class ShipmentBatchAdmin(admin.ModelAdmin):
         BackorderSnapshotItemInline,
     ]
 
+
     def confirmation_type_display(self, obj):
         confirmation = getattr(obj, "factory_confirmation", None)
 
@@ -247,6 +249,17 @@ class ShipmentBatchAdmin(admin.ModelAdmin):
         只能从订单文件夹点进去。
         """
         return False
+
+    def source_display(self, obj):
+        if getattr(obj, "inventory_allocation_id", None):
+            return f"库存分配 #{obj.inventory_allocation_id}"
+
+        if getattr(obj, "factory_confirmation_id", None):
+            return f"工厂确认 #{obj.factory_confirmation_id}"
+
+        return "-"
+
+    source_display.short_description = "来源"
 
 
 @admin.register(ShipmentBatchItem)

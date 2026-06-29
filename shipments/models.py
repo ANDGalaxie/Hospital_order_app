@@ -66,6 +66,34 @@ class ShipmentBatch(models.Model):
     """
     一个工厂确认文件对应一个发货批次。
     """
+    class SourceType(models.TextChoices):
+        FACTORY_CONFIRMATION = "factory_confirmation", "工厂确认文件"
+        INVENTORY_ALLOCATION = "inventory_allocation", "库存分配"
+        MANUAL = "manual", "人工记录"
+
+    class ValidationStatus(models.TextChoices):
+        READY = "ready", "可以生成文件"
+        NEEDS_REVIEW = "needs_review", "需要人工检查"
+        BLOCKED = "blocked", "禁止生成文件"
+        
+    validation_status = models.CharField(
+        max_length=30,
+        choices=ValidationStatus.choices,
+        default=ValidationStatus.NEEDS_REVIEW,
+        verbose_name="校验状态",
+    )
+
+    validation_data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="校验结果",
+    )
+
+    validated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="校验时间",
+    )
 
     class Status(models.TextChoices):
         OPEN = "open", "Open"
@@ -90,8 +118,27 @@ class ShipmentBatch(models.Model):
 
     factory_confirmation = models.OneToOneField(
         FactoryConfirmation,
-        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
         related_name="shipment_batch",
+        verbose_name="工厂确认文件",
+    )
+
+    source_type = models.CharField(
+        max_length=40,
+        choices=SourceType.choices,
+        default=SourceType.FACTORY_CONFIRMATION,
+        verbose_name="来源类型",
+    )
+
+    inventory_allocation = models.OneToOneField(
+        "backorders.InventoryAllocation",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="shipment_batch",
+        verbose_name="库存预留记录",
     )
 
     batch_number = models.PositiveIntegerField(default=1)

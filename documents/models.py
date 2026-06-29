@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from datetime import timedelta
 
 from orders.models import Order
 
@@ -37,6 +38,42 @@ class DocumentSequence(models.Model):
         blank=True,
     )
 
+    class PaymentStatus(models.TextChoices):
+        UNPAID = "unpaid", "未付款"
+        PAID = "paid", "已付款"
+
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.UNPAID,
+        verbose_name="付款状态",
+    )
+
+    payment_due_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="付款截止日期",
+    )
+
+    payment_reminder_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="提醒日期",
+        help_text="自动计算：付款截止日期前 10 天。",
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="付款时间",
+    )
+
+    payment_notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="付款备注",
+    )
+    
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -52,6 +89,14 @@ class DocumentSequence(models.Model):
         ]
         ordering = ["-month_key", "sequence"]
 
+    def save(self, *args, **kwargs):
+        if self.payment_due_date:
+            self.payment_reminder_date = self.payment_due_date - timedelta(days=10)
+        else:
+            self.payment_reminder_date = None
+
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.month_key} - {self.bon_de_commande} - {self.sequence}"
 
@@ -74,24 +119,35 @@ class GeneratedDocument(models.Model):
         related_name="generated_documents",
     )
 
+    shipment_batch = models.ForeignKey(
+        "shipments.ShipmentBatch",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="generated_documents",
+        verbose_name="发货批次",
+    )
+    
     document_type = models.CharField(
         max_length=50,
         choices=DocumentType.choices,
     )
 
     document_number = models.CharField(
-        max_length=100,
+        max_length=200,
         db_index=True,
     )
 
     pdf_file = models.FileField(
         upload_to="generated_documents/pdf/%Y/%m/",
         blank=True,
+        max_length=500,
     )
 
     html_file = models.FileField(
         upload_to="generated_documents/html/%Y/%m/",
         blank=True,
+        max_length=500,
     )
 
     source_data = models.JSONField(

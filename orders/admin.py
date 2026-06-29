@@ -90,10 +90,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     actions = [
         "extract_selected_hospital_orders",
-        "validate_selected_orders_for_documents",
-        "generate_documents_for_selected_orders",
         "generate_factory_order_request",
-        "apply_price_policy_to_selected_orders",
     ]
 
     fieldsets = (

@@ -29,6 +29,10 @@ from backorders.services.inventory_service import (
     cancel_inventory_allocation,
 )
 
+from backorders.services.inventory_shipment_service import (
+    create_shipment_batch_from_inventory_allocation,
+)
+
 
 @admin.register(BackorderRootFolder)
 class BackorderRootFolderAdmin(admin.ModelAdmin):
@@ -710,6 +714,7 @@ class InventoryAllocationAdmin(admin.ModelAdmin):
         "quantity_requested",
         "allocated_count",
         "status",
+        "shipment_batch_link",
         "created_by",
         "created_at",
     )
@@ -753,6 +758,7 @@ class InventoryAllocationAdmin(admin.ModelAdmin):
     )
 
     actions = [
+        "create_shipment_batches_for_allocations",
         "cancel_selected_allocations",
     ]
 
@@ -817,6 +823,63 @@ class InventoryAllocationAdmin(admin.ModelAdmin):
                 f"预留 {allocation.product_code} x {allocation.allocated_count}。"
             ),
             level=messages.SUCCESS,
+        )
+
+    def shipment_batch_link(self, obj):
+        try:
+            batch = obj.shipment_batch
+        except Exception:
+            return "-"
+
+        url = reverse(
+            "admin:shipments_shipmentbatch_change",
+            args=[batch.id],
+        )
+
+        return format_html(
+            '<a href="{}">Batch {}</a>',
+            url,
+            batch.batch_number,
+        )
+
+    shipment_batch_link.short_description = "发货批次"
+
+    @admin.action(description="生成补发 Shipment Batch")
+    def create_shipment_batches_for_allocations(self, request, queryset):
+        success = 0
+        failed = 0
+
+        for allocation in queryset:
+            try:
+                batch = create_shipment_batch_from_inventory_allocation(
+                    allocation
+                )
+
+                success += 1
+
+                self.message_user(
+                    request,
+                    (
+                        f"库存预留记录 {allocation.id} 已生成 "
+                        f"Order {allocation.order.bon_de_commande} "
+                        f"Batch {batch.batch_number}。"
+                    ),
+                    level=messages.SUCCESS,
+                )
+
+            except Exception as exc:
+                failed += 1
+
+                self.message_user(
+                    request,
+                    f"库存预留记录 {allocation.id} 生成失败：{exc}",
+                    level=messages.ERROR,
+                )
+
+        self.message_user(
+            request,
+            f"生成完成：成功 {success}，失败 {failed}。",
+            level=messages.INFO,
         )
 
     @admin.action(description="取消所选库存预留")

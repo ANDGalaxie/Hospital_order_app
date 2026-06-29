@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "shipments",
     "factories",
     "factory_confirmations",
+    "workflow",
     "pricing",
     "backorders",
     "finance.apps.FinanceConfig",
@@ -143,7 +144,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 LOGIN_URL = "login"

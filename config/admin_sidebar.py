@@ -55,6 +55,13 @@ def custom_get_app_list(self, request, app_label=None):
             ],
         },
         {
+            "name": "Workflow",
+            "app_label": "workflow_group",
+            "models": [
+                "workflow.documentworkflowitem",
+            ],
+        },
+        {
             "name": "Documents",
             "app_label": "documents_group",
             "models": [
