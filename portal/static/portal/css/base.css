@@ -1,0 +1,435 @@
+:root {
+    --bg: #f6f8fb;
+    --card: rgba(255, 255, 255, 0.94);
+    --text: #111827;
+    --muted: #6b7280;
+    --border: rgba(148, 163, 184, 0.24);
+    --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.06);
+
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
+    --danger: #ef4444;
+    --success: #16a34a;
+    --warning: #f59e0b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 20% 10%, rgba(96, 165, 250, 0.16), transparent 26%),
+        radial-gradient(circle at 80% 0%, rgba(45, 212, 191, 0.14), transparent 24%),
+        linear-gradient(180deg, #f9fbff 0%, #f3f6fb 100%);
+}
+
+a {
+    color: inherit;
+}
+
+/* 顶部栏 */
+
+.topbar {
+    height: 78px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 310px minmax(300px, 1fr) auto;
+    align-items: center;
+    padding: 0 36px;
+    gap: 28px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+}
+
+.brand-logo-img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+}
+
+.brand-text {
+    font-size: 22px;
+    font-weight: 780;
+    letter-spacing: 0.2px;
+}
+
+.search-box {
+    max-width: 640px;
+    height: 46px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    box-shadow: var(--shadow-soft);
+}
+
+.search-icon {
+    color: #64748b;
+    font-size: 24px;
+    transform: rotate(-15deg);
+}
+
+.search-box input {
+    border: 0;
+    outline: 0;
+    flex: 1;
+    background: transparent;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.shortcut {
+    font-size: 13px;
+    color: #64748b;
+    border: 1px solid #dbe3ef;
+    background: #f8fafc;
+    border-radius: 9px;
+    padding: 4px 9px;
+}
+
+.user-area {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+}
+
+.lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.lang-switch a {
+    text-decoration: none;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 9px;
+    border-radius: 999px;
+}
+
+.lang-switch a.active {
+    color: #0f172a;
+    background: #eef6ff;
+}
+
+.notification {
+    position: relative;
+    font-size: 21px;
+    color: #475569;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -11px;
+    right: -12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--danger);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid white;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.26);
+}
+
+.user-name {
+    font-weight: 720;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.admin-link {
+    color: #475569;
+    text-decoration: none;
+    font-size: 13px;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: white;
+}
+
+/* 页面公共布局 */
+
+.page {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 46px 24px 80px;
+}
+
+.portal-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.portal-page-header h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: -0.6px;
+}
+
+.portal-page-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.portal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 通用按钮 */
+
+.portal-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 15px;
+    border-radius: 12px;
+    border: 1px solid #dbe3ef;
+    background: white;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+}
+
+.portal-button:hover {
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.portal-button.primary {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.portal-button.danger {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+/* 通用卡片与面板 */
+
+.portal-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+    padding: 22px;
+}
+
+.portal-panel-title {
+    margin: 0 0 14px;
+    font-size: 18px;
+    font-weight: 780;
+}
+
+/* 通用状态标签 */
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 760;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.status-pill.success {
+    background: #ecfdf5;
+    color: #15803d;
+}
+
+.status-pill.warning {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.status-pill.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.status-pill.info {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* 通用表格，之后 workflow / orders 会用 */
+
+.portal-table-wrap {
+    overflow: auto;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: white;
+    box-shadow: var(--shadow-soft);
+}
+
+.portal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.portal-table th {
+    text-align: left;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 780;
+    background: #f8fafc;
+    padding: 13px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.portal-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.portal-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.portal-empty {
+    padding: 46px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.portal-messages {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.portal-message {
+    padding: 13px 16px;
+    border-radius: 14px;
+    border: 1px solid #dbe3ef;
+    background: white;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 650;
+    box-shadow: var(--shadow-soft);
+}
+
+.portal-message.success {
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.portal-message.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.portal-message.warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
+}
+
+.portal-message.info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+/* 响应式 */
+
+@media (max-width: 1180px) {
+    .topbar {
+        grid-template-columns: 260px 1fr auto;
+        padding: 0 22px;
+    }
+}
+
+@media (max-width: 880px) {
+    .topbar {
+        height: auto;
+        grid-template-columns: 1fr;
+        padding: 18px;
+        gap: 14px;
+    }
+
+    .search-box {
+        max-width: none;
+    }
+
+    .user-area {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .portal-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

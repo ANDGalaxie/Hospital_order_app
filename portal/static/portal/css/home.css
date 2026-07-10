@@ -1,0 +1,127 @@
+.home-header {
+    margin-bottom: 28px;
+}
+
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(210px, 1fr));
+    gap: 28px;
+}
+
+.module-card {
+    min-height: 188px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 24px 22px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow);
+    border-color: rgba(96, 165, 250, 0.42);
+}
+
+.module-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.module-icon img {
+    width: 82px;
+    height: 82px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.12));
+}
+
+.module-title-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.module-content h2 {
+    margin: 0;
+    text-align: center;
+    font-size: 19px;
+    font-weight: 780;
+    letter-spacing: 0.2px;
+}
+
+.module-content p {
+    margin: 8px auto 0;
+    text-align: center;
+    max-width: 230px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.module-badge {
+    min-width: 25px;
+    height: 23px;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 750;
+    color: white;
+    background: #ef4444;
+}
+
+.module-status {
+    display: inline-flex;
+    margin: 14px auto 0;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.module-arrow {
+    position: absolute;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 34px;
+    color: #94a3b8;
+}
+
+@media (max-width: 1180px) {
+    .module-grid {
+        grid-template-columns: repeat(3, minmax(210px, 1fr));
+    }
+}
+
+@media (max-width: 880px) {
+    .module-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        gap: 18px;
+    }
+}
+
+@media (max-width: 560px) {
+    .module-grid {
+        grid-template-columns: 1fr;
+    }
+}

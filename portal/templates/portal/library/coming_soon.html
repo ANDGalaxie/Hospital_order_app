@@ -1,0 +1,26 @@
+{% extends "portal/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<span>{{ title }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="portal-page-header">
+    <div>
+        <h1>{{ title }}</h1>
+        <p>{{ description }}</p>
+    </div>
+</div>
+
+<div class="portal-panel">
+    <div class="empty-cell">
+        这个页面下一步接入列表和搜索功能。
+    </div>
+</div>
+{% endblock %}

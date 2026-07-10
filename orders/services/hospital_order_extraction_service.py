@@ -1,4 +1,5 @@
 import json
+import re
 import traceback
 from decimal import Decimal
 from pathlib import Path
@@ -89,6 +90,62 @@ def build_hospitals_from_db() -> List[Dict[str, Any]]:
     return hospitals
 
 
+def collect_text_from_ocr_blocks(value: Any) -> str:
+    """
+    从 OCR blocks 里递归收集文本。
+    这个函数尽量宽松，避免依赖 OCR block 的固定结构。
+    """
+    texts = []
+
+    if isinstance(value, str):
+        texts.append(value)
+
+    elif isinstance(value, dict):
+        for child_value in value.values():
+            child_text = collect_text_from_ocr_blocks(child_value)
+            if child_text:
+                texts.append(child_text)
+
+    elif isinstance(value, list):
+        for item in value:
+            child_text = collect_text_from_ocr_blocks(item)
+            if child_text:
+                texts.append(child_text)
+
+    return " ".join(texts)
+
+
+def extract_bon_de_commande_fallback_from_blocks(blocks: Any) -> Optional[str]:
+    """
+    当 legacy extract_header 没有识别出 bon_de_commande 时，
+    从 OCR 文本里用正则兜底提取。
+
+    支持格式：
+        BON DE COMMANDE N° 150 222 / Pharmacie
+        Bon de commande n 150222
+        COMMANDE N° 150 222
+    """
+    text = collect_text_from_ocr_blocks(blocks)
+
+    normalized_text = re.sub(r"\s+", " ", text).strip()
+
+    patterns = [
+        r"\bBON\s+DE\s+COMMANDE\s*(?:N|N°|Nº|NO|N0|NUMERO|NUMÉRO)?\s*[°º:]?\s*([0-9][0-9\s]{2,20})",
+        r"\bCOMMANDE\s*(?:N|N°|Nº|NO|N0|NUMERO|NUMÉRO)\s*[°º:]?\s*([0-9][0-9\s]{2,20})",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, normalized_text, flags=re.IGNORECASE)
+        if not match:
+            continue
+
+        digits = re.sub(r"\D", "", match.group(1))
+
+        if 3 <= len(digits) <= 12:
+            return digits
+
+    return None
+
 def extract_order_from_ocr_with_django_db(ocr_dir: Path) -> Dict[str, Any]:
     """
     使用旧 OCR 解析逻辑，但产品库和医院库来自 Django 数据库。
@@ -104,7 +161,15 @@ def extract_order_from_ocr_with_django_db(ocr_dir: Path) -> Dict[str, Any]:
     factory_match = match_factory_from_data(blocks)
     matched_factory = factory_match["factory"]
 
-    header = extract_header(blocks)
+    header = extract_header(blocks) or {}
+
+    if not header.get("bon_de_commande"):
+        fallback_bon_de_commande = extract_bon_de_commande_fallback_from_blocks(blocks)
+
+        if fallback_bon_de_commande:
+            header["bon_de_commande"] = fallback_bon_de_commande
+            header["bon_de_commande_source"] = "fallback_regex_from_ocr_blocks"
+
     addresses = extract_addresses(blocks)
 
     hospital_match = match_hospital(

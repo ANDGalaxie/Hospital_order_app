@@ -109,24 +109,29 @@ class FactoryConfirmationAdmin(admin.ModelAdmin):
 
                 success_count += 1
 
+                order_number = (
+                    confirmation.order.bon_de_commande
+                    if confirmation.order_id and confirmation.order
+                    else "未匹配订单"
+                )
+
                 self.message_user(
                     request,
-                    (
-                        f"Factory confirmation for order "
-                        f"{confirmation.order.bon_de_commande}: extracted successfully."
-                    ),
-                    level=messages.SUCCESS,
+                    f"{order_number}: extracted successfully.",
                 )
 
             except Exception as exc:
                 failed_count += 1
 
+                order_number = (
+                    confirmation.order.bon_de_commande
+                    if confirmation.order_id and confirmation.order
+                    else "未匹配订单"
+                )
+
                 self.message_user(
                     request,
-                    (
-                        f"Factory confirmation for order "
-                        f"{confirmation.order.bon_de_commande}: extraction failed: {exc}"
-                    ),
+                    f"{order_number}: extraction failed: {exc}",
                     level=messages.ERROR,
                 )
 

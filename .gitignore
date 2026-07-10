@@ -28,3 +28,20 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Local uploaded/generated files
+media/
+backups/
+
+# Release packages / large archives
+release/**/*.zip
+release/**/*.tar.gz
+*.tar.gz
+*.zip
+
+# Windows metadata files
+*:Zone.Identifier
+
+# Python cache
+__pycache__/
+*.pyc

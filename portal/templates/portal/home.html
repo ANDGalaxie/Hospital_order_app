@@ -1,0 +1,44 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}工作台 |Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="portal-page-header home-header">
+        <div>
+            <h1>工作台</h1>
+            <p>请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。</p>
+        </div>
+    </section>
+
+    <section class="module-grid">
+        {% for module in modules %}
+            <a class="module-card" href="{{ module.url }}">
+                <div class="module-icon icon-{{ module.theme }}">
+                    <img src="{% static module.icon %}" alt="{{ module.title }}">
+                </div>
+
+                <div class="module-content">
+                    <div class="module-title-row">
+                        <h2>{{ module.title }}</h2>
+                        {% if module.badge is not None %}
+                            <span class="module-badge">{{ module.badge }}</span>
+                        {% endif %}
+                    </div>
+
+                    <p>{{ module.subtitle }}</p>
+
+                    {% if module.status_text %}
+                        <span class="module-status">{{ module.status_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="module-arrow">›</div>
+            </a>
+        {% endfor %}
+    </section>
+{% endblock %}

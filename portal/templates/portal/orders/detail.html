@@ -1,0 +1,344 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}医院订单 {{ order_number }} | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/orders.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>医院订单详情</h1>
+        <p>订单 {{ order_number }} 的基础信息、产品明细、地址信息与后续工作流。</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:order_list' %}">返回订单列表</a>
+        <a class="portal-button" href="{{ admin_url }}">Admin</a>
+    </div>
+</section>
+
+<section class="portal-panel order-action-panel">
+    <div>
+        <h2 class="portal-panel-title">订单操作</h2>
+        <p class="detail-muted">重新提取会覆盖当前 OCR 提取结果；保存人工修改不会重新 OCR。</p>
+    </div>
+
+    <div class="order-action-buttons">
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="extract">
+            <button class="portal-button" type="submit">重新提取</button>
+        </form>
+
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="validate">
+            <button class="portal-button" type="submit">基础验证</button>
+        </form>
+
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate_request">
+            <button class="portal-button primary" type="submit">生成 Factory Request</button>
+        </form>
+
+        {% if factory_request_url %}
+            <a class="portal-button" href="{{ factory_request_url }}" target="_blank">
+                下载 Factory Request
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<form method="post" action="{{ edit_url }}" class="order-edit-form">
+    {% csrf_token %}
+
+    <section class="order-detail-grid">
+        <div class="portal-panel order-main-card">
+            <h2 class="portal-panel-title">订单信息</h2>
+
+            <div class="detail-info-grid">
+                <div>
+                    <label class="detail-label">订单号</label>
+                    <input class="portal-input" name="bon_de_commande" value="{{ order_number }}">
+                </div>
+
+                <div>
+                    <label class="detail-label">医院</label>
+                    <input class="portal-input" name="hospital_name" value="{{ hospital_name }}">
+                </div>
+
+                <div>
+                    <span class="detail-label">工厂</span>
+                    <strong>{{ factory_name }}</strong>
+                </div>
+
+                <div>
+                    <span class="detail-label">订单状态</span>
+                    <span class="status-pill {{ order_status_class }}">{{ order_status_text }}</span>
+                </div>
+
+                <div>
+                    <span class="detail-label">提取状态</span>
+                    <span class="status-pill {{ extraction_class }}">{{ extraction_text }}</span>
+                </div>
+
+                <div>
+                    <span class="detail-label">验证状态</span>
+                    <span class="status-pill {{ validation_class }}">{{ validation_text }}</span>
+                </div>
+
+                <div>
+                    <span class="detail-label">创建时间</span>
+                    <strong>{{ order.created_at|date:"Y-m-d H:i" }}</strong>
+                </div>
+
+                <div>
+                    <span class="detail-label">更新时间</span>
+                    <strong>{{ order.updated_at|date:"Y-m-d H:i" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="portal-panel order-summary-card">
+            <h2 class="portal-panel-title">订单概览</h2>
+
+            <div class="quantity-summary">
+                <div>
+                    <span>产品行数</span>
+                    <strong>{{ item_count }}</strong>
+                </div>
+                <div>
+                    <span>订单数量</span>
+                    <strong>{{ total_requested }}</strong>
+                </div>
+                <div>
+                    <span>验证状态</span>
+                    <strong class="summary-status-text">{{ validation_text }}</strong>
+                </div>
+            </div>
+
+            {% if pdf_url %}
+                <a class="portal-button primary full-width-button" href="{{ pdf_url }}" target="_blank">
+                    打开原始订单 PDF
+                </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="address-grid">
+        <div class="portal-panel">
+            <h2 class="portal-panel-title">收货地址</h2>
+            <textarea class="portal-textarea" name="shipping_address_text" rows="6">{{ shipping_address_text }}</textarea>
+        </div>
+
+        <div class="portal-panel">
+            <h2 class="portal-panel-title">账单地址</h2>
+            <textarea class="portal-textarea" name="billing_address_text" rows="6">{{ billing_address_text }}</textarea>
+        </div>
+    </section>
+
+    <section class="portal-panel detail-section">
+        <h2 class="portal-panel-title">产品明细</h2>
+
+        {% if item_rows %}
+            <div class="portal-table-wrap order-items-table-wrap">
+                <table class="portal-table order-items-table editable-items-table">
+                    <thead>
+                        <tr>
+                            <th>原图</th>
+                            <th>OCR产品号</th>
+                            <th>产品库编号</th>
+                            <th>描述</th>
+                            <th>订单数量</th>
+                            <th>医院单价</th>
+                            <th>匹配</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in item_rows %}
+                            <tr>
+                                <td>
+                                    {% if item.row_crop_url %}
+                                        <a href="{{ item.row_crop_url }}" target="_blank" class="row-crop-link">
+                                            <img
+                                                class="row-crop-image"
+                                                src="{{ item.row_crop_url }}"
+                                                alt="PDF row crop"
+                                            >
+                                        </a>
+                                    {% else %}
+                                        <div class="ocr-source-box">
+                                            {{ item.ocr_source_text }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <input
+                                        class="table-input code-input"
+                                        name="item_{{ item.id }}_product_code"
+                                        value="{{ item.product_code }}"
+                                    >
+                                </td>
+
+                                <td>
+                                    <div class="matched-code">
+                                        {{ item.matched_product_code }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <textarea
+                                        class="table-textarea"
+                                        name="item_{{ item.id }}_description"
+                                        rows="2"
+                                    >{{ item.description }}</textarea>
+                                </td>
+
+                                <td>
+                                    <input
+                                        class="table-input qty-input"
+                                        name="item_{{ item.id }}_requested_quantity"
+                                        value="{{ item.requested_quantity }}"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        class="table-input price-input"
+                                        name="item_{{ item.id }}_hospital_unit_price"
+                                        value="{{ item.hospital_unit_price|default_if_none:'' }}"
+                                    >
+                                </td>
+
+                                <td>
+                                    <span class="status-pill {{ item.product_match_class }}">
+                                        {{ item.product_match_text }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="detail-muted">没有产品明细。</p>
+        {% endif %}
+    </section>
+
+    <section class="portal-panel detail-section">
+        <h2 class="portal-panel-title">备注</h2>
+        <textarea class="portal-textarea" name="notes" rows="4">{{ order.notes }}</textarea>
+    </section>
+
+    <div class="save-bar">
+        <button class="portal-button primary" type="submit">
+            保存人工修改并基础验证
+        </button>
+    </div>
+</form>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">提取与验证问题</h2>
+
+    {% if extraction_error %}
+        <div class="issue-box danger">
+            <strong>提取错误</strong>
+            <p>{{ extraction_error }}</p>
+        </div>
+    {% endif %}
+
+    {% if validation_errors or validation_warnings %}
+        <div class="issue-grid">
+            <div>
+                <h3>Errors</h3>
+                {% if validation_errors %}
+                    <ul class="issue-list danger">
+                        {% for error in validation_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="detail-muted">没有 errors。</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <h3>Warnings</h3>
+                {% if validation_warnings %}
+                    <ul class="issue-list warning">
+                        {% for warning in validation_warnings %}
+                            <li>{{ warning }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="detail-muted">没有 warnings。</p>
+                {% endif %}
+            </div>
+        </div>
+    {% elif not extraction_error %}
+        <p class="detail-muted">当前没有提取或验证问题。</p>
+    {% endif %}
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">关联工作流</h2>
+
+    {% if workflow_rows %}
+        <div class="portal-table-wrap related-workflow-table-wrap">
+            <table class="portal-table related-workflow-table">
+                <thead>
+                    <tr>
+                        <th>批次</th>
+                        <th>来源</th>
+                        <th>流程</th>
+                        <th>验证</th>
+                        <th>Invoice</th>
+                        <th>PO</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for wf in workflow_rows %}
+                        <tr>
+                            <td>
+                                {% if wf.batch_number %}
+                                    Batch {{ wf.batch_number }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ wf.source_label }}</td>
+                            <td><span class="status-pill {{ wf.workflow_class }}">{{ wf.workflow_text }}</span></td>
+                            <td><span class="status-pill {{ wf.validation_class }}">{{ wf.validation_text }}</span></td>
+                            <td>
+                                <span class="status-pill {{ wf.invoice_class }}">{{ wf.invoice_text }}</span>
+                                {% if wf.invoice_url %}
+                                    <a class="small-link" href="{{ wf.invoice_url }}" target="_blank">PDF</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-pill {{ wf.po_class }}">{{ wf.po_text }}</span>
+                                {% if wf.po_url %}
+                                    <a class="small-link" href="{{ wf.po_url }}" target="_blank">PDF</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="mini-button ghost" href="{{ wf.detail_url }}">查看</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">这个订单暂时没有关联工作流。</p>
+    {% endif %}
+</section>
+{% endblock %}

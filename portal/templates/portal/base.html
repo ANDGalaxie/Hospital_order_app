@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Acoeurs France{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{% static 'portal/css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% with current_lang=lang|default:"zh" %}
+    <header class="topbar">
+        <a class="brand" href="{% url 'portal:home' %}">
+            <img class="brand-logo-img" src="{% static 'portal/img/acoeur_logo.png' %}" alt="Acoeur">
+            <div class="brand-text">Acoeurs France</div>
+        </a>
+
+        <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <input type="text" placeholder="搜索菜单、功能或数据..." disabled>
+            <span class="shortcut">⌘ K</span>
+        </div>
+
+        <div class="user-area">
+            <nav class="lang-switch">
+                <a class="{% if current_lang == 'zh' %}active{% endif %}" href="?lang=zh">中文</a>
+                <a class="{% if current_lang == 'en' %}active{% endif %}" href="?lang=en">EN</a>
+                <a class="{% if current_lang == 'fr' %}active{% endif %}" href="?lang=fr">FR</a>
+            </nav>
+
+            <div class="notification">
+                🔔
+                <span class="notification-badge">3</span>
+            </div>
+
+            <div class="avatar">
+                {{ request.user.username|default:"A"|slice:":1"|upper }}
+            </div>
+
+            <div class="user-text">
+                <div class="user-name">
+                    {% firstof user_display_name request.user.get_full_name request.user.username "Acoeur" %}
+                </div>
+                <div class="user-role">操作员 · Acoeur</div>
+            </div>
+
+            <a class="admin-link" href="/admin/">Admin</a>
+        </div>
+    </header>
+    {% endwith %}
+
+    <main class="page">
+        {% if messages %}
+            <section class="portal-messages">
+                {% for message in messages %}
+                    <div class="portal-message {{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        {% block breadcrumb %}{% endblock %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

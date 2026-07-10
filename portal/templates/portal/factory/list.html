@@ -1,0 +1,114 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}工厂采购{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<span>工厂采购</span>
+{% endblock %}
+
+{% block content %}
+<div class="portal-page-header">
+    <div>
+        <h1>工厂采购</h1>
+        <p>管理工厂采购 PDF、serial number、发货批次与后续流程。</p>
+    </div>
+
+    <div class="page-actions">
+        <a class="portal-button primary" href="{{ upload_url }}">上传工厂采购</a>
+    </div>
+</div>
+
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>采购文件列表</h2>
+            <p>共 {{ total_count }} 份采购文件</p>
+        </div>
+    </div>
+
+    <div class="portal-table-wrap factory-table-wrap">
+        <table class="portal-table factory-table clean-factory-table">
+            <colgroup>
+                <col class="col-order">
+                <col class="col-factory">
+                <col class="col-date">
+                <col class="col-serial">
+                <col class="col-status">
+                <col class="col-next">
+                <col class="col-actions">
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>工厂</th>
+                    <th>发货日期</th>
+                    <th>产品 / Serial</th>
+                    <th>状态</th>
+                    <th>下一步</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>
+                            <div class="order-number">{{ row.order_number }}</div>
+                        </td>
+
+                        <td>
+                            <div class="factory-name">{{ row.factory_name }}</div>
+                        </td>
+
+                        <td>
+                            {% if row.shipping_date %}
+                                {{ row.shipping_date|date:"d/m/Y" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="serial-summary">
+                                {{ row.product_count }} 产品 / {{ row.serial_count }} SN
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="status-pill {{ row.status_class }}">
+                                {{ row.status_text }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="next-action {{ row.next_class }}">
+                                {{ row.next_text }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="row-actions">
+                                <a class="mini-button" href="{{ row.detail_url }}">查看</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-cell">
+                            还没有工厂采购文件。
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

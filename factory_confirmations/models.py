@@ -40,6 +40,8 @@ class FactoryConfirmation(models.Model):
         Order,
         on_delete=models.CASCADE,
         related_name="factory_confirmations",
+        null=True,
+        blank=True,
     )
 
     factory = models.ForeignKey(
@@ -144,7 +146,15 @@ class FactoryConfirmation(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"Factory confirmation for {self.order.bon_de_commande}"
+        if self.order_id and self.order:
+            order_number = self.order.bon_de_commande or f"Order #{self.order_id}"
+        else:
+            data = self.extracted_confirmation_data or {}
+            django_data = data.get("django") or {}
+            detected_bon = django_data.get("detected_bon_de_commande")
+            order_number = detected_bon or "未匹配订单"
+
+        return f"Factory confirmation #{self.id} for {order_number}"
 
 
 class SerialItem(models.Model):
@@ -213,4 +223,9 @@ class SerialItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.product_code} - {self.serial_number}"
+        if self.order_id and self.order:
+            order_number = self.order.bon_de_commande or f"Order #{self.order_id}"
+        else:
+            order_number = "未匹配订单"
+
+        return f"Factory confirmation #{self.id} for {order_number}"

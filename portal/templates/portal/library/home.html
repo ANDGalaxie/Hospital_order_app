@@ -1,0 +1,55 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}资料库 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<span>资料库</span>
+{% endblock %}
+
+{% block content %}
+    <section class="portal-page-header home-header">
+        <div>
+            <h1>资料库</h1>
+            <p>维护产品、医院、工厂和价格等系统基础资料。</p>
+        </div>
+    </section>
+
+    <section class="module-grid">
+        {% for module in modules %}
+            <a class="module-card" href="{{ module.url }}">
+                <div class="module-icon icon-{{ module.theme }}">
+                    <img src="{% static module.icon %}" alt="{{ module.title }}">
+                </div>
+
+                <div class="module-content">
+                    <div class="module-title-row">
+                        <h2>{{ module.title }}</h2>
+
+                        {% if module.badge is not None %}
+                            <span class="module-badge">{{ module.badge }}</span>
+                        {% endif %}
+                    </div>
+
+                    <p>{{ module.subtitle }}</p>
+
+                    {% if module.status_text %}
+                        <span class="module-status">{{ module.status_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="module-arrow">›</div>
+            </a>
+        {% empty %}
+            <div class="portal-panel">
+                <p>资料库模块暂未配置。</p>
+            </div>
+        {% endfor %}
+    </section>
+{% endblock %}

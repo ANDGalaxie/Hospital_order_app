@@ -41,6 +41,7 @@
 
 import argparse
 import json
+import os
 import re
 import unicodedata
 from pathlib import Path
@@ -362,7 +363,53 @@ def run_paddleocr_for_pdf(
     if existing_jsons and not force_ocr:
         print(f"[INFO] 已发现 OCR JSON，跳过重新 OCR：{ocr_dir}")
         return
+    
+    service_url = os.getenv("ACOEUR_OCR_SERVICE_URL", "").strip()
+    if service_url:
+        print(f"[INFO] 使用外部 OCR 服务：{service_url}")
 
+        import json
+        import urllib.error
+        import urllib.request
+
+        payload = {
+            "pdf_path": str(pdf_path),
+            "ocr_dir": str(ocr_dir),
+            "force_ocr": bool(force_ocr),
+        }
+
+        data = json.dumps(payload).encode("utf-8")
+
+        req = urllib.request.Request(
+            service_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        timeout = int(os.getenv("ACOEUR_OCR_SERVICE_TIMEOUT", "1800"))
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                body = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            error_body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"OCR service HTTP error {exc.code}: {error_body}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(
+                f"OCR service is not available: {exc}"
+            ) from exc
+
+        result = json.loads(body)
+
+        if not result.get("ok"):
+            raise RuntimeError(f"OCR service failed: {result}")
+
+        print(f"[INFO] OCR service finished: {result}")
+        return
+    
     print("[INFO] PDF 转图片...")
     image_paths = pdf_to_images(pdf_path, ocr_dir)
 

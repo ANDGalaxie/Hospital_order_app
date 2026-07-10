@@ -1,0 +1,336 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}工厂采购 FC #{{ confirmation.id }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:factory_list' %}">工厂采购</a>
+<span>/</span>
+<span>FC #{{ confirmation.id }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="portal-page-header">
+    <div>
+        <h1>工厂采购 FC #{{ confirmation.id }}</h1>
+        <p>订单号：{{ order_number }}</p>
+    </div>
+
+    <div class="page-actions factory-detail-actions">
+        <a class="portal-button" href="{% url 'portal:factory_list' %}">返回列表</a>
+
+        {% if pdf_url %}
+            <a class="portal-button primary" href="{{ pdf_url }}" target="_blank">查看 PDF</a>
+        {% endif %}
+
+        <form
+            method="post"
+            action="{% url 'portal:factory_action' confirmation.id %}"
+            class="inline-action-form"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="action" value="re_extract">
+            <button class="portal-button" type="submit">
+                重新提取
+            </button>
+        </form>
+
+        <form
+            method="post"
+            action="{% url 'portal:factory_action' confirmation.id %}"
+            class="inline-action-form"
+            onsubmit="return confirm('确认删除这份工厂采购文件吗？系统会删除相关 Serial、ShipmentBatch、Workflow，并重新计算订单发货状态。');"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <button class="portal-button danger-button" type="submit">
+                删除
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="factory-detail-grid">
+    <div class="portal-panel">
+        <div class="panel-header">
+            <div>
+                <h2>基础信息</h2>
+                <p>工厂采购文件的提取与匹配状态</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">订单号</span>
+                <strong>{{ order_number }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">工厂</span>
+                <strong>{{ factory_name }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">发货日期</span>
+                <strong>
+                    {% if confirmation.shipping_date %}
+                        {{ confirmation.shipping_date|date:"d/m/Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">提取状态</span>
+                <span class="status-pill {{ extraction_class }}">{{ extraction_text }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">订单匹配</span>
+                <span class="status-pill {{ match_class }}">{{ match_text }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">后续流程</span>
+                <span class="status-pill {{ workflow_class }}">{{ workflow_text }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">产品数</span>
+                <strong>{{ product_count }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Serial 数</span>
+                <strong>{{ serial_count }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-panel">
+        <div class="panel-header">
+            <div>
+                <h2>系统识别信息</h2>
+                <p>用于检查 bon de commande 自动匹配</p>
+            </div>
+        </div>
+
+        <div class="debug-box">
+            <div>
+                <span>识别到的 bon de commande</span>
+                <strong>{{ django_data.detected_bon_de_commande|default:"—" }}</strong>
+            </div>
+
+            <div>
+                <span>匹配状态</span>
+                <strong>{{ django_data.order_match_status|default:"—" }}</strong>
+            </div>
+
+            <div>
+                <span>ShipmentBatch</span>
+                <strong>
+                    {% if shipment_batch %}
+                        #{{ shipment_batch.id }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span>WorkflowItem</span>
+                <strong>
+                    {% if workflow_item %}
+                        #{{ workflow_item.id }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if confirmation.extraction_error %}
+<div class="portal-panel danger-panel">
+    <div class="panel-header">
+        <div>
+            <h2>提取错误</h2>
+            <p>系统在处理这份工厂采购文件时遇到的问题</p>
+        </div>
+    </div>
+
+    <pre class="error-box">{{ confirmation.extraction_error }}</pre>
+</div>
+{% endif %}
+
+{% if warnings %}
+<div class="portal-panel warning-panel">
+    <div class="panel-header">
+        <div>
+            <h2>提醒</h2>
+            <p>这些内容需要人工检查</p>
+        </div>
+    </div>
+
+    <ul class="warning-list">
+        {% for warning in warnings %}
+            <li>{{ warning }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>产品汇总</h2>
+            <p>按产品号比较医院订单数量与工厂采购数量</p>
+        </div>
+    </div>
+
+    <div class="portal-table-wrap">
+        <table class="portal-table summary-table">
+            <thead>
+                <tr>
+                    <th>产品号</th>
+                    <th>医院订单数量</th>
+                    <th>工厂采购数量</th>
+                    <th>差异</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in summary_rows %}
+                    <tr>
+                        <td><strong>{{ row.product_code }}</strong></td>
+                        <td>{{ row.requested_qty }}</td>
+                        <td>{{ row.confirmed_qty }}</td>
+                        <td>{{ row.diff }}</td>
+                        <td>
+                            <span class="status-pill {{ row.status_class }}">
+                                {{ row.status_text }}
+                            </span>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-cell">暂无产品汇总。</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>Serial 明细</h2>
+            <p>对照源文件截图，人工检查并修正产品号、Serial Number 和 Expiry Date。</p>
+        </div>
+    </div>
+
+    <form
+        method="post"
+        action="{% url 'portal:factory_action' confirmation.id %}"
+        class="serial-edit-form"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_serials">
+
+        <div class="portal-table-wrap">
+            <table class="portal-table serial-table editable-serial-table">
+                <thead>
+                    <tr>
+                        <th>产品号</th>
+                        <th>源文件截图</th>
+                        <th>Serial Number</th>
+                        <th>Expiry Date</th>
+                        <th>预估折扣</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in serial_rows %}
+                        <tr>
+                            <td>
+                                <input
+                                    class="table-input code-input"
+                                    type="text"
+                                    name="serial_{{ row.id }}_product_code"
+                                    value="{{ row.product_code }}"
+                                >
+                            </td>
+
+                            <td>
+                                {% if row.row_crop_url %}
+                                    <a href="{{ row.row_crop_url }}" target="_blank" class="serial-crop-link">
+                                        <img
+                                            src="{{ row.row_crop_url }}"
+                                            alt="Serial source number"
+                                            class="serial-crop-image"
+                                        >
+                                    </a>
+                                {% else %}
+                                    <div class="serial-source-fallback">
+                                        {{ row.source_text|linebreaksbr }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <input
+                                    class="table-input serial-input"
+                                    type="text"
+                                    name="serial_{{ row.id }}_serial_number"
+                                    value="{{ row.serial_number }}"
+                                >
+                            </td>
+
+                            <td>
+                                <input
+                                    class="table-input date-input"
+                                    type="date"
+                                    name="serial_{{ row.id }}_expiration_date"
+                                    value="{{ row.expiration_date|date:'Y-m-d' }}"
+                                >
+                            </td>
+
+                            <td>
+                                {% if row.discount_rate %}
+                                    {{ row.discount_rate }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">暂无 Serial 明细。</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="serial-edit-actions">
+            <button class="portal-button primary" type="submit">
+                保存 Serial 修改
+            </button>
+
+            <span class="edit-warning-text">
+                保存后系统会重新同步 ShipmentBatch / Workflow, 并重新验证。
+            </span>
+        </div>
+    </form>
+</div>
+{% endblock %}
