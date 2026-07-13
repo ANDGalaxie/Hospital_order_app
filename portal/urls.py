@@ -97,6 +97,30 @@ urlpatterns = [
         views.library_hospital_toggle_active,
         name="library_hospital_toggle_active",
     ),
-    path("library/factories/", views.library_factories, name="library_factories"),
+    path(
+        "library/factories/",
+        views.library_factories,
+        name="library_factories",
+    ),
+    path(
+        "library/factories/add/",
+        views.library_factory_add,
+        name="library_factory_add",
+    ),
+    path(
+        "library/factories/<int:factory_id>/",
+        views.library_factory_detail,
+        name="library_factory_detail",
+    ),
+    path(
+        "library/factories/<int:factory_id>/edit/",
+        views.library_factory_edit,
+        name="library_factory_edit",
+    ),
+    path(
+        "library/factories/<int:factory_id>/toggle-active/",
+        views.library_factory_toggle_active,
+        name="library_factory_toggle_active",
+    ),
     path("library/prices/", views.library_prices, name="library_prices"),
 ]

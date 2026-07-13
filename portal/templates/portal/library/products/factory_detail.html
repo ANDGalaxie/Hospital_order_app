@@ -35,6 +35,15 @@
             {% endif %}
         </p>
     </div>
+
+    {% if factory_node.factory %}
+        <div class="portal-header-actions">
+            <a class="portal-button"
+               href="{% url 'portal:library_factory_detail' factory_node.factory.id %}">
+                查看工厂资料
+            </a>
+        </div>
+    {% endif %}
 </section>
 
 <section class="product-node-grid">

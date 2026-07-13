@@ -11,6 +11,9 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from portal.forms.factory_library_forms import (
+    FactoryPortalForm,
+)
 from portal.forms.hospital_library_forms import (
     HospitalPortalForm,
 )
@@ -52,6 +55,10 @@ from portal.services.workflow_portal_service import (
 )
 
 from portal.services.library_portal_service import build_library_home_context
+from portal.services.factory_library_portal_service import (
+    build_factory_detail_context,
+    build_factory_list_context,
+)
 from portal.services.hospital_library_portal_service import (
     build_hospital_detail_context,
     build_hospital_list_context,
@@ -789,10 +796,209 @@ def library_hospital_toggle_active(
 
 @staff_member_required
 def library_factories(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "工厂资料",
-        "description": "工厂资料列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/factories/list.html",
+        build_factory_list_context(request),
+    )
+
+
+@staff_member_required
+def library_factory_detail(request, factory_id):
+    return render(
+        request,
+        "portal/library/factories/detail.html",
+        build_factory_detail_context(
+            request,
+            factory_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.add_factory",
+    raise_exception=True,
+)
+def library_factory_add(request):
+    form = FactoryPortalForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "新增工厂",
+            "form_description": (
+                "创建新的工厂主数据记录。"
+            ),
+            "submit_text": "创建工厂",
+            "cancel_url": reverse(
+                "portal:library_factories"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "工厂库",
+                    "url": reverse(
+                        "portal:library_factories"
+                    ),
+                },
+                {
+                    "label": "新增工厂",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.change_factory",
+    raise_exception=True,
+)
+def library_factory_edit(request, factory_id):
+    from factories.models import Factory
+
+    factory = get_object_or_404(
+        Factory,
+        id=factory_id,
+    )
+
+    form = FactoryPortalForm(
+        request.POST or None,
+        instance=factory,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "编辑工厂",
+            "form_description": str(factory),
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_factory_detail",
+                args=[factory.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "工厂库",
+                    "url": reverse(
+                        "portal:library_factories"
+                    ),
+                },
+                {
+                    "label": str(factory),
+                    "url": reverse(
+                        "portal:library_factory_detail",
+                        args=[factory.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.change_factory",
+    raise_exception=True,
+)
+def library_factory_toggle_active(
+    request,
+    factory_id,
+):
+    from factories.models import Factory
+
+    factory = get_object_or_404(
+        Factory,
+        id=factory_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    factory.is_active = not factory.is_active
+    factory.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if factory.is_active:
+        messages.success(
+            request,
+            f"工厂“{factory}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"工厂“{factory}”已停用。"
+            "已有产品和历史业务记录不会被删除。",
+        )
+
+    return redirect(
+        "portal:library_factory_detail",
+        factory_id=factory.id,
+    )
 
 
 @staff_member_required
