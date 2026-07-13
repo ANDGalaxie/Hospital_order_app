@@ -20,6 +20,28 @@ class ProductCategory(models.Model):
         骨科
     """
 
+    class NodeType(models.TextChoices):
+        """
+        产品库分类树中的节点类型。
+
+        固定层级：
+            department：科室
+            factory：该科室下的工厂入口
+            category：工厂下的具体产品分类
+        """
+
+        DEPARTMENT = "department", "科室"
+        FACTORY = "factory", "工厂"
+        CATEGORY = "category", "产品分类"
+
+    node_type = models.CharField(
+        max_length=20,
+        choices=NodeType.choices,
+        default=NodeType.CATEGORY,
+        db_index=True,
+        help_text="该节点在产品库中的层级类型。",
+    )
+
     name = models.CharField(
         max_length=255,
         help_text="分类名称。",
@@ -32,6 +54,23 @@ class ProductCategory(models.Model):
         on_delete=models.CASCADE,
         related_name="children",
         help_text="上级分类。没有上级时表示一级科室。",
+    )
+
+    factory = models.ForeignKey(
+        Factory,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="product_category_nodes",
+        help_text=(
+            "仅工厂节点使用。关联到真实 Factory 记录，"
+            "避免仅依赖工厂名称进行匹配。"
+        ),
+    )
+
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        help_text="同一层级中的显示顺序，数字越小越靠前。",
     )
 
     is_active = models.BooleanField(
@@ -53,7 +92,7 @@ class ProductCategory(models.Model):
     class Meta:
         verbose_name = "Product category"
         verbose_name_plural = "Product categories"
-        ordering = ["parent__name", "name"]
+        ordering = ["parent__name", "sort_order", "name"]
 
     def get_full_path(self):
         parts = [self.name]
