@@ -72,7 +72,31 @@ urlpatterns = [
         views.library_product_add,
         name="library_product_add",
     ),
-    path("library/hospitals/", views.library_hospitals, name="library_hospitals"),
+    path(
+        "library/hospitals/",
+        views.library_hospitals,
+        name="library_hospitals",
+    ),
+    path(
+        "library/hospitals/add/",
+        views.library_hospital_add,
+        name="library_hospital_add",
+    ),
+    path(
+        "library/hospitals/<int:hospital_id>/",
+        views.library_hospital_detail,
+        name="library_hospital_detail",
+    ),
+    path(
+        "library/hospitals/<int:hospital_id>/edit/",
+        views.library_hospital_edit,
+        name="library_hospital_edit",
+    ),
+    path(
+        "library/hospitals/<int:hospital_id>/toggle-active/",
+        views.library_hospital_toggle_active,
+        name="library_hospital_toggle_active",
+    ),
     path("library/factories/", views.library_factories, name="library_factories"),
     path("library/prices/", views.library_prices, name="library_prices"),
 ]

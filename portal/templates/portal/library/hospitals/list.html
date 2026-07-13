@@ -1,0 +1,201 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}医院库 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/master_data_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="master-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <span>医院库</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>医院库</h1>
+        <p>查询和维护医院名称、地址及联系方式。</p>
+    </div>
+
+    {% if can_add_hospital %}
+        <div class="portal-header-actions">
+            <a class="portal-button primary"
+               href="{% url 'portal:library_hospital_add' %}">
+                ＋ 新增医院
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+<section class="master-stat-grid">
+    <div class="master-stat-card">
+        <span>全部医院</span>
+        <strong>{{ total_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>启用医院</span>
+        <strong>{{ active_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>缺少账单地址</span>
+        <strong>{{ missing_billing_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>资料不完整</span>
+        <strong>{{ incomplete_count }}</strong>
+    </div>
+</section>
+
+<section class="master-filter-panel">
+    <form method="get" class="master-filter-form">
+        <div class="master-filter-main">
+            <input
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="搜索医院名称、地址、联系人、电话或邮箱"
+            >
+        </div>
+
+        <div class="master-filter-select">
+            <label for="status">状态</label>
+            <select name="status" id="status">
+                <option value="all"
+                        {% if status == "all" %}selected{% endif %}>
+                    全部
+                </option>
+                <option value="active"
+                        {% if status == "active" %}selected{% endif %}>
+                    启用
+                </option>
+                <option value="inactive"
+                        {% if status == "inactive" %}selected{% endif %}>
+                    停用
+                </option>
+            </select>
+        </div>
+
+        <div class="master-filter-select">
+            <label for="completeness">资料</label>
+            <select name="completeness" id="completeness">
+                <option value="all"
+                        {% if completeness == "all" %}selected{% endif %}>
+                    全部
+                </option>
+                <option value="complete"
+                        {% if completeness == "complete" %}selected{% endif %}>
+                    信息完整
+                </option>
+                <option value="incomplete"
+                        {% if completeness == "incomplete" %}selected{% endif %}>
+                    资料缺失
+                </option>
+            </select>
+        </div>
+
+        <button class="portal-button primary"
+                type="submit">
+            查询
+        </button>
+
+        <a class="portal-button"
+           href="{% url 'portal:library_hospitals' %}">
+            重置
+        </a>
+    </form>
+</section>
+
+<div class="portal-table-wrap">
+    <table class="portal-table">
+        <thead>
+            <tr>
+                <th>医院名称</th>
+                <th>账单地址</th>
+                <th>默认收货地址</th>
+                <th>联系人</th>
+                <th>电话</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for hospital in page_obj %}
+                <tr>
+                    <td>
+                        <a class="master-record-link"
+                           href="{% url 'portal:library_hospital_detail' hospital.id %}">
+                            {{ hospital.name }}
+                        </a>
+                    </td>
+
+                    <td>
+                        {{ hospital.billing_address|default:"-"|truncatechars:70 }}
+                    </td>
+
+                    <td>
+                        {{ hospital.default_shipping_address|default:"-"|truncatechars:70 }}
+                    </td>
+
+                    <td>
+                        {{ hospital.contact_name|default:"-" }}
+                    </td>
+
+                    <td>
+                        {{ hospital.phone|default:"-" }}
+                    </td>
+
+                    <td>
+                        {% if hospital.is_active %}
+                            <span class="status-pill success">
+                                启用
+                            </span>
+                        {% else %}
+                            <span class="status-pill">
+                                停用
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="portal-empty">
+                        没有找到符合条件的医院。
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="master-pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            上一页
+        </a>
+    {% endif %}
+
+    <span>
+        第 {{ page_obj.number }} 页，
+        共 {{ page_obj.paginator.num_pages }} 页
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
+            下一页
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

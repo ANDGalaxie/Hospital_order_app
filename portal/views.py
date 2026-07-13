@@ -11,6 +11,9 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from portal.forms.hospital_library_forms import (
+    HospitalPortalForm,
+)
 from portal.forms.product_library_forms import (
     DepartmentCreateForm,
     FactoryNodeCreateForm,
@@ -49,6 +52,10 @@ from portal.services.workflow_portal_service import (
 )
 
 from portal.services.library_portal_service import build_library_home_context
+from portal.services.hospital_library_portal_service import (
+    build_hospital_detail_context,
+    build_hospital_list_context,
+)
 from portal.services.product_library_portal_service import (
     build_product_category_context,
     build_product_department_context,
@@ -575,10 +582,209 @@ def library_product_add(
 
 @staff_member_required
 def library_hospitals(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "医院资料",
-        "description": "医院资料列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/hospitals/list.html",
+        build_hospital_list_context(request),
+    )
+
+
+@staff_member_required
+def library_hospital_detail(request, hospital_id):
+    return render(
+        request,
+        "portal/library/hospitals/detail.html",
+        build_hospital_detail_context(
+            request,
+            hospital_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.add_hospital",
+    raise_exception=True,
+)
+def library_hospital_add(request):
+    form = HospitalPortalForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        hospital = form.save()
+
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "新增医院",
+            "form_description": (
+                "创建新的医院主数据记录。"
+            ),
+            "submit_text": "创建医院",
+            "cancel_url": reverse(
+                "portal:library_hospitals"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "医院库",
+                    "url": reverse(
+                        "portal:library_hospitals"
+                    ),
+                },
+                {
+                    "label": "新增医院",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.change_hospital",
+    raise_exception=True,
+)
+def library_hospital_edit(request, hospital_id):
+    from hospitals.models import Hospital
+
+    hospital = get_object_or_404(
+        Hospital,
+        id=hospital_id,
+    )
+
+    form = HospitalPortalForm(
+        request.POST or None,
+        instance=hospital,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        hospital = form.save()
+
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "编辑医院",
+            "form_description": hospital.name,
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_hospital_detail",
+                args=[hospital.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "医院库",
+                    "url": reverse(
+                        "portal:library_hospitals"
+                    ),
+                },
+                {
+                    "label": hospital.name,
+                    "url": reverse(
+                        "portal:library_hospital_detail",
+                        args=[hospital.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.change_hospital",
+    raise_exception=True,
+)
+def library_hospital_toggle_active(
+    request,
+    hospital_id,
+):
+    from hospitals.models import Hospital
+
+    hospital = get_object_or_404(
+        Hospital,
+        id=hospital_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    hospital.is_active = not hospital.is_active
+    hospital.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if hospital.is_active:
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"医院“{hospital.name}”已停用。"
+            "历史订单不会被删除。",
+        )
+
+    return redirect(
+        "portal:library_hospital_detail",
+        hospital_id=hospital.id,
+    )
 
 
 @staff_member_required
