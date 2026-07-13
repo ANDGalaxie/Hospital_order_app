@@ -41,6 +41,13 @@ from portal.services.workflow_portal_service import (
 )
 
 from portal.services.library_portal_service import build_library_home_context
+from portal.services.product_library_portal_service import (
+    build_product_category_context,
+    build_product_department_context,
+    build_product_detail_context,
+    build_product_factory_context,
+    build_product_library_home_context,
+)
 
 # =============================================================================
 # 通用小工具
@@ -157,10 +164,59 @@ def library_home(request):
 
 @staff_member_required
 def library_products(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "产品资料",
-        "description": "产品库列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/products/home.html",
+        build_product_library_home_context(request),
+    )
+
+
+@staff_member_required
+def library_product_department(request, department_id):
+    return render(
+        request,
+        "portal/library/products/department_detail.html",
+        build_product_department_context(
+            request,
+            department_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_factory(request, factory_node_id):
+    return render(
+        request,
+        "portal/library/products/factory_detail.html",
+        build_product_factory_context(
+            request,
+            factory_node_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_category(request, category_id):
+    return render(
+        request,
+        "portal/library/products/category_detail.html",
+        build_product_category_context(
+            request,
+            category_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_detail(request, product_id):
+    return render(
+        request,
+        "portal/library/products/product_detail.html",
+        build_product_detail_context(
+            request,
+            product_id,
+        ),
+    )
 
 
 @staff_member_required

@@ -1,0 +1,116 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ category.name }} | 产品库{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="library-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_products' %}">产品库</a>
+
+    {% if department %}
+        <span>›</span>
+        <a href="{% url 'portal:library_product_department' department.id %}">
+            {{ department.name }}
+        </a>
+    {% endif %}
+
+    {% if factory_node %}
+        <span>›</span>
+        <a href="{% url 'portal:library_product_factory' factory_node.id %}">
+            {{ factory_node.name }}
+        </a>
+    {% endif %}
+
+    <span>›</span>
+    <span>{{ category.name }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ category.name }}</h1>
+        <p>{{ product_count }} 个启用产品。</p>
+    </div>
+
+    {% if can_add_product %}
+        <div class="portal-header-actions">
+            <button class="portal-button" type="button" disabled>
+                ＋ 新增产品
+            </button>
+        </div>
+    {% endif %}
+</section>
+
+<section class="library-search-panel">
+    <form method="get" class="library-search-form">
+        <input
+            type="search"
+            name="q"
+            value="{{ query }}"
+            placeholder="在当前分类中搜索产品编号或描述"
+        >
+        <button class="portal-button primary" type="submit">搜索</button>
+
+        {% if query %}
+            <a class="portal-button"
+               href="{% url 'portal:library_product_category' category.id %}">
+                清除
+            </a>
+        {% endif %}
+    </form>
+</section>
+
+<div class="portal-table-wrap">
+    <table class="portal-table">
+        <thead>
+            <tr>
+                <th>产品编号</th>
+                <th>描述</th>
+                <th>工厂</th>
+                <th>医院价格</th>
+                <th>工厂价格</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>
+                        <a class="product-code-link"
+                           href="{% url 'portal:library_product_detail' product.id %}">
+                            {{ product.code }}
+                        </a>
+                    </td>
+                    <td>{{ product.description|default:"-" }}</td>
+                    <td>{{ product.factory|default:"-" }}</td>
+                    <td>{{ product.hospital_unit_price|default:"-" }}</td>
+                    <td>{{ product.factory_unit_price|default:"-" }}</td>
+                    <td>
+                        {% if product.is_active %}
+                            <span class="status-pill success">启用</span>
+                        {% else %}
+                            <span class="status-pill">停用</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="portal-empty">
+                        当前分类没有符合条件的产品。
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

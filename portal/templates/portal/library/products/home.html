@@ -1,0 +1,143 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}产品库 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="library-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <span>产品库</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>产品库</h1>
+        <p>按科室、工厂和产品分类浏览全部产品资料。</p>
+    </div>
+</section>
+
+<section class="library-search-panel">
+    <form method="get" class="library-search-form">
+        <input
+            type="search"
+            name="q"
+            value="{{ query }}"
+            placeholder="搜索产品编号、描述、工厂或产品分类"
+        >
+        <button class="portal-button primary" type="submit">搜索</button>
+
+        {% if query %}
+            <a class="portal-button" href="{% url 'portal:library_products' %}">
+                清除
+            </a>
+        {% endif %}
+    </form>
+</section>
+
+{% if query %}
+<section class="library-section">
+    <div class="library-section-heading">
+        <div>
+            <h2>搜索结果</h2>
+            <p>关键词：{{ query }}</p>
+        </div>
+        <span class="count-badge">{{ search_results|length }}</span>
+    </div>
+
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>产品编号</th>
+                    <th>描述</th>
+                    <th>分类路径</th>
+                    <th>工厂</th>
+                    <th>医院价格</th>
+                    <th>工厂价格</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in search_results %}
+                    <tr>
+                        <td>
+                            <a class="product-code-link"
+                               href="{% url 'portal:library_product_detail' product.id %}">
+                                {{ product.code }}
+                            </a>
+                        </td>
+                        <td>{{ product.description|default:"-"|truncatechars:80 }}</td>
+                        <td>
+                            {% if product.category %}
+                                {{ product.category.get_full_path }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ product.factory|default:"-" }}</td>
+                        <td>{{ product.hospital_unit_price|default:"-" }}</td>
+                        <td>{{ product.factory_unit_price|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="portal-empty">
+                            没有找到匹配的产品。
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<section class="library-section">
+    <div class="library-section-heading">
+        <div>
+            <h2>科室</h2>
+            <p>选择一个科室，继续浏览该科室下的工厂。</p>
+        </div>
+    </div>
+
+    <div class="product-node-grid">
+        {% for department in departments %}
+            <a class="product-node-card" href="{{ department.url }}">
+                <div class="node-icon">⌘</div>
+                <h3>{{ department.name }}</h3>
+
+                <div class="node-stat-row">
+                    <span>{{ department.factory_count }} 个工厂</span>
+                    <span>{{ department.category_count }} 个分类</span>
+                </div>
+
+                <div class="node-product-count">
+                    {{ department.product_count }} 个产品
+                </div>
+
+                <div class="node-arrow">›</div>
+            </a>
+        {% empty %}
+            <div class="portal-panel">
+                暂无科室记录。
+            </div>
+        {% endfor %}
+
+        {% if can_add_category %}
+            <div class="product-node-card add-node-card disabled-node-card">
+                <div class="node-icon add-icon">＋</div>
+                <h3>新增科室</h3>
+                <p>新增功能将在浏览结构确认后接入。</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

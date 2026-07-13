@@ -27,7 +27,31 @@ urlpatterns = [
     path("factory/<int:confirmation_id>/action/", views.factory_action, name="factory_action"),
 
     path("library/", views.library_home, name="library_home"),
-    path("library/products/", views.library_products, name="library_products"),
+    path(
+        "library/products/",
+        views.library_products,
+        name="library_products",
+    ),
+    path(
+        "library/products/departments/<int:department_id>/",
+        views.library_product_department,
+        name="library_product_department",
+    ),
+    path(
+        "library/products/factories/<int:factory_node_id>/",
+        views.library_product_factory,
+        name="library_product_factory",
+    ),
+    path(
+        "library/products/categories/<int:category_id>/",
+        views.library_product_category,
+        name="library_product_category",
+    ),
+    path(
+        "library/products/items/<int:product_id>/",
+        views.library_product_detail,
+        name="library_product_detail",
+    ),
     path("library/hospitals/", views.library_hospitals, name="library_hospitals"),
     path("library/factories/", views.library_factories, name="library_factories"),
     path("library/prices/", views.library_prices, name="library_prices"),
