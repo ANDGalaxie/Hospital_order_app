@@ -6,9 +6,17 @@ Portal views.
 """
 
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+
+from portal.forms.product_library_forms import (
+    DepartmentCreateForm,
+    FactoryNodeCreateForm,
+    ProductCategoryCreateForm,
+    ProductCreateForm,
+)
 
 from portal.services.common import (
     get_safe_next_url,
@@ -216,6 +224,352 @@ def library_product_detail(request, product_id):
             request,
             product_id,
         ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_department_add(request):
+    form = DepartmentCreateForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        department = form.save()
+
+        messages.success(
+            request,
+            f"科室“{department.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_department",
+            department_id=department.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增科室",
+            "form_description": (
+                "创建产品库的一级科室入口。"
+            ),
+            "submit_text": "创建科室",
+            "cancel_url": reverse(
+                "portal:library_products"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": "新增科室",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_factory_add(
+    request,
+    department_id,
+):
+    from products.models import ProductCategory
+
+    department = get_object_or_404(
+        ProductCategory,
+        id=department_id,
+        node_type=ProductCategory.NodeType.DEPARTMENT,
+        is_active=True,
+    )
+
+    form = FactoryNodeCreateForm(
+        request.POST or None,
+        department=department,
+        allow_create_factory=request.user.has_perm(
+            "factories.add_factory"
+        ),
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory_node = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory_node.name}”已添加到"
+            f"“{department.name}”。",
+        )
+
+        return redirect(
+            "portal:library_product_factory",
+            factory_node_id=factory_node.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增或关联工厂",
+            "form_description": (
+                f"将工厂添加到科室“{department.name}”。"
+            ),
+            "submit_text": "保存工厂",
+            "cancel_url": reverse(
+                "portal:library_product_department",
+                args=[department.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": department.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[department.id],
+                    ),
+                },
+                {
+                    "label": "新增工厂",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_category_add(
+    request,
+    factory_node_id,
+):
+    from products.models import ProductCategory
+
+    factory_node = get_object_or_404(
+        ProductCategory.objects.select_related(
+            "parent",
+            "factory",
+        ),
+        id=factory_node_id,
+        node_type=ProductCategory.NodeType.FACTORY,
+        is_active=True,
+    )
+
+    form = ProductCategoryCreateForm(
+        request.POST or None,
+        factory_node=factory_node,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        category = form.save()
+
+        messages.success(
+            request,
+            f"产品分类“{category.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_category",
+            category_id=category.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增产品分类",
+            "form_description": (
+                f"为工厂“{factory_node.name}”"
+                "创建一个产品分类。"
+            ),
+            "submit_text": "创建分类",
+            "cancel_url": reverse(
+                "portal:library_product_factory",
+                args=[factory_node.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": factory_node.parent.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[factory_node.parent.id],
+                    ),
+                },
+                {
+                    "label": factory_node.name,
+                    "url": reverse(
+                        "portal:library_product_factory",
+                        args=[factory_node.id],
+                    ),
+                },
+                {
+                    "label": "新增产品分类",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_product",
+    raise_exception=True,
+)
+def library_product_add(
+    request,
+    category_id,
+):
+    from products.models import ProductCategory
+
+    category = get_object_or_404(
+        ProductCategory.objects.select_related(
+            "parent",
+            "parent__parent",
+            "parent__factory",
+        ),
+        id=category_id,
+        node_type=ProductCategory.NodeType.CATEGORY,
+        is_active=True,
+    )
+
+    form = ProductCreateForm(
+        request.POST or None,
+        category=category,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        product = form.save()
+
+        messages.success(
+            request,
+            f"产品“{product.code}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_detail",
+            product_id=product.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增产品",
+            "form_description": (
+                f"在分类“{category.name}”中新增产品。"
+            ),
+            "submit_text": "创建产品",
+            "cancel_url": reverse(
+                "portal:library_product_category",
+                args=[category.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": category.parent.parent.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[
+                            category.parent.parent.id
+                        ],
+                    ),
+                },
+                {
+                    "label": category.parent.name,
+                    "url": reverse(
+                        "portal:library_product_factory",
+                        args=[category.parent.id],
+                    ),
+                },
+                {
+                    "label": category.name,
+                    "url": reverse(
+                        "portal:library_product_category",
+                        args=[category.id],
+                    ),
+                },
+                {
+                    "label": "新增产品",
+                    "url": "",
+                },
+            ],
+        },
     )
 
 

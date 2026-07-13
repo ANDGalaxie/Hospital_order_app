@@ -62,11 +62,13 @@
     {% endfor %}
 
     {% if can_add_category %}
-        <div class="product-node-card add-node-card disabled-node-card">
+        <a class="product-node-card add-node-card"
+        href="{% url 'portal:library_product_category_add' factory_node.id %}">
             <div class="node-icon add-icon">＋</div>
             <h3>新增产品分类</h3>
-            <p>新增表单将在下一阶段接入。</p>
-        </div>
+            <p>为当前工厂创建一个产品分类。</p>
+            <div class="node-arrow">›</div>
+        </a>
     {% endif %}
 </section>
 {% endblock %}

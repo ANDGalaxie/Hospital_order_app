@@ -132,11 +132,13 @@
         {% endfor %}
 
         {% if can_add_category %}
-            <div class="product-node-card add-node-card disabled-node-card">
+            <a class="product-node-card add-node-card"
+            href="{% url 'portal:library_product_department_add' %}">
                 <div class="node-icon add-icon">＋</div>
                 <h3>新增科室</h3>
-                <p>新增功能将在浏览结构确认后接入。</p>
-            </div>
+                <p>创建新的产品科室。</p>
+                <div class="node-arrow">›</div>
+            </a>
         {% endif %}
     </div>
 </section>

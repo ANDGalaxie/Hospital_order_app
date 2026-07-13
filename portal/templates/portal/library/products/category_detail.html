@@ -43,9 +43,10 @@
 
     {% if can_add_product %}
         <div class="portal-header-actions">
-            <button class="portal-button" type="button" disabled>
+            <a class="portal-button primary"
+            href="{% url 'portal:library_product_add' category.id %}">
                 ＋ 新增产品
-            </button>
+            </a>
         </div>
     {% endif %}
 </section>

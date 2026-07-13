@@ -52,6 +52,26 @@ urlpatterns = [
         views.library_product_detail,
         name="library_product_detail",
     ),
+    path(
+    "library/products/departments/add/",
+    views.library_product_department_add,
+    name="library_product_department_add",
+    ),
+    path(
+        "library/products/departments/<int:department_id>/factories/add/",
+        views.library_product_factory_add,
+        name="library_product_factory_add",
+    ),
+    path(
+        "library/products/factories/<int:factory_node_id>/categories/add/",
+        views.library_product_category_add,
+        name="library_product_category_add",
+    ),
+    path(
+        "library/products/categories/<int:category_id>/items/add/",
+        views.library_product_add,
+        name="library_product_add",
+    ),
     path("library/hospitals/", views.library_hospitals, name="library_hospitals"),
     path("library/factories/", views.library_factories, name="library_factories"),
     path("library/prices/", views.library_prices, name="library_prices"),

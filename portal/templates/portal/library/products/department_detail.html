@@ -55,11 +55,13 @@
     {% endfor %}
 
     {% if can_add_category %}
-        <div class="product-node-card add-node-card disabled-node-card">
+        <a class="product-node-card add-node-card"
+        href="{% url 'portal:library_product_factory_add' department.id %}">
             <div class="node-icon add-icon">＋</div>
-            <h3>新增工厂</h3>
-            <p>下一阶段将支持选择已有工厂或创建新工厂。</p>
-        </div>
+            <h3>新增或关联工厂</h3>
+            <p>选择已有工厂，或创建一个新工厂。</p>
+            <div class="node-arrow">›</div>
+        </a>
     {% endif %}
 </section>
 {% endblock %}
