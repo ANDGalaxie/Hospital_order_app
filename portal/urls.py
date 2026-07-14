@@ -183,4 +183,25 @@ urlpatterns = [
         name="document_detail",
     ),
 
+    path(
+        "settlements/",
+        views.settlement_home,
+        name="settlement_home",
+    ),
+    path(
+        "settlements/receivables/",
+        views.settlement_receivables,
+        name="settlement_receivables",
+    ),
+    path(
+        "settlements/payables/",
+        views.settlement_payables,
+        name="settlement_payables",
+    ),
+    path(
+        "settlements/transactions/",
+        views.settlement_transactions,
+        name="settlement_transactions",
+    ),
+
 ]

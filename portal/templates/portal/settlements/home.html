@@ -1,0 +1,173 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}发票与结算 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/settlements.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="settlement-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+    <span>›</span>
+    <span>发票与结算</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>发票与结算</h1>
+
+        <p>
+            管理医院应收、工厂应付及实际收付款流水。
+            正式文件仍在文档中心只读归档。
+        </p>
+    </div>
+</section>
+
+<section class="settlement-kpi-grid">
+    <article class="settlement-kpi">
+        <span>医院待收</span>
+        <strong>
+            €{{ receivable_summary.remaining_total|floatformat:2 }}
+        </strong>
+        <small>
+            {{ receivable_summary.count }} 个应收账户
+        </small>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>工厂待付</span>
+        <strong>
+            €{{ payable_summary.remaining_total|floatformat:2 }}
+        </strong>
+        <small>
+            {{ payable_summary.count }} 个应付账户
+        </small>
+    </article>
+
+    <article class="settlement-kpi overdue">
+        <span>逾期应收</span>
+        <strong>
+            {{ receivable_summary.overdue_count }}
+        </strong>
+        <small>需要优先跟进</small>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>有效流水</span>
+        <strong>{{ posted_transaction_count }}</strong>
+        <small>
+            全部流水 {{ transaction_count }}
+        </small>
+    </article>
+</section>
+
+<section class="settlement-category-grid">
+    {% for card in cards %}
+        <a class="settlement-category-card {{ card.theme }}"
+           href="{{ card.url }}">
+
+            <div class="settlement-category-top">
+                <span class="settlement-category-symbol">
+                    {{ card.symbol }}
+                </span>
+
+                <span class="settlement-category-count">
+                    {{ card.count }}
+                </span>
+            </div>
+
+            <span class="settlement-category-subtitle">
+                {{ card.subtitle }}
+            </span>
+
+            <h2>{{ card.title }}</h2>
+
+            <p>{{ card.description }}</p>
+
+            <div class="settlement-category-amount">
+                <span>{{ card.amount_label }}</span>
+
+                <strong>
+                    {% if card.amount_is_money == False %}
+                        {{ card.amount }}
+                    {% else %}
+                        €{{ card.amount|floatformat:2 }}
+                    {% endif %}
+                </strong>
+            </div>
+
+            <span class="settlement-category-arrow">›</span>
+        </a>
+    {% endfor %}
+</section>
+
+{% if recent_accounts %}
+<section class="portal-panel settlement-recent-panel">
+    <div class="settlement-section-heading">
+        <div>
+            <h2>最近结算账户</h2>
+            <p>最近开立的医院应收和工厂应付。</p>
+        </div>
+    </div>
+
+    <div class="portal-table-wrap">
+        <table class="portal-table settlement-recent-table">
+            <thead>
+                <tr>
+                    <th>文档</th>
+                    <th>方向</th>
+                    <th>医院 / 工厂</th>
+                    <th>原始金额</th>
+                    <th>剩余金额</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for account in recent_accounts %}
+                    <tr>
+                        <td>
+                            <a class="settlement-document-link"
+                               href="{{ account.portal_document_url }}">
+                                {{ account.document.document_number }}
+                            </a>
+                        </td>
+
+                        <td>
+                            {{ account.portal_direction_label }}
+                        </td>
+
+                        <td>
+                            {{ account.counterparty_name }}
+                        </td>
+
+                        <td>
+                            {{ account.currency }}
+                            {{ account.original_amount|floatformat:2 }}
+                        </td>
+
+                        <td class="settlement-money-strong">
+                            {{ account.currency }}
+                            {{ account.portal_remaining_amount|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            <span class="settlement-status {{ account.portal_status_class }}">
+                                {{ account.portal_status_label }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

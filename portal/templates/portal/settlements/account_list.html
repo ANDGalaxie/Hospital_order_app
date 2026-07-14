@@ -1,0 +1,305 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} | 发票与结算{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/settlements.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="settlement-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+    <span>›</span>
+
+    <a href="{% url 'portal:settlement_home' %}">
+        发票与结算
+    </a>
+
+    <span>›</span>
+    <span>{{ page_title }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ page_title }}</h1>
+        <p>{{ page_subtitle }}</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{% url 'portal:settlement_home' %}">
+            返回结算首页
+        </a>
+    </div>
+</section>
+
+<section class="settlement-kpi-grid account-kpis">
+    <article class="settlement-kpi">
+        <span>账户数量</span>
+        <strong>{{ summary.count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>原始总额</span>
+        <strong>
+            €{{ summary.original_total|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{{ posted_label }}总额</span>
+        <strong>
+            €{{ summary.posted_total|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{{ remaining_label }}余额</span>
+        <strong>
+            €{{ summary.remaining_total|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi overdue">
+        <span>逾期账户</span>
+        <strong>{{ summary.overdue_count }}</strong>
+    </article>
+</section>
+
+<section class="settlement-filter-panel">
+    <form method="get"
+          class="settlement-filter-form">
+
+        <div class="settlement-filter-search">
+            <label for="settlement-search">搜索</label>
+            <input
+                id="settlement-search"
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="文档编号、订单号或{{ counterparty_label }}"
+            >
+        </div>
+
+        <div>
+            <label for="settlement-status">
+                状态
+            </label>
+
+            <select id="settlement-status"
+                    name="status">
+                <option value="all">
+                    全部状态
+                </option>
+
+                {% for value, label in status_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if status_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="settlement-due">
+                到期情况
+            </label>
+
+            <select id="settlement-due"
+                    name="due">
+                <option value="all"
+                        {% if due_scope == "all" %}selected{% endif %}>
+                    全部
+                </option>
+
+                <option value="overdue"
+                        {% if due_scope == "overdue" %}selected{% endif %}>
+                    已逾期
+                </option>
+
+                <option value="due_30"
+                        {% if due_scope == "due_30" %}selected{% endif %}>
+                    30 天内到期
+                </option>
+
+                <option value="no_due"
+                        {% if due_scope == "no_due" %}selected{% endif %}>
+                    未设置截止日
+                </option>
+            </select>
+        </div>
+
+        <div>
+            <label for="issue-from">
+                开立日期从
+            </label>
+
+            <input
+                id="issue-from"
+                type="date"
+                name="issue_from"
+                value="{{ issue_from }}"
+            >
+        </div>
+
+        <div>
+            <label for="issue-to">
+                开立日期至
+            </label>
+
+            <input
+                id="issue-to"
+                type="date"
+                name="issue_to"
+                value="{{ issue_to }}"
+            >
+        </div>
+
+        <div class="settlement-filter-actions">
+            <button class="portal-button primary"
+                    type="submit">
+                查询
+            </button>
+
+            <a class="portal-button"
+               href="{{ list_url }}">
+                重置
+            </a>
+        </div>
+    </form>
+</section>
+
+<div class="portal-table-wrap settlement-account-table-wrap">
+    <table class="portal-table settlement-account-table">
+        <colgroup>
+            <col class="settlement-col-document">
+            <col class="settlement-col-party">
+            <col class="settlement-col-order">
+            <col class="settlement-col-batch">
+            <col class="settlement-col-date">
+            <col class="settlement-col-due">
+            <col class="settlement-col-money">
+            <col class="settlement-col-money">
+            <col class="settlement-col-money">
+            <col class="settlement-col-status">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>正式文档</th>
+                <th>{{ counterparty_label }}</th>
+                <th>订单号</th>
+                <th>批次</th>
+                <th>开立日期</th>
+                <th>截止日期</th>
+                <th>原始金额</th>
+                <th>{{ posted_label }}</th>
+                <th>{{ remaining_label }}</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for account in page_obj %}
+                <tr>
+                    <td>
+                        <a class="settlement-document-link"
+                           href="{{ account.portal_document_url }}">
+                            {{ account.document.document_number }}
+                        </a>
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ account.counterparty_name }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <a href="{{ account.portal_order_url }}">
+                            {{ account.portal_order_number }}
+                        </a>
+                    </td>
+
+                    <td>
+                        {{ account.portal_batch_label }}
+                    </td>
+
+                    <td>
+                        {{ account.issue_date|date:"Y-m-d" }}
+                    </td>
+
+                    <td>
+                        {% if account.due_date %}
+                            {{ account.due_date|date:"Y-m-d" }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td class="settlement-money">
+                        {{ account.currency }}
+                        {{ account.original_amount|floatformat:2 }}
+                    </td>
+
+                    <td class="settlement-money">
+                        {{ account.currency }}
+                        {{ account.portal_posted_amount|floatformat:2 }}
+                    </td>
+
+                    <td class="settlement-money-strong">
+                        {{ account.currency }}
+                        {{ account.portal_remaining_amount|floatformat:2 }}
+                    </td>
+
+                    <td>
+                        <span class="settlement-status {{ account.portal_status_class }}">
+                            {{ account.portal_status_label }}
+                        </span>
+
+                        <div class="settlement-progress">
+                            <span style="width: {{ account.portal_progress }}%;"></span>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10"
+                        class="portal-empty">
+                        没有找到符合条件的结算账户。
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="settlement-pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            上一页
+        </a>
+    {% endif %}
+
+    <span>
+        第 {{ page_obj.number }} 页，
+        共 {{ page_obj.paginator.num_pages }} 页
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
+            下一页
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

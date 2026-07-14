@@ -1999,3 +1999,84 @@ def factory_action(request, confirmation_id):
 
     messages.warning(request, "未知操作。")
     return redirect("portal:factory_detail", confirmation_id=confirmation_id)
+
+# =============================================================================
+# Settlements / 发票与结算
+# =============================================================================
+
+
+@staff_member_required
+def settlement_home(request):
+    from portal.services.settlement_portal_service import (
+        build_settlement_home_context,
+    )
+
+    return render(
+        request,
+        "portal/settlements/home.html",
+        build_settlement_home_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def settlement_receivables(request):
+    from portal.services.settlement_portal_service import (
+        build_account_list_context,
+    )
+    from settlements.models import (
+        SettlementAccount,
+    )
+
+    return render(
+        request,
+        "portal/settlements/account_list.html",
+        build_account_list_context(
+            request,
+            direction=(
+                SettlementAccount
+                .Direction
+                .RECEIVABLE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def settlement_payables(request):
+    from portal.services.settlement_portal_service import (
+        build_account_list_context,
+    )
+    from settlements.models import (
+        SettlementAccount,
+    )
+
+    return render(
+        request,
+        "portal/settlements/account_list.html",
+        build_account_list_context(
+            request,
+            direction=(
+                SettlementAccount
+                .Direction
+                .PAYABLE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def settlement_transactions(request):
+    from portal.services.settlement_portal_service import (
+        build_transaction_list_context,
+    )
+
+    return render(
+        request,
+        "portal/settlements/transactions.html",
+        build_transaction_list_context(
+            request
+        ),
+    )
+
