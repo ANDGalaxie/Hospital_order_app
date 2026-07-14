@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.urls import reverse
 
 from portal.services.common import (
@@ -192,9 +194,21 @@ def build_workflow_list_context(request):
                 "admin_url": f"/admin/workflow/documentworkflowitem/{item.id}/change/",
                 "detail_url": reverse("portal:workflow_detail", args=[item.id]),
                 "action_url": reverse("portal:workflow_item_action", args=[item.id]),
-                "can_generate": not (
-                    item.invoice_status == "generated"
-                    and item.po_status == "generated"
+                "documents_generated": (
+                    item.invoice_status
+                    == "generated"
+                    and item.po_status
+                    == "generated"
+                ),
+                "can_generate": (
+                    item.validation_status
+                    == "ready"
+                    and not (
+                        item.invoice_status
+                        == "generated"
+                        and item.po_status
+                        == "generated"
+                    )
                 ),
                 "updated_at": item.updated_at,
                 "row_status": row_status,
@@ -228,6 +242,187 @@ def build_workflow_list_context(request):
             "done": sum(1 for row in unfiltered_rows if row["row_status"] == "done"),
         },
     }
+
+
+def build_workflow_price_snapshot(
+    item,
+    batch_quantities,
+):
+    """
+    构建当前工作流批次的价格快照展示。
+
+    数量优先使用当前 ShipmentBatch 数量；
+    没有批次数量时回退到订单确认数量或请求数量。
+    """
+    order = item.order
+
+    result = {
+        "rows": [],
+        "item_count": 0,
+        "matched_count": 0,
+        "estimated_hospital_total": (
+            Decimal("0.00")
+        ),
+        "estimated_factory_total": (
+            Decimal("0.00")
+        ),
+        "issues": [],
+    }
+
+    if not order:
+        result["issues"].append(
+            "该工作流没有关联医院订单。"
+        )
+        return result
+
+    order_items = (
+        order.items
+        .select_related(
+            "product",
+            "price_policy",
+        )
+        .order_by("id")
+    )
+
+    batch_product_codes = set(
+        batch_quantities.keys()
+    )
+
+    if batch_product_codes:
+        order_items = order_items.filter(
+            product_code__in=batch_product_codes
+        )
+
+    for order_item in order_items:
+        product_code = (
+            order_item.product_code
+            or f"Item #{order_item.id}"
+        )
+
+        quantity = batch_quantities.get(
+            product_code,
+            (
+                order_item.confirmed_quantity
+                or order_item.requested_quantity
+                or 0
+            ),
+        )
+
+        hospital_price = (
+            order_item.hospital_unit_price
+            or Decimal("0.00")
+        )
+
+        factory_price = (
+            order_item.factory_unit_price
+            or Decimal("0.00")
+        )
+
+        discount_rate = (
+            order_item.expiration_discount_rate
+            or Decimal("0")
+        )
+
+        discount_percent = (
+            discount_rate
+            * Decimal("100")
+        )
+
+        if order_item.price_policy_id:
+            result["matched_count"] += 1
+
+            price_source_text = (
+                order_item.price_policy.name
+                or (
+                    "PricePolicy "
+                    f"#{order_item.price_policy_id}"
+                )
+            )
+
+            price_source_class = "success"
+
+        elif order_item.product_id:
+            price_source_text = (
+                "产品库默认价格 / 未命中规则"
+            )
+            price_source_class = "warning"
+
+        else:
+            price_source_text = (
+                "产品未匹配 / 价格待处理"
+            )
+            price_source_class = "danger"
+
+        if hospital_price <= 0:
+            result["issues"].append(
+                f"产品 {product_code} "
+                "缺少有效医院销售价。"
+            )
+
+        if factory_price <= 0:
+            result["issues"].append(
+                f"产品 {product_code} "
+                "缺少有效工厂采购价。"
+            )
+
+        if (
+            order_item.product_id
+            and not order_item.price_policy_id
+        ):
+            result["issues"].append(
+                f"产品 {product_code} "
+                "没有命中价格规则。"
+            )
+
+        result[
+            "estimated_hospital_total"
+        ] += hospital_price * quantity
+
+        result[
+            "estimated_factory_total"
+        ] += factory_price * quantity
+
+        result["rows"].append(
+            {
+                "order_item_id": order_item.id,
+                "product_code": product_code,
+                "quantity": quantity,
+                "hospital_unit_price": (
+                    order_item.hospital_unit_price
+                ),
+                "factory_unit_price": (
+                    order_item.factory_unit_price
+                ),
+                "price_source_text": (
+                    price_source_text
+                ),
+                "price_source_class": (
+                    price_source_class
+                ),
+                "price_policy_id": (
+                    order_item.price_policy_id
+                ),
+                "price_policy_date": (
+                    order_item.price_policy_date
+                ),
+                "price_policy_message": (
+                    order_item.price_policy_message
+                ),
+                "expiration_threshold_days": (
+                    order_item
+                    .expiration_threshold_days
+                ),
+                "discount_percent": (
+                    discount_percent
+                ),
+            }
+        )
+
+    result["item_count"] = len(
+        result["rows"]
+    )
+
+    return result
 
 
 def build_workflow_detail_context(request, item_id):
@@ -287,6 +482,34 @@ def build_workflow_detail_context(request, item_id):
             }
         )
 
+    price_snapshot = (
+        build_workflow_price_snapshot(
+            item=item,
+            batch_quantities=batch_quantities,
+        )
+    )
+
+    documents_generated = (
+        item.invoice_status == "generated"
+        and item.po_status == "generated"
+    )
+
+    any_document_generated = bool(
+        item.invoice_document_id
+        or item.po_document_id
+        or item.invoice_status == "generated"
+        or item.po_status == "generated"
+    )
+
+    can_reapply_prices = (
+        not any_document_generated
+    )
+
+    can_generate_now = (
+        item.validation_status == "ready"
+        and not documents_generated
+    )
+
     return {
         "lang": lang,
         "user_display_name": get_user_display_name(request.user),
@@ -309,6 +532,35 @@ def build_workflow_detail_context(request, item_id):
         "next_action_class": next_action_class,
         "product_rows": product_rows,
         "batch_rows": batch_rows,
+        "price_rows": price_snapshot["rows"],
+        "price_item_count": (
+            price_snapshot["item_count"]
+        ),
+        "price_policy_matched_count": (
+            price_snapshot["matched_count"]
+        ),
+        "estimated_hospital_total": (
+            price_snapshot[
+                "estimated_hospital_total"
+            ]
+        ),
+        "estimated_factory_total": (
+            price_snapshot[
+                "estimated_factory_total"
+            ]
+        ),
+        "price_issues": (
+            price_snapshot["issues"]
+        ),
+        "documents_generated": (
+            documents_generated
+        ),
+        "can_reapply_prices": (
+            can_reapply_prices
+        ),
+        "can_generate_now": (
+            can_generate_now
+        ),
         "errors": data.get("errors") or [],
         "warnings": data.get("warnings") or [],
         "can_generate_documents": data.get("can_generate_documents"),

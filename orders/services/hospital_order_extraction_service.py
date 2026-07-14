@@ -14,7 +14,9 @@ from orders.models import Order, OrderItem
 from products.models import Product
 
 from factories.services.factory_matching_service import match_factory_from_data
-from pricing.services.price_policy_service import apply_price_policy_to_order
+from orders.services.order_price_policy_service import (
+    apply_and_store_order_price_policy,
+)
 from backorders.services.backorder_sync_service import sync_backorders_for_order
 
 from legacy_services.hospital_order_extractor import (
@@ -317,16 +319,54 @@ def create_order_items_from_extracted_data(
 
         if product:
             description = product.description
-            hospital_unit_price = product.hospital_unit_price
-            product_match_status = OrderItem.ProductMatchStatus.OK
-            product_match_message = "Matched automatically with Django Product database."
+
+            # PricePolicy 尚未应用前，先使用产品库默认价作为回退。
+            # 后面的价格规则步骤会覆盖这些快照。
+            hospital_unit_price = (
+                product.hospital_unit_price
+                if product.hospital_unit_price is not None
+                else Decimal("0.00")
+            )
+            factory_unit_price = (
+                product.factory_unit_price
+            )
+
+            price_policy_message = (
+                "Product default price loaded. "
+                "Waiting for PricePolicy application."
+            )
+
+            product_match_status = (
+                OrderItem.ProductMatchStatus.OK
+            )
+            product_match_message = (
+                "Matched automatically with "
+                "Django Product database."
+            )
+
         else:
-            description = item.get("raw_product_text", "")
-            hospital_unit_price = Decimal("270.00")
-            product_match_status = OrderItem.ProductMatchStatus.NEEDS_REVIEW
-            product_match_message = build_product_match_message(
-                item=item,
-                product_code=product_code,
+            description = item.get(
+                "raw_product_text",
+                "",
+            )
+
+            # 未匹配产品绝不能再自动假设为 270 欧元。
+            hospital_unit_price = Decimal("0.00")
+            factory_unit_price = None
+
+            price_policy_message = (
+                "No Product is linked. "
+                "PricePolicy cannot be applied."
+            )
+
+            product_match_status = (
+                OrderItem.ProductMatchStatus.NEEDS_REVIEW
+            )
+            product_match_message = (
+                build_product_match_message(
+                    item=item,
+                    product_code=product_code,
+                )
             )
 
         OrderItem.objects.create(
@@ -338,6 +378,8 @@ def create_order_items_from_extracted_data(
             confirmed_quantity=0,
             backordered_quantity=requested_quantity,
             hospital_unit_price=hospital_unit_price,
+            factory_unit_price=factory_unit_price,
+            price_policy_message=price_policy_message,
             status=OrderItem.Status.REQUESTED,
             product_match_status=product_match_status,
             product_match_message=product_match_message,
@@ -493,12 +535,23 @@ def extract_hospital_order_for_order(
             extracted_data=extracted_data,
         )
 
+        # 价格引擎需要读取本次 OCR 的医院订单日期。
+        # 因此必须先把 extracted_data 放到内存中的 order。
+        order.extracted_order_data = extracted_data
+
         item_count = create_order_items_from_extracted_data(
             order=order,
             extracted_data=extracted_data,
         )
 
-        price_policy_result = apply_price_policy_to_order(order)
+        price_policy_result = (
+            apply_and_store_order_price_policy(
+                order=order,
+                extracted_data=extracted_data,
+                save_order=False,
+            )
+        )
+
         sync_backorders_for_order(order)
 
         extracted_data.setdefault("django", {})
@@ -534,6 +587,9 @@ def extract_hospital_order_for_order(
                 "factory",
                 "factory_match_status",
                 "factory_match_message",
+                "document_validation_status",
+                "document_validation_data",
+                "validated_at",
             ]
         )
 

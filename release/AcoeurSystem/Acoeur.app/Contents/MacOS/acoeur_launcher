@@ -1,0 +1,41 @@
+#!/bin/bash
+
+APP_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+
+CHOICE=$(osascript <<'APPLESCRIPT'
+set choicesList to {"打开网站", "启动系统", "备份数据", "停止系统", "更新系统"}
+set selectedChoice to choose from list choicesList with title "Acoeur" with prompt "请选择要执行的操作：" OK button name "执行" cancel button name "取消"
+
+if selectedChoice is false then
+    return "取消"
+else
+    return item 1 of selectedChoice
+end if
+APPLESCRIPT
+)
+
+case "$CHOICE" in
+  "打开网站")
+    open "http://localhost:8000/admin/"
+    ;;
+
+  "启动系统")
+    osascript -e "tell application \"Terminal\" to do script \"cd '$APP_DIR' && ./scripts/start.sh\""
+    ;;
+
+  "备份数据")
+    osascript -e "tell application \"Terminal\" to do script \"cd '$APP_DIR' && ./scripts/backup.sh\""
+    ;;
+
+  "停止系统")
+    osascript -e "tell application \"Terminal\" to do script \"cd '$APP_DIR' && ./scripts/stop.sh\""
+    ;;
+
+  "更新系统")
+    osascript -e "tell application \"Terminal\" to do script \"cd '$APP_DIR' && ./scripts/update.sh\""
+    ;;
+
+  *)
+    exit 0
+    ;;
+esac

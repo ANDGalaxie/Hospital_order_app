@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - Hospital Order System{% endblock %}
+
+{% block content %}
+  <h2>Orders</h2>
+
+  <p>
+    <a href="{% url 'order_create' %}">+ New Order</a>
+  </p>
+
+  <table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Bon de commande</th>
+        <th>Hospital</th>
+        <th>Status</th>
+        <th>Created by</th>
+        <th>Created at</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td>
+            <a href="{% url 'order_detail' order.pk %}">
+              {{ order.bon_de_commande }}
+            </a>
+          </td>
+          <td>{{ order.hospital_name }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.created_by.username }}</td>
+          <td>{{ order.created_at }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">No orders yet.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

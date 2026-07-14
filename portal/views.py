@@ -64,8 +64,8 @@ from portal.services.price_policy_portal_service import (
     build_price_policy_simulator_context,
 )
 from portal.services.factory_library_portal_service import (
-    build_factory_detail_context,
-    build_factory_list_context,
+    build_factory_detail_context as build_factory_library_detail_context,
+    build_factory_list_context as build_factory_library_list_context,
 )
 from portal.services.hospital_library_portal_service import (
     build_hospital_detail_context,
@@ -807,7 +807,7 @@ def library_factories(request):
     return render(
         request,
         "portal/library/factories/list.html",
-        build_factory_list_context(request),
+        build_factory_library_list_context(request),
     )
 
 
@@ -816,7 +816,7 @@ def library_factory_detail(request, factory_id):
     return render(
         request,
         "portal/library/factories/detail.html",
-        build_factory_detail_context(
+        build_factory_library_detail_context(
             request,
             factory_id,
         ),
@@ -1306,6 +1306,9 @@ def workflow_item_action(request, item_id):
     from workflow.services.workflow_validation_service import (
         validate_document_workflow_items,
     )
+    from workflow.services.workflow_price_policy_service import (
+        reapply_prices_and_validate_workflow_item,
+    )
 
     item = get_object_or_404(
         DocumentWorkflowItem.objects.select_related("order", "shipment_batch"),
@@ -1329,6 +1332,94 @@ def workflow_item_action(request, item_id):
         "batch_number",
         "-",
     )
+
+    if action == "reapply_prices":
+        try:
+            result = (
+                reapply_prices_and_validate_workflow_item(
+                    item
+                )
+            )
+
+            price_result = (
+                result.get("price_result")
+                or {}
+            )
+
+            validation_result = (
+                result.get("validation_result")
+                or {}
+            )
+
+            updated_count = price_result.get(
+                "updated_count",
+                0,
+            )
+
+            price_errors = (
+                price_result.get("errors")
+                or []
+            )
+
+            price_warnings = (
+                price_result.get("warnings")
+                or []
+            )
+
+            validation_errors = (
+                validation_result.get("errors")
+                or []
+            )
+
+            validation_warnings = (
+                validation_result.get("warnings")
+                or []
+            )
+
+            if price_errors:
+                messages.error(
+                    request,
+                    "价格规则重新应用失败："
+                    + "；".join(
+                        str(error)
+                        for error in price_errors
+                    ),
+                )
+
+            elif validation_errors:
+                messages.error(
+                    request,
+                    f"已更新 {updated_count} 个产品价格，"
+                    "但重新验证仍存在错误，"
+                    "请检查工作流详情。",
+                )
+
+            elif (
+                price_warnings
+                or validation_warnings
+            ):
+                messages.warning(
+                    request,
+                    f"已更新 {updated_count} 个产品价格"
+                    "并完成重新验证，"
+                    "但仍有需要检查的提醒。",
+                )
+
+            else:
+                messages.success(
+                    request,
+                    f"已重新应用价格规则，"
+                    f"更新 {updated_count} 个产品价格，"
+                    "工作流验证已通过。",
+                )
+
+        except Exception as exc:
+            messages.error(
+                request,
+                f"重新应用价格规则失败：{exc}",
+            )
+
+        return redirect(next_url)
 
     if action == "validate":
         try:

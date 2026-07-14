@@ -1,0 +1,361 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .finance-dashboard {
+    padding: 10px 0 30px 0;
+  }
+
+  .finance-header {
+    margin-bottom: 20px;
+  }
+
+  .finance-header h1 {
+    margin-bottom: 6px;
+  }
+
+  .finance-subtitle {
+    color: #666;
+    font-size: 13px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .kpi-label {
+    color: #4b5563;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: help;
+    position: relative;
+  }
+
+  .help-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: 130%;
+    transform: translateX(-50%);
+    min-width: 260px;
+    max-width: 360px;
+    background: #111827;
+    color: #ffffff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 400;
+    white-space: normal;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  }
+
+  .help-icon:hover::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 112%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #111827 transparent transparent transparent;
+    z-index: 9999;
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-bottom: 28px;
+  }
+
+  .chart-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .chart-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #111827;
+  }
+
+  .chart-note {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 14px;
+  }
+
+  .chart-container {
+    height: 360px;
+  }
+
+  .table-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .finance-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .finance-table th,
+  .finance-table td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 9px 8px;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  .finance-table th {
+    color: #374151;
+    background: #f9fafb;
+  }
+
+  @media (max-width: 1200px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="finance-dashboard">
+  <div class="finance-header">
+    <h1>财务分析仪表盘</h1>
+    <div class="finance-subtitle">
+      当前页面为预计毛利润分析。销售额和价格使用订单价格快照，不使用产品库当前价格。
+    </div>
+  </div>
+
+  <h2>核心指标</h2>
+
+  <div class="kpi-grid">
+    {% for card in kpi_cards %}
+      <div class="kpi-card">
+        <div class="kpi-label">
+          {{ card.label }}
+          <span class="help-icon" data-tooltip="{{ card.help }}">?</span>
+        </div>
+        <div class="kpi-value">{{ card.value }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2>图表分析</h2>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">月度销售与利润趋势</div>
+      <div class="chart-note">按医院下单日期 Date de commande 统计。</div>
+      <div class="chart-container">
+        <canvas id="monthlyFinanceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">医院毛利润排行</div>
+      <div class="chart-note">显示预计毛利润最高的前 10 个医院。</div>
+      <div class="chart-container">
+        <canvas id="hospitalProfitChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="chart-title">产品毛利润排行</div>
+    <div class="chart-note">第一版先显示前 10 个产品，后续可增加更多筛选和图表。</div>
+
+    <table class="finance-table">
+      <thead>
+        <tr>
+          <th>产品号</th>
+          <th>已发数量</th>
+          <th>销售额</th>
+          <th>采购成本</th>
+          <th>预计毛利润</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in top_products %}
+          <tr>
+            <td>{{ row.product_code }}</td>
+            <td>{{ row.quantity }}</td>
+            <td>{{ row.revenue }}</td>
+            <td>{{ row.factory_cost }}</td>
+            <td>{{ row.gross_profit }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">暂无数据</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{ chart_data|json_script:"finance-chart-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const chartData = JSON.parse(
+    document.getElementById("finance-chart-data").textContent
+  );
+
+  function euro(value) {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR"
+    }).format(value);
+  }
+
+  const monthlyCtx = document.getElementById("monthlyFinanceChart");
+
+  new Chart(monthlyCtx, {
+    type: "line",
+    data: {
+      labels: chartData.monthly.labels,
+      datasets: [
+        {
+          label: "销售额",
+          data: chartData.monthly.revenue,
+          tension: 0.25
+        },
+        {
+          label: "采购成本",
+          data: chartData.monthly.factory_cost,
+          tension: 0.25
+        },
+        {
+          label: "预计毛利润",
+          data: chartData.monthly.gross_profit,
+          tension: 0.25
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: "bottom"
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ": " + euro(context.parsed.y);
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: function(value) {
+              return euro(value);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const hospitalCtx = document.getElementById("hospitalProfitChart");
+
+  new Chart(hospitalCtx, {
+    type: "bar",
+    data: {
+      labels: chartData.hospital.labels,
+      datasets: [
+        {
+          label: "预计毛利润",
+          data: chartData.hospital.gross_profit
+        }
+      ]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return "预计毛利润: " + euro(context.parsed.x);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            callback: function(value) {
+              return euro(value);
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

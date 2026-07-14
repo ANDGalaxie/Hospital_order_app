@@ -147,13 +147,6 @@
 
                     <td class="action-cell">
                         <div class="row-actions">
-                            <form method="post" action="{{ row.action_url }}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="validate">
-                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button class="mini-button neutral" type="submit">验证</button>
-                            </form>
-
                             {% if row.can_generate %}
                                 <form method="post" action="{{ row.action_url }}">
                                     {% csrf_token %}
@@ -161,8 +154,14 @@
                                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                     <button class="mini-button" type="submit">生成</button>
                                 </form>
+                            {% elif row.documents_generated %}
+                                <span class="mini-button disabled">
+                                    已生成
+                                </span>
                             {% else %}
-                                <span class="mini-button disabled">已生成</span>
+                                <span class="mini-button disabled">
+                                    待验证
+                                </span>
                             {% endif %}
 
                             <a class="mini-button ghost" href="{{ row.detail_url }}">查看</a>
