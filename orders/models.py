@@ -306,6 +306,16 @@ class OrderItem(models.Model):
         help_text="Example: 0.30 means 30% discount, i.e. 70% final price.",
     )
 
+    expiration_threshold_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Expiration threshold days snapshot",
+        help_text=(
+            "临期折扣门槛天数快照。"
+            "正式 PO 不应重新读取当前 PricePolicy。"
+        ),
+    )
+
     price_policy = models.ForeignKey(
         "pricing.PricePolicy",
         null=True,
