@@ -1,0 +1,142 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div style="max-width: 820px;">
+    <h1 style="color: #b91c1c;">
+        Permanently purge test order
+    </h1>
+
+    <p>
+        This action is intended only for local
+        development and test data.
+    </p>
+
+    <div style="
+        margin: 20px 0;
+        padding: 18px;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        background: #fff7f7;
+    ">
+        <p>
+            <strong>Order:</strong>
+            {{ order.bon_de_commande }}
+        </p>
+
+        <p>
+            <strong>Hospital:</strong>
+            {{ order.hospital_name|default:"—" }}
+        </p>
+
+        <p>
+            <strong>Order items:</strong>
+            {{ preview.order_items }}
+        </p>
+
+        <p>
+            <strong>Generated documents:</strong>
+            {{ preview.documents }}
+        </p>
+
+        <p>
+            <strong>Settlement accounts:</strong>
+            {{ preview.settlement_accounts }}
+        </p>
+
+        <p>
+            <strong>Payment transactions:</strong>
+            {{ preview.payment_transactions }}
+        </p>
+    </div>
+
+    <p>
+        The order, settlement accounts,
+        payment transactions and related
+        cascading database records will be
+        permanently deleted.
+    </p>
+
+    {% if confirmation_error %}
+        <div style="
+            margin: 16px 0;
+            padding: 12px;
+            border-radius: 6px;
+            background: #fef2f2;
+            color: #b91c1c;
+            font-weight: 700;
+        ">
+            {{ confirmation_error }}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="action"
+            value="{{ action_name }}"
+        >
+
+        <input
+            type="hidden"
+            name="{{ action_checkbox_name }}"
+            value="{{ order.pk }}"
+        >
+
+        <input
+            type="hidden"
+            name="confirm_purge"
+            value="yes"
+        >
+
+        <label
+            for="confirmation_text"
+            style="
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 700;
+            "
+        >
+            Type the exact order number:
+            <code>{{ order.bon_de_commande }}</code>
+        </label>
+
+        <input
+            id="confirmation_text"
+            type="text"
+            name="confirmation_text"
+            autocomplete="off"
+            required
+            style="
+                width: 100%;
+                max-width: 420px;
+                padding: 9px;
+                margin-bottom: 18px;
+            "
+        >
+
+        <div>
+            <button
+                type="submit"
+                class="button"
+                style="
+                    background: #b91c1c;
+                    color: white;
+                "
+            >
+                Permanently delete test order
+            </button>
+
+            <a
+                href="../"
+                class="button cancel-link"
+                style="margin-left: 8px;"
+            >
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
