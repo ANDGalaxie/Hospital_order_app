@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "pricing",
     "backorders",
     "finance.apps.FinanceConfig",
+    "settlements.apps.SettlementsConfig",
 ]
 
 MIDDLEWARE = [
