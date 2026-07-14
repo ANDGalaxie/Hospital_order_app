@@ -1,0 +1,95 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}文档中心 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/document_center.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="document-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+    <span>›</span>
+    <span>文档中心</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>文档中心</h1>
+
+        <p>
+            按文档类型查看系统生成的正式业务文件。
+            文档中心仅用于查看、下载和业务追溯。
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{{ all_documents_url }}">
+            查看全部文档
+        </a>
+    </div>
+</section>
+
+<section class="document-category-summary">
+    当前共归档
+    <strong>{{ total_count }}</strong>
+    份业务文档。
+</section>
+
+<section class="document-category-grid">
+    {% for card in cards %}
+        <a class="document-category-card {{ card.theme }}"
+           href="{{ card.url }}">
+
+            <div class="document-category-card-header">
+                <div class="document-category-symbol">
+                    {{ card.symbol }}
+                </div>
+
+                <span class="document-category-count">
+                    {{ card.count }}
+                </span>
+            </div>
+
+            <div class="document-category-content">
+                <span class="document-category-subtitle">
+                    {{ card.subtitle }}
+                </span>
+
+                <h2>{{ card.title }}</h2>
+
+                <p>{{ card.description }}</p>
+            </div>
+
+            {% if card.latest_document %}
+                <div class="document-category-latest">
+                    <span>最新文档</span>
+
+                    <strong>
+                        {{ card.latest_document.document_number }}
+                    </strong>
+
+                    <small>
+                        {{ card.latest_document.generated_at|date:"Y-m-d H:i" }}
+                    </small>
+                </div>
+            {% else %}
+                <div class="document-category-latest empty">
+                    当前还没有此类文档
+                </div>
+            {% endif %}
+
+            <div class="document-category-arrow">
+                ›
+            </div>
+        </a>
+    {% endfor %}
+</section>
+{% endblock %}

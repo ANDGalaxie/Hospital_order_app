@@ -1281,6 +1281,21 @@ def library_price_policy_simulator(
 @staff_member_required
 def document_center(request):
     from portal.services.document_center_portal_service import (
+        build_document_center_home_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/home.html",
+        build_document_center_home_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def document_list(request):
+    from portal.services.document_center_portal_service import (
         build_document_list_context,
     )
 
@@ -1289,6 +1304,75 @@ def document_center(request):
         "portal/documents/list.html",
         build_document_list_context(
             request
+        ),
+    )
+
+
+@staff_member_required
+def document_invoices(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .HOSPITAL_INVOICE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def document_factory_pos(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_PO
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def document_factory_requests(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_ORDER_REQUEST
+            ),
         ),
     )
 

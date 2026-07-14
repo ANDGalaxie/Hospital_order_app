@@ -158,6 +158,26 @@ urlpatterns = [
         name="document_center",
     ),
     path(
+        "documents/all/",
+        views.document_list,
+        name="document_list",
+    ),
+    path(
+        "documents/invoices/",
+        views.document_invoices,
+        name="document_invoices",
+    ),
+    path(
+        "documents/factory-pos/",
+        views.document_factory_pos,
+        name="document_factory_pos",
+    ),
+    path(
+        "documents/factory-requests/",
+        views.document_factory_requests,
+        name="document_factory_requests",
+    ),
+    path(
         "documents/<int:document_id>/",
         views.document_detail,
         name="document_detail",

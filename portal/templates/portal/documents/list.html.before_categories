@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
 {% load static %}
 
-{% block title %}{{ page_title }} | 文档中心{% endblock %}
+{% block title %}文档中心 | Acoeurs France{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -13,39 +13,20 @@
     <a href="{% url 'portal:home' %}">
         首页
     </a>
-
     <span>›</span>
-
-    <a href="{% url 'portal:document_center' %}">
-        文档中心
-    </a>
-
-    <span>›</span>
-
-    <span>{{ page_title }}</span>
+    <span>文档中心</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>{{ page_title }}</h1>
-
-        <p>{{ page_description }}</p>
-    </div>
-
-    <div class="portal-header-actions">
-        <a class="portal-button"
-           href="{{ document_home_url }}">
-            返回文档分类
-        </a>
-
-        {% if fixed_document_type %}
-            <a class="portal-button"
-               href="{% url 'portal:document_list' %}">
-                查看全部
-            </a>
-        {% endif %}
+        <h1>文档中心</h1>
+        <p>
+            集中查看系统生成的 Invoice、
+            Factory PO 和 Factory Request。
+            本页面只读，不修改财务状态。
+        </p>
     </div>
 </section>
 
@@ -78,7 +59,7 @@
 
 <section class="document-filter-panel">
     <form method="get"
-          class="document-filter-form {% if fixed_document_type %}fixed-document-type{% endif %}">
+          class="document-filter-form">
 
         <div class="document-filter-search">
             <label for="document-search">
@@ -94,33 +75,30 @@
             >
         </div>
 
-        {% if not fixed_document_type %}
-            <div>
-                <label for="document-type">
-                    文档类型
-                </label>
+        <div>
+            <label for="document-type">
+                文档类型
+            </label>
 
-                <select
-                    id="document-type"
-                    name="type">
+            <select
+                id="document-type"
+                name="type">
 
-                    <option value="all"
-                            {% if document_type == "all" %}selected{% endif %}>
-                        全部类型
+                <option value="all">
+                    全部类型
+                </option>
+
+                {% for value, label in document_type_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if document_type == value %}
+                            selected
+                        {% endif %}>
+                        {{ label }}
                     </option>
-
-                    {% for value, label in document_type_choices %}
-                        <option
-                            value="{{ value }}"
-                            {% if document_type == value %}
-                                selected
-                            {% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-        {% endif %}
+                {% endfor %}
+            </select>
+        </div>
 
         <div>
             <label for="document-month">
@@ -214,30 +192,16 @@
     </form>
 </section>
 
-<div class="portal-table-wrap document-center-table-wrap">
-    <table class="portal-table document-table{% if not show_amount_column %} without-amount{% endif %}">
-        <colgroup>
-            <col class="col-document-number">
-            <col class="col-order-number">
-            <col class="col-business-party">
-            <col class="col-batch">
-            {% if show_amount_column %}
-                <col class="col-amount">
-            {% endif %}
-            <col class="col-files">
-            <col class="col-generated-at">
-            <col class="col-generated-by">
-        </colgroup>
-
+<div class="portal-table-wrap">
+    <table class="portal-table document-table">
         <thead>
             <tr>
                 <th>文档编号</th>
+                <th>类型</th>
                 <th>医院订单</th>
                 <th>医院 / 工厂</th>
                 <th>批次</th>
-                {% if show_amount_column %}
-                    <th>金额</th>
-                {% endif %}
+                <th>金额</th>
                 <th>文件</th>
                 <th>生成时间</th>
                 <th>生成人</th>
@@ -252,6 +216,12 @@
                            href="{% url 'portal:document_detail' document.id %}">
                             {{ document.document_number }}
                         </a>
+                    </td>
+
+                    <td>
+                        <span class="document-type-pill {{ document.portal_type_class }}">
+                            {{ document.portal_type_label }}
+                        </span>
                     </td>
 
                     <td>
@@ -279,25 +249,22 @@
                         {% endif %}
                     </td>
 
-                    {% if show_amount_column %}
-                        <td class="document-amount">
-                            {% if document.portal_amount is not None %}
-                                €{{ document.portal_amount|floatformat:2 }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-                    {% endif %}
+                    <td class="document-amount">
+                        {% if document.portal_amount is not None %}
+                            €{{ document.portal_amount|floatformat:2 }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
 
                     <td>
                         <div class="document-file-status">
                             {% if document.portal_pdf.name %}
                                 {% if document.portal_pdf.exists %}
-                                    <a class="document-file-link pdf"
-                                       href="{{ document.portal_pdf.url }}"
+                                    <a href="{{ document.portal_pdf.url }}"
                                        target="_blank"
                                        rel="noopener">
-                                        PDF ↗
+                                        PDF
                                     </a>
                                 {% else %}
                                     <span class="missing">
@@ -310,11 +277,10 @@
 
                             {% if document.portal_html.name %}
                                 {% if document.portal_html.exists %}
-                                    <a class="document-file-link html"
-                                       href="{{ document.portal_html.url }}"
+                                    <a href="{{ document.portal_html.url }}"
                                        target="_blank"
                                        rel="noopener">
-                                        HTML ↗
+                                        HTML
                                     </a>
                                 {% else %}
                                     <span class="missing">
@@ -325,17 +291,17 @@
                         </div>
                     </td>
 
-                    <td class="document-generated-time">
+                    <td>
                         {{ document.generated_at|date:"Y-m-d H:i" }}
                     </td>
 
-                    <td class="document-user-cell">
+                    <td>
                         {{ document.generated_by.get_full_name|default:document.generated_by.username }}
                     </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="{% if show_amount_column %}8{% else %}7{% endif %}"
+                    <td colspan="9"
                         class="portal-empty">
                         没有找到符合条件的文档。
                     </td>

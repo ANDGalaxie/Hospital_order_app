@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django.contrib.auth import (
     get_user_model,
 )
@@ -35,7 +33,9 @@ class DocumentCenterPortalTests(
 
         self.order = Order.objects.create(
             bon_de_commande="DOC-TEST-001",
-            hospital_name="DOCUMENT TEST HOSPITAL",
+            hospital_name=(
+                "DOCUMENT TEST HOSPITAL"
+            ),
             hospital_order_pdf=(
                 "hospital_orders/test.pdf"
             ),
@@ -43,7 +43,7 @@ class DocumentCenterPortalTests(
             created_by=self.user,
         )
 
-        self.document = (
+        self.invoice = (
             GeneratedDocument.objects.create(
                 order=self.order,
                 document_type=(
@@ -56,9 +56,6 @@ class DocumentCenterPortalTests(
                 ),
                 generated_by=self.user,
                 source_data={
-                    "invoice": {
-                        "due_date": "31/12/2026",
-                    },
                     "items": [
                         {
                             "product_code": "TEST-01",
@@ -75,7 +72,53 @@ class DocumentCenterPortalTests(
             )
         )
 
-    def test_document_list_page(self):
+        self.po = (
+            GeneratedDocument.objects.create(
+                order=self.order,
+                document_type=(
+                    GeneratedDocument
+                    .DocumentType
+                    .FACTORY_PO
+                ),
+                document_number=(
+                    "PO-DOC-TEST-001"
+                ),
+                generated_by=self.user,
+                source_data={
+                    "items": [
+                        {
+                            "product_code": "TEST-01",
+                            "quantity_raw": 2,
+                            "unit_price_raw": 120,
+                            "amount_raw": 240,
+                        }
+                    ],
+                    "totals": {
+                        "total_raw": 240,
+                    },
+                },
+            )
+        )
+
+        self.request_document = (
+            GeneratedDocument.objects.create(
+                order=self.order,
+                document_type=(
+                    GeneratedDocument
+                    .DocumentType
+                    .FACTORY_ORDER_REQUEST
+                ),
+                document_number=(
+                    "REQUEST-DOC-TEST-001"
+                ),
+                generated_by=self.user,
+                source_data={},
+            )
+        )
+
+    def test_document_home_has_three_categories(
+        self,
+    ):
         response = self.client.get(
             reverse(
                 "portal:document_center"
@@ -89,7 +132,154 @@ class DocumentCenterPortalTests(
 
         self.assertContains(
             response,
-            "INVOICE-DOC-TEST-001",
+            "Hospital Invoice",
+        )
+
+        self.assertContains(
+            response,
+            "Factory Purchase Order",
+        )
+
+        self.assertContains(
+            response,
+            "Factory Order Request",
+        )
+
+    def test_invoice_page_only_shows_invoices(
+        self,
+    ):
+        response = self.client.get(
+            reverse(
+                "portal:document_invoices"
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertContains(
+            response,
+            self.invoice.document_number,
+        )
+
+        self.assertNotContains(
+            response,
+            self.po.document_number,
+        )
+
+    def test_po_page_only_shows_pos(self):
+        response = self.client.get(
+            reverse(
+                "portal:document_factory_pos"
+            )
+        )
+
+        self.assertContains(
+            response,
+            self.po.document_number,
+        )
+
+        self.assertNotContains(
+            response,
+            self.invoice.document_number,
+        )
+
+    def test_request_page_only_shows_requests(
+        self,
+    ):
+        response = self.client.get(
+            reverse(
+                "portal:document_factory_requests"
+            )
+        )
+
+        self.assertContains(
+            response,
+            self.request_document.document_number,
+        )
+
+        self.assertNotContains(
+            response,
+            self.invoice.document_number,
+        )
+
+    def test_all_documents_page(self):
+        response = self.client.get(
+            reverse(
+                "portal:document_list"
+            )
+        )
+
+        self.assertContains(
+            response,
+            self.invoice.document_number,
+        )
+
+        self.assertContains(
+            response,
+            self.po.document_number,
+        )
+
+        self.assertContains(
+            response,
+            self.request_document.document_number,
+        )
+
+    def test_request_page_hides_amount_column(
+        self,
+    ):
+        response = self.client.get(
+            reverse(
+                "portal:document_factory_requests"
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertFalse(
+            response.context[
+                "show_amount_column"
+            ]
+        )
+
+        self.assertNotContains(
+            response,
+            ">金额<",
+        )
+
+        self.assertContains(
+            response,
+            self.request_document.document_number,
+        )
+
+    def test_invoice_page_keeps_amount_column(
+        self,
+    ):
+        response = self.client.get(
+            reverse(
+                "portal:document_invoices"
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertTrue(
+            response.context[
+                "show_amount_column"
+            ]
+        )
+
+        self.assertContains(
+            response,
+            ">金额<",
         )
 
         self.assertContains(
@@ -101,7 +291,7 @@ class DocumentCenterPortalTests(
         response = self.client.get(
             reverse(
                 "portal:document_detail",
-                args=[self.document.id],
+                args=[self.invoice.id],
             )
         )
 
@@ -112,39 +302,10 @@ class DocumentCenterPortalTests(
 
         self.assertContains(
             response,
-            "INVOICE-DOC-TEST-001",
-        )
-
-        self.assertContains(
-            response,
-            "DOC-TEST-001",
+            self.invoice.document_number,
         )
 
         self.assertContains(
             response,
             "TEST-01",
-        )
-
-    def test_type_filter(self):
-        response = self.client.get(
-            reverse(
-                "portal:document_center"
-            ),
-            {
-                "type": (
-                    GeneratedDocument
-                    .DocumentType
-                    .HOSPITAL_INVOICE
-                ),
-            },
-        )
-
-        self.assertEqual(
-            response.status_code,
-            200,
-        )
-
-        self.assertContains(
-            response,
-            self.document.document_number,
         )

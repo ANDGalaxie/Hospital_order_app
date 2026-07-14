@@ -95,18 +95,81 @@ def decimal_from_value(value):
         return None
 
 
-def extract_document_amount(document):
+def get_document_payload(document):
     """
-    从 GeneratedDocument.source_data 中读取生成时金额。
+    获取真正的业务文档数据。
 
-    兼容 Invoice 和 PO 的不同快照结构。
+    当前生成结构：
+    - Invoice: source_data["invoice_data"]
+    - PO: source_data["po_data"]
+    - Factory Request: 兼容多个历史字段名
+
+    同时兼容旧文档直接把 totals/items
+    保存在 source_data 顶层的情况。
     """
     data = document.source_data or {}
 
     if not isinstance(data, dict):
-        return None
+        return {}
 
-    totals = data.get("totals") or {}
+    if (
+        document.document_type
+        == GeneratedDocument
+        .DocumentType
+        .HOSPITAL_INVOICE
+    ):
+        payload = data.get("invoice_data")
+
+        if isinstance(payload, dict):
+            return payload
+
+    if (
+        document.document_type
+        == GeneratedDocument
+        .DocumentType
+        .FACTORY_PO
+    ):
+        payload = data.get("po_data")
+
+        if isinstance(payload, dict):
+            return payload
+
+    if (
+        document.document_type
+        == GeneratedDocument
+        .DocumentType
+        .FACTORY_ORDER_REQUEST
+    ):
+        for key in [
+            "factory_order_request_data",
+            "factory_request_data",
+            "request_data",
+            "order_request_data",
+        ]:
+            payload = data.get(key)
+
+            if isinstance(payload, dict):
+                return payload
+
+    return data
+
+
+def extract_document_amount(document):
+    """
+    从真正的文档 payload 中读取金额。
+
+    Hospital Invoice:
+        invoice_data["totals"]["total_raw"]
+
+    Factory PO:
+        po_data["totals"]["total_raw"]
+
+    Factory Request:
+        通常没有最终金额，返回 None。
+    """
+    payload = get_document_payload(document)
+
+    totals = payload.get("totals") or {}
 
     if not isinstance(totals, dict):
         totals = {}
@@ -123,53 +186,93 @@ def extract_document_amount(document):
     ]
 
     for key in candidate_keys:
-        if key in totals:
-            value = decimal_from_value(
-                totals.get(key)
-            )
+        if key not in totals:
+            continue
 
-            if value is not None:
-                return value
+        value = decimal_from_value(
+            totals.get(key)
+        )
+
+        if value is not None:
+            return value
 
     for key in candidate_keys:
-        if key in data:
-            value = decimal_from_value(
-                data.get(key)
-            )
+        if key not in payload:
+            continue
 
-            if value is not None:
-                return value
+        value = decimal_from_value(
+            payload.get(key)
+        )
+
+        if value is not None:
+            return value
+
+    # Invoice 和 PO 的历史数据如果没有 totals，
+    # 尝试对产品行金额求和。
+    if document.document_type in {
+        GeneratedDocument
+        .DocumentType
+        .HOSPITAL_INVOICE,
+        GeneratedDocument
+        .DocumentType
+        .FACTORY_PO,
+    }:
+        items = payload.get("items") or []
+
+        if isinstance(items, list):
+            total = Decimal("0.00")
+            found_amount = False
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+
+                amount = decimal_from_value(
+                    item.get("amount_raw")
+                    or item.get("amount")
+                )
+
+                if amount is not None:
+                    total += amount
+                    found_amount = True
+
+            if found_amount:
+                return total
 
     return None
 
 
 def extract_document_due_date(document):
-    data = document.source_data or {}
+    payload = get_document_payload(
+        document
+    )
 
-    if not isinstance(data, dict):
+    invoice_data = (
+        payload.get("invoice")
+        or {}
+    )
+
+    if not isinstance(
+        invoice_data,
+        dict,
+    ):
         return ""
 
-    invoice_data = data.get("invoice") or {}
-
-    if isinstance(invoice_data, dict):
-        return (
-            invoice_data.get("due_date")
-            or invoice_data.get(
-                "payment_due_date"
-            )
-            or ""
+    return (
+        invoice_data.get("due_date")
+        or invoice_data.get(
+            "payment_due_date"
         )
-
-    return ""
+        or ""
+    )
 
 
 def extract_document_item_count(document):
-    data = document.source_data or {}
+    payload = get_document_payload(
+        document
+    )
 
-    if not isinstance(data, dict):
-        return 0
-
-    items = data.get("items") or []
+    items = payload.get("items") or []
 
     if isinstance(items, list):
         return len(items)
@@ -178,12 +281,11 @@ def extract_document_item_count(document):
 
 
 def extract_document_total_quantity(document):
-    data = document.source_data or {}
+    payload = get_document_payload(
+        document
+    )
 
-    if not isinstance(data, dict):
-        return None
-
-    totals = data.get("totals") or {}
+    totals = payload.get("totals") or {}
 
     if isinstance(totals, dict):
         for key in [
@@ -192,18 +294,23 @@ def extract_document_total_quantity(document):
             "total_units",
             "total_quantity",
         ]:
-            if key in totals:
-                return decimal_from_value(
-                    totals.get(key)
-                )
+            if key not in totals:
+                continue
 
-    items = data.get("items") or []
+            value = decimal_from_value(
+                totals.get(key)
+            )
+
+            if value is not None:
+                return value
+
+    items = payload.get("items") or []
 
     if not isinstance(items, list):
         return None
 
     total = Decimal("0.00")
-    found = False
+    found_quantity = False
 
     for item in items:
         if not isinstance(item, dict):
@@ -216,9 +323,13 @@ def extract_document_total_quantity(document):
 
         if quantity is not None:
             total += quantity
-            found = True
+            found_quantity = True
 
-    return total if found else None
+    return (
+        total
+        if found_quantity
+        else None
+    )
 
 
 def build_file_info(field_file):
@@ -378,16 +489,191 @@ def build_document_month_options():
     )
 
 
-def build_document_list_context(request):
+DOCUMENT_LIST_PAGE_META = {
+    "all": {
+        "title": "全部文档",
+        "description": (
+            "查看全部 Invoice、Factory PO "
+            "和 Factory Request。"
+        ),
+    },
+    GeneratedDocument.DocumentType.HOSPITAL_INVOICE: {
+        "title": "Hospital Invoice",
+        "description": (
+            "查看发送给医院的正式销售发票。"
+        ),
+    },
+    GeneratedDocument.DocumentType.FACTORY_PO: {
+        "title": "Factory Purchase Order",
+        "description": (
+            "查看发送给工厂的正式采购订单。"
+        ),
+    },
+    GeneratedDocument.DocumentType.FACTORY_ORDER_REQUEST: {
+        "title": "Factory Order Request",
+        "description": (
+            "查看医院订单提取后生成的工厂需求文件。"
+        ),
+    },
+}
+
+
+def get_document_list_page_meta(
+    forced_document_type,
+):
+    key = forced_document_type or "all"
+
+    return DOCUMENT_LIST_PAGE_META.get(
+        key,
+        DOCUMENT_LIST_PAGE_META["all"],
+    )
+
+
+def build_document_center_home_context(
+    request,
+):
+    """
+    文档中心分类首页。
+    """
+    card_configs = [
+        {
+            "document_type": (
+                GeneratedDocument
+                .DocumentType
+                .HOSPITAL_INVOICE
+            ),
+            "title": "Hospital Invoice",
+            "subtitle": "医院销售发票",
+            "description": (
+                "查看发送给医院的正式发票、"
+                "金额、付款截止日期和生成快照。"
+            ),
+            "theme": "invoice",
+            "symbol": "INV",
+            "url_name": (
+                "portal:document_invoices"
+            ),
+        },
+        {
+            "document_type": (
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_PO
+            ),
+            "title": "Factory Purchase Order",
+            "subtitle": "工厂采购订单",
+            "description": (
+                "查看发送给工厂的正式 PO、"
+                "采购金额和临期折扣结果。"
+            ),
+            "theme": "po",
+            "symbol": "PO",
+            "url_name": (
+                "portal:document_factory_pos"
+            ),
+        },
+        {
+            "document_type": (
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_ORDER_REQUEST
+            ),
+            "title": "Factory Order Request",
+            "subtitle": "工厂需求文件",
+            "description": (
+                "查看医院订单提取后生成的"
+                "工厂需求文件。"
+            ),
+            "theme": "request",
+            "symbol": "REQ",
+            "url_name": (
+                "portal:document_factory_requests"
+            ),
+        },
+    ]
+
+    documents = (
+        GeneratedDocument.objects
+        .select_related(
+            "order",
+            "order__hospital",
+            "order__factory",
+            "shipment_batch",
+            "generated_by",
+        )
+    )
+
+    cards = []
+
+    for config in card_configs:
+        type_documents = documents.filter(
+            document_type=(
+                config["document_type"]
+            )
+        )
+
+        latest_document = (
+            type_documents
+            .order_by(
+                "-generated_at",
+                "-id",
+            )
+            .first()
+        )
+
+        if latest_document:
+            decorate_document(
+                latest_document
+            )
+
+        cards.append(
+            {
+                **config,
+                "url": reverse(
+                    config["url_name"]
+                ),
+                "count": (
+                    type_documents.count()
+                ),
+                "latest_document": (
+                    latest_document
+                ),
+            }
+        )
+
+    return {
+        "cards": cards,
+        "total_count": (
+            documents.count()
+        ),
+        "all_documents_url": reverse(
+            "portal:document_list"
+        ),
+    }
+
+
+def build_document_list_context(request, forced_document_type=None):
     query = (
         request.GET.get("q")
         or ""
     ).strip()
 
-    document_type = (
-        request.GET.get("type")
-        or "all"
-    ).strip()
+    if forced_document_type:
+        document_type = (
+            forced_document_type
+        )
+    else:
+        document_type = (
+            request.GET.get("type")
+            or "all"
+        ).strip()
+
+    show_amount_column = (
+        forced_document_type
+        != GeneratedDocument
+        .DocumentType
+        .FACTORY_ORDER_REQUEST
+    )
 
     month_key = (
         request.GET.get("month")
@@ -524,7 +810,26 @@ def build_document_list_context(request):
     query_params = request.GET.copy()
     query_params.pop("page", None)
 
+    page_meta = (
+        get_document_list_page_meta(
+            forced_document_type
+        )
+    )
+
     return {
+        "page_title": page_meta["title"],
+        "page_description": (
+            page_meta["description"]
+        ),
+        "fixed_document_type": (
+            forced_document_type or ""
+        ),
+        "document_home_url": reverse(
+            "portal:document_center"
+        ),
+        "show_amount_column": (
+            show_amount_column
+        ),
         "page_obj": page_obj,
         "query": query,
         "document_type": document_type,
@@ -620,7 +925,7 @@ def build_document_detail_context(
     except Exception:
         workflow_item = None
 
-    source_data = (
+    raw_source_data = (
         document.source_data
         if isinstance(
             document.source_data,
@@ -629,8 +934,14 @@ def build_document_detail_context(
         else {}
     )
 
+    payload_data = (
+        get_document_payload(
+            document
+        )
+    )
+
     source_json = json.dumps(
-        source_data,
+        raw_source_data,
         ensure_ascii=False,
         indent=2,
         default=str,
@@ -666,20 +977,20 @@ def build_document_detail_context(
 
     return {
         "document": document,
-        "source_data": source_data,
+        "source_data": payload_data,
         "source_json": source_json,
         "source_items": (
-            source_data.get("items")
+            payload_data.get("items")
             if isinstance(
-                source_data.get("items"),
+                payload_data.get("items"),
                 list,
             )
             else []
         ),
         "source_serial_items": (
-            source_data.get("serial_items")
+            payload_data.get("serial_items")
             if isinstance(
-                source_data.get(
+                payload_data.get(
                     "serial_items"
                 ),
                 list,
