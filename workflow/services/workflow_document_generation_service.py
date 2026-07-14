@@ -261,16 +261,23 @@ def build_batch_invoice_items(batch: ShipmentBatch) -> Tuple[List[Dict[str, Any]
 
             unit_price = Decimal(order_item.hospital_unit_price or 0)
         else:
-            description = ""
-            unit_price = Decimal("0.00")
-            warnings.append(
-                f"ShipmentBatchItem {batch_item.id}: product {product_code} "
+            raise ValueError(
+                f"ShipmentBatchItem {batch_item.id}: "
+                f"product {product_code} "
                 "does not exist in OrderItem."
             )
 
         if unit_price <= 0:
-            warnings.append(
-                f"Product {product_code}: hospital_unit_price is missing or zero."
+            raise ValueError(
+                f"Product {product_code}: "
+                "hospital_unit_price snapshot "
+                "is missing or zero."
+            )
+
+        if not order_item.price_policy_id:
+            raise ValueError(
+                f"Product {product_code}: "
+                "PricePolicy snapshot is missing."
             )
 
         amount = unit_price * Decimal(quantity)
@@ -395,150 +402,161 @@ def build_batch_factory_po_items(
     factory_info: Dict[str, Any],
     shipping_date,
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
-    warnings: List[str] = []
+    """
+    Factory PO 价格只来自 OrderItem 快照。
 
-    prepared_factory = prepare_factory_info(factory_info)
-
-    default_description = prepared_factory.get(
-        "default_product_description",
-        "HT-Supreme™ Drug Eluting Stent",
+    Workflow 页面和 Factory PO 使用同一个
+    Serial 级临期价格计算结果。
+    """
+    from workflow.services.batch_price_snapshot_service import (
+        build_batch_price_snapshot,
     )
 
-    order_items_by_code = {
-        item.product_code: item
-        for item in batch.order.items.all()
-    }
+    snapshot = build_batch_price_snapshot(
+        batch
+    )
 
-    groups: Dict[Tuple[str, Decimal], Dict[str, Any]] = {}
-
-    for row in get_batch_serial_rows(batch):
-        code = row["product_code"]
-
-        if not code:
-            warnings.append(
-                f"Serial source {row['source']} #{row['source_id']}: missing product_code."
+    if snapshot["errors"]:
+        raise ValueError(
+            "Factory PO price validation failed: "
+            + "; ".join(
+                snapshot["errors"][:10]
             )
-            continue
-
-        order_item = order_items_by_code.get(code)
-
-        policy_discount_rate = Decimal("0.00")
-
-        if order_item and order_item.expiration_discount_rate is not None:
-            policy_discount_rate = Decimal(order_item.expiration_discount_rate)
-
-        discount_rate = (
-            policy_discount_rate
-            if should_apply_expiration_discount(
-                row["expiration_date"],
-                shipping_date,
-            )
-            else Decimal("0.00")
         )
 
-        if order_item and order_item.factory_unit_price is not None:
-            unit_price = Decimal(order_item.factory_unit_price)
+    prepared_factory = prepare_factory_info(
+        factory_info
+    )
 
-        elif order_item and order_item.product:
-            unit_price = Decimal(order_item.product.factory_unit_price or 0)
-
-        else:
-            unit_price = DEFAULT_FACTORY_UNIT_PRICE
-
-        key = (code, discount_rate)
-
-        if key not in groups:
-            groups[key] = {
-                "product_code": code,
-                "description": default_description,
-                "quantity_raw": Decimal("0.00"),
-                "unit_price_raw": unit_price,
-                "discount_rate_raw": discount_rate,
-                "serial_numbers": [],
-                "expiration_dates": [],
-                "min_expiration_date": row["expiration_date"],
-            }
-
-        groups[key]["quantity_raw"] += Decimal(row["quantity"])
-
-        if row["serial_number"]:
-            groups[key]["serial_numbers"].append(row["serial_number"])
-
-        if row["expiration_date"]:
-            groups[key]["expiration_dates"].append(row["expiration_date"].isoformat())
-
-            current_min = groups[key].get("min_expiration_date")
-            if current_min is None or row["expiration_date"] < current_min:
-                groups[key]["min_expiration_date"] = row["expiration_date"]
-
-    order_sequence = [
-        item.product_code
-        for item in batch.order.items.all().order_by("id")
-    ]
-
-    order_index = {
-        code: index
-        for index, code in enumerate(order_sequence)
-    }
-
-    sorted_groups = sorted(
-        groups.values(),
-        key=lambda item: (
-            order_index.get(item["product_code"], 999999),
-            item["product_code"],
-            float(item["discount_rate_raw"]),
-        ),
+    default_description = (
+        prepared_factory.get(
+            "default_product_description",
+            "HT-Supreme™ Drug Eluting Stent",
+        )
     )
 
     po_items: List[Dict[str, Any]] = []
 
-    for group in sorted_groups:
-        quantity = Decimal(group["quantity_raw"])
-        unit_price = Decimal(group["unit_price_raw"])
-        discount_rate = Decimal(group["discount_rate_raw"])
+    for group in snapshot["po_groups"]:
+        quantity = Decimal(
+            group["quantity"]
+        )
 
-        amount = quantity * unit_price * (Decimal("1.00") - discount_rate)
-        min_expiration_date = group.get("min_expiration_date")
+        unit_price = Decimal(
+            group["unit_price"]
+        )
+
+        discount_rate = Decimal(
+            group["discount_rate"]
+        )
+
+        amount = Decimal(
+            group["amount"]
+        )
+
+        min_expiration_date = (
+            group.get(
+                "min_expiration_date"
+            )
+        )
 
         discount_note = ""
 
         if discount_rate > 0:
             discount_note = (
-                f"{float(discount_rate) * 100:.0f}% discount applied."
+                f"{float(discount_rate) * 100:.0f}% "
+                "discount applied."
             )
 
             if min_expiration_date:
                 discount_note += (
-                    f" Earliest expiration: {min_expiration_date.isoformat()}"
+                    " Earliest expiration: "
+                    f"{min_expiration_date.isoformat()}"
                 )
+
+            discount_note += (
+                " Threshold: "
+                f"{group['expiration_threshold_days']} "
+                "days."
+            )
 
         po_items.append(
             {
-                "product_code": group["product_code"],
-                "description": group["description"],
-                "quantity_raw": float(quantity),
-                "unit_price_raw": float(unit_price),
-                "discount_rate_raw": float(discount_rate),
-                "amount_raw": float(amount),
-                "quantity": format_po_quantity(float(quantity)),
-                "unit_price": format_po_unit_price(float(unit_price)),
-                "discount": format_po_discount(float(discount_rate)),
-                "amount": format_po_eur(float(amount)),
-                "discount_note": discount_note,
-                "serial_numbers": group["serial_numbers"],
-                "expiration_dates": group["expiration_dates"],
+                "product_code": (
+                    group["product_code"]
+                ),
+                "description": (
+                    group["description"]
+                    or default_description
+                ),
+                "quantity_raw": float(
+                    quantity
+                ),
+                "unit_price_raw": float(
+                    unit_price
+                ),
+                "discount_rate_raw": float(
+                    discount_rate
+                ),
+                "final_unit_price_raw": float(
+                    group[
+                        "final_unit_price"
+                    ]
+                ),
+                "amount_raw": float(
+                    amount
+                ),
+                "quantity": (
+                    format_po_quantity(
+                        float(quantity)
+                    )
+                ),
+                "unit_price": (
+                    format_po_unit_price(
+                        float(unit_price)
+                    )
+                ),
+                "discount": (
+                    format_po_discount(
+                        float(discount_rate)
+                    )
+                ),
+                "amount": format_po_eur(
+                    float(amount)
+                ),
+                "discount_note": (
+                    discount_note
+                ),
+                "serial_numbers": (
+                    group["serial_numbers"]
+                ),
+                "expiration_dates": (
+                    group["expiration_dates"]
+                ),
                 "min_expiration_date": (
-                    min_expiration_date.isoformat()
+                    min_expiration_date
+                    .isoformat()
                     if min_expiration_date
                     else None
+                ),
+                "expiration_threshold_days": (
+                    group[
+                        "expiration_threshold_days"
+                    ]
                 ),
             }
         )
 
     if not po_items:
-        warnings.append("No PO item generated from current ShipmentBatch serials.")
+        raise ValueError(
+            "No Factory PO item was generated "
+            "from the current ShipmentBatch."
+        )
 
-    return po_items, warnings
+    return (
+        po_items,
+        list(snapshot["warnings"]),
+    )
 
 
 def build_batch_factory_po_data(
@@ -591,7 +609,9 @@ def build_batch_factory_po_data(
             "document_sequence": numbers,
             "po_order_date_source": po_order_date_source,
             "discount_reference_date": shipping_date.isoformat(),
-            "expiration_discount_threshold_days": EXPIRATION_THRESHOLD_DAYS,
+            "expiration_pricing_source": (
+                "OrderItem price snapshot per product"
+            ),
         },
         "warnings": warnings + po_date_warnings + numbers.get("batch_numbering_warnings", []),
     }
@@ -794,10 +814,48 @@ def generate_documents_for_workflow_item(
         .get(id=item.id)
     )
 
-    if item.validation_status != DocumentWorkflowItem.ValidationStatus.READY:
+    from workflow.services.workflow_validation_service import (
+        validate_document_workflow_item,
+    )
+
+    validation_result = (
+        validate_document_workflow_item(
+            item=item,
+            save=True,
+        )
+    )
+
+    item.refresh_from_db()
+
+    if not validation_result.get(
+        "can_generate_documents"
+    ):
+        validation_errors = (
+            validation_result.get("errors")
+            or []
+        )
+
+        error_text = "; ".join(
+            str(error)
+            for error in validation_errors[:10]
+        )
+
+        raise ValueError(
+            f"Workflow item {item.id} "
+            "failed final validation. "
+            f"{error_text}"
+        )
+
+    if (
+        item.validation_status
+        != DocumentWorkflowItem
+        .ValidationStatus
+        .READY
+    ):
         raise ValueError(
             f"Workflow item {item.id} is not ready. "
-            f"Current validation_status={item.validation_status}."
+            f"Current validation_status="
+            f"{item.validation_status}."
         )
 
     if (

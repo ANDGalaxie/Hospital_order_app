@@ -249,180 +249,95 @@ def build_workflow_price_snapshot(
     batch_quantities,
 ):
     """
-    构建当前工作流批次的价格快照展示。
+    使用统一的 Serial 级价格计算服务，
+    构建 Workflow 价格展示。
 
-    数量优先使用当前 ShipmentBatch 数量；
-    没有批次数量时回退到订单确认数量或请求数量。
+    batch_quantities 参数暂时保留，
+    兼容现有调用接口。
     """
-    order = item.order
-
-    result = {
-        "rows": [],
-        "item_count": 0,
-        "matched_count": 0,
-        "estimated_hospital_total": (
-            Decimal("0.00")
-        ),
-        "estimated_factory_total": (
-            Decimal("0.00")
-        ),
-        "issues": [],
-    }
-
-    if not order:
-        result["issues"].append(
-            "该工作流没有关联医院订单。"
-        )
-        return result
-
-    order_items = (
-        order.items
-        .select_related(
-            "product",
-            "price_policy",
-        )
-        .order_by("id")
+    from workflow.services.batch_price_snapshot_service import (
+        build_batch_price_snapshot,
     )
 
-    batch_product_codes = set(
-        batch_quantities.keys()
+    snapshot = build_batch_price_snapshot(
+        item.shipment_batch
     )
 
-    if batch_product_codes:
-        order_items = order_items.filter(
-            product_code__in=batch_product_codes
-        )
+    rows = []
 
-    for order_item in order_items:
-        product_code = (
-            order_item.product_code
-            or f"Item #{order_item.id}"
-        )
-
-        quantity = batch_quantities.get(
-            product_code,
-            (
-                order_item.confirmed_quantity
-                or order_item.requested_quantity
-                or 0
-            ),
-        )
-
-        hospital_price = (
-            order_item.hospital_unit_price
-            or Decimal("0.00")
-        )
-
-        factory_price = (
-            order_item.factory_unit_price
-            or Decimal("0.00")
-        )
-
-        discount_rate = (
-            order_item.expiration_discount_rate
-            or Decimal("0")
-        )
-
-        discount_percent = (
-            discount_rate
-            * Decimal("100")
-        )
-
-        if order_item.price_policy_id:
-            result["matched_count"] += 1
-
+    for row in snapshot["product_rows"]:
+        if row["price_policy_id"]:
             price_source_text = (
-                order_item.price_policy.name
+                row["price_policy_name"]
                 or (
                     "PricePolicy "
-                    f"#{order_item.price_policy_id}"
+                    f"#{row['price_policy_id']}"
                 )
             )
-
             price_source_class = "success"
-
-        elif order_item.product_id:
-            price_source_text = (
-                "产品库默认价格 / 未命中规则"
-            )
-            price_source_class = "warning"
-
         else:
             price_source_text = (
-                "产品未匹配 / 价格待处理"
+                "没有 PricePolicy"
             )
             price_source_class = "danger"
 
-        if hospital_price <= 0:
-            result["issues"].append(
-                f"产品 {product_code} "
-                "缺少有效医院销售价。"
-            )
-
-        if factory_price <= 0:
-            result["issues"].append(
-                f"产品 {product_code} "
-                "缺少有效工厂采购价。"
-            )
-
-        if (
-            order_item.product_id
-            and not order_item.price_policy_id
-        ):
-            result["issues"].append(
-                f"产品 {product_code} "
-                "没有命中价格规则。"
-            )
-
-        result[
-            "estimated_hospital_total"
-        ] += hospital_price * quantity
-
-        result[
-            "estimated_factory_total"
-        ] += factory_price * quantity
-
-        result["rows"].append(
+        rows.append(
             {
-                "order_item_id": order_item.id,
-                "product_code": product_code,
-                "quantity": quantity,
-                "hospital_unit_price": (
-                    order_item.hospital_unit_price
-                ),
-                "factory_unit_price": (
-                    order_item.factory_unit_price
-                ),
+                **row,
                 "price_source_text": (
                     price_source_text
                 ),
                 "price_source_class": (
                     price_source_class
                 ),
-                "price_policy_id": (
-                    order_item.price_policy_id
-                ),
-                "price_policy_date": (
-                    order_item.price_policy_date
-                ),
-                "price_policy_message": (
-                    order_item.price_policy_message
-                ),
-                "expiration_threshold_days": (
-                    order_item
-                    .expiration_threshold_days
-                ),
                 "discount_percent": (
-                    discount_percent
+                    row[
+                        "expiration_discount_rate"
+                    ]
+                    * Decimal("100")
                 ),
             }
         )
 
-    result["item_count"] = len(
-        result["rows"]
+    issues = (
+        list(snapshot["errors"])
+        + list(snapshot["warnings"])
     )
 
-    return result
+    return {
+        "rows": rows,
+        "item_count": len(rows),
+        "matched_count": sum(
+            1
+            for row in rows
+            if row["price_policy_id"]
+        ),
+        "estimated_hospital_total": (
+            snapshot[
+                "base_hospital_total"
+            ]
+        ),
+        "base_factory_total": (
+            snapshot[
+                "base_factory_total"
+            ]
+        ),
+        "estimated_factory_total": (
+            snapshot[
+                "actual_factory_total"
+            ]
+        ),
+        "factory_discount_savings": (
+            snapshot[
+                "factory_discount_savings"
+            ]
+        ),
+        "pricing_reference_date": (
+            snapshot["reference_date"]
+        ),
+        "issues": issues,
+        "is_valid": snapshot["is_valid"],
+    }
 
 
 def build_workflow_detail_context(request, item_id):
@@ -547,6 +462,21 @@ def build_workflow_detail_context(request, item_id):
         "estimated_factory_total": (
             price_snapshot[
                 "estimated_factory_total"
+            ]
+        ),
+        "base_factory_total": (
+            price_snapshot[
+                "base_factory_total"
+            ]
+        ),
+        "factory_discount_savings": (
+            price_snapshot[
+                "factory_discount_savings"
+            ]
+        ),
+        "pricing_reference_date": (
+            price_snapshot[
+                "pricing_reference_date"
             ]
         ),
         "price_issues": (

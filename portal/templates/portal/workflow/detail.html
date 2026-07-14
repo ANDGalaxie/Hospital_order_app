@@ -242,8 +242,8 @@
             </h2>
 
             <p class="detail-muted">
-                这些价格将作为 Invoice 和 Purchase Order
-                生成前的价格依据。
+                临期判断基准日期：
+                {{ pricing_reference_date|date:"Y-m-d"|default:"—" }}
             </p>
         </div>
 
@@ -257,14 +257,28 @@
             </span>
 
             <span>
-                预计医院金额：
+                医院金额：
                 <strong>
                     €{{ estimated_hospital_total|floatformat:2 }}
                 </strong>
             </span>
 
             <span>
-                预计工厂金额：
+                工厂基础金额：
+                <strong>
+                    €{{ base_factory_total|floatformat:2 }}
+                </strong>
+            </span>
+
+            <span>
+                临期优惠：
+                <strong>
+                    −€{{ factory_discount_savings|floatformat:2 }}
+                </strong>
+            </span>
+
+            <span>
+                工厂实际金额：
                 <strong>
                     €{{ estimated_factory_total|floatformat:2 }}
                 </strong>
@@ -292,10 +306,12 @@
                         <th>产品号</th>
                         <th>本批数量</th>
                         <th>医院单价</th>
-                        <th>工厂单价</th>
+                        <th>基础工厂价</th>
+                        <th>正常数量</th>
+                        <th>临期数量</th>
+                        <th>临期折后价</th>
+                        <th>工厂实际金额</th>
                         <th>价格来源</th>
-                        <th>规则日期</th>
-                        <th>临期规则</th>
                     </tr>
                 </thead>
 
@@ -308,144 +324,55 @@
                                 </strong>
                             </td>
 
-                            <td>{{ row.quantity }}</td>
+                            <td>
+                                {{ row.quantity|floatformat:0 }}
+                            </td>
 
                             <td>
-                                {% if row.hospital_unit_price is not None %}
-                                    €{{ row.hospital_unit_price|floatformat:2 }}
+                                €{{ row.hospital_unit_price|floatformat:2 }}
+                            </td>
+
+                            <td>
+                                €{{ row.base_factory_unit_price|floatformat:2 }}
+                            </td>
+
+                            <td>
+                                {{ row.normal_quantity|floatformat:0 }}
+                            </td>
+
+                            <td>
+                                {% if row.discounted_quantity > 0 %}
+                                    <strong class="price-discount-value">
+                                        {{ row.discounted_quantity|floatformat:0 }}
+                                    </strong>
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if row.discounted_quantity > 0 %}
+                                    €{{ row.discounted_factory_unit_price|floatformat:2 }}
+                                    <div class="detail-muted">
+                                        −{{ row.discount_percent|floatformat:2 }}%
+                                        /
+                                        {{ row.expiration_threshold_days }}天
+                                    </div>
                                 {% else %}
                                     —
                                 {% endif %}
                             </td>
 
-                            <td>
-                                {% if row.factory_unit_price is not None %}
-                                    €{{ row.factory_unit_price|floatformat:2 }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                <span class="status-pill {{ row.price_source_class }}">
-                                    {{ row.price_source_text }}
-                                </span>
-                            </td>
-
-                            <td>
-                                {{ row.price_policy_date|date:"Y-m-d"|default:"—" }}
-                            </td>
-
-                            <td>
-                                {% if row.expiration_threshold_days is not None %}
-                                    {{ row.expiration_threshold_days }}
-                                    天 /
-                                    {{ row.discount_percent|floatformat:2 }}%
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <p class="detail-muted">
-            当前工作流没有可显示的价格明细。
-        </p>
-    {% endif %}
-</section>
-
-<section class="portal-panel detail-section">
-    <div class="workflow-price-heading">
-        <div>
-            <h2 class="portal-panel-title">
-                当前批次价格快照
-            </h2>
-
-            <p class="detail-muted">
-                这些价格将作为 Invoice 和 Purchase Order
-                生成前的价格依据。
-            </p>
-        </div>
-
-        <div class="workflow-price-summary">
-            <span>
-                规则命中：
-                <strong>
-                    {{ price_policy_matched_count }}
-                    / {{ price_item_count }}
-                </strong>
-            </span>
-
-            <span>
-                预计医院金额：
-                <strong>
-                    €{{ estimated_hospital_total|floatformat:2 }}
-                </strong>
-            </span>
-
-            <span>
-                预计工厂金额：
-                <strong>
-                    €{{ estimated_factory_total|floatformat:2 }}
-                </strong>
-            </span>
-        </div>
-    </div>
-
-    {% if price_issues %}
-        <div class="issue-box warning">
-            <strong>价格需要检查</strong>
-
-            <ul class="issue-list warning">
-                {% for issue in price_issues %}
-                    <li>{{ issue }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-
-    {% if price_rows %}
-        <div class="portal-table-wrap">
-            <table class="portal-table">
-                <thead>
-                    <tr>
-                        <th>产品号</th>
-                        <th>本批数量</th>
-                        <th>医院单价</th>
-                        <th>工厂单价</th>
-                        <th>价格来源</th>
-                        <th>规则日期</th>
-                        <th>临期规则</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for row in price_rows %}
-                        <tr>
                             <td>
                                 <strong>
-                                    {{ row.product_code }}
+                                    €{{ row.actual_factory_amount|floatformat:2 }}
                                 </strong>
-                            </td>
 
-                            <td>{{ row.quantity }}</td>
-
-                            <td>
-                                {% if row.hospital_unit_price is not None %}
-                                    €{{ row.hospital_unit_price|floatformat:2 }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                {% if row.factory_unit_price is not None %}
-                                    €{{ row.factory_unit_price|floatformat:2 }}
-                                {% else %}
-                                    —
+                                {% if row.discount_savings > 0 %}
+                                    <div class="detail-muted">
+                                        节省
+                                        €{{ row.discount_savings|floatformat:2 }}
+                                    </div>
                                 {% endif %}
                             </td>
 
@@ -453,19 +380,11 @@
                                 <span class="status-pill {{ row.price_source_class }}">
                                     {{ row.price_source_text }}
                                 </span>
-                            </td>
 
-                            <td>
-                                {{ row.price_policy_date|date:"Y-m-d"|default:"—" }}
-                            </td>
-
-                            <td>
-                                {% if row.expiration_threshold_days is not None %}
-                                    {{ row.expiration_threshold_days }}
-                                    天 /
-                                    {{ row.discount_percent|floatformat:2 }}%
-                                {% else %}
-                                    —
+                                {% if row.price_policy_date %}
+                                    <div class="detail-muted">
+                                        {{ row.price_policy_date|date:"Y-m-d" }}
+                                    </div>
                                 {% endif %}
                             </td>
                         </tr>

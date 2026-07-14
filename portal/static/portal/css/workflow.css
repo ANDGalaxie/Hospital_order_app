@@ -559,3 +559,12 @@
         justify-content: flex-start;
     }
 }
+
+.price-discount-value {
+    color: #047857;
+}
+
+.workflow-price-summary span:last-child {
+    background: #ecfdf5;
+    color: #047857;
+}
