@@ -122,5 +122,34 @@ urlpatterns = [
         views.library_factory_toggle_active,
         name="library_factory_toggle_active",
     ),
-    path("library/prices/", views.library_prices, name="library_prices"),
+    path(
+        "library/prices/",
+        views.library_prices,
+        name="library_prices",
+    ),
+    path(
+        "library/prices/add/",
+        views.library_price_policy_add,
+        name="library_price_policy_add",
+    ),
+    path(
+        "library/prices/simulator/",
+        views.library_price_policy_simulator,
+        name="library_price_policy_simulator",
+    ),
+    path(
+        "library/prices/<int:policy_id>/",
+        views.library_price_policy_detail,
+        name="library_price_policy_detail",
+    ),
+    path(
+        "library/prices/<int:policy_id>/edit/",
+        views.library_price_policy_edit,
+        name="library_price_policy_edit",
+    ),
+    path(
+        "library/prices/<int:policy_id>/toggle-active/",
+        views.library_price_policy_toggle_active,
+        name="library_price_policy_toggle_active",
+    ),
 ]

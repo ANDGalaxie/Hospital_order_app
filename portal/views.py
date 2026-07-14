@@ -17,6 +17,9 @@ from portal.forms.factory_library_forms import (
 from portal.forms.hospital_library_forms import (
     HospitalPortalForm,
 )
+from portal.forms.price_policy_forms import (
+    PricePolicyPortalForm,
+)
 from portal.forms.product_library_forms import (
     DepartmentCreateForm,
     FactoryNodeCreateForm,
@@ -55,6 +58,11 @@ from portal.services.workflow_portal_service import (
 )
 
 from portal.services.library_portal_service import build_library_home_context
+from portal.services.price_policy_portal_service import (
+    build_price_policy_detail_context,
+    build_price_policy_list_context,
+    build_price_policy_simulator_context,
+)
 from portal.services.factory_library_portal_service import (
     build_factory_detail_context,
     build_factory_list_context,
@@ -1003,11 +1011,268 @@ def library_factory_toggle_active(
 
 @staff_member_required
 def library_prices(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "价格资料",
-        "description": "价格资料列表页即将接入。",
-    })
-    
+    return render(
+        request,
+        "portal/library/prices/list.html",
+        build_price_policy_list_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def library_price_policy_detail(
+    request,
+    policy_id,
+):
+    return render(
+        request,
+        "portal/library/prices/detail.html",
+        build_price_policy_detail_context(
+            request,
+            policy_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.add_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_add(request):
+    form = PricePolicyPortalForm(
+        request.POST or None,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        policy = form.save()
+
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    return render(
+        request,
+        "portal/library/prices/form.html",
+        {
+            "form": form,
+            "form_title": "新增价格规则",
+            "form_description": (
+                "按工厂、产品分类和医院订单日期"
+                "定义价格。"
+            ),
+            "submit_text": "创建规则",
+            "cancel_url": reverse(
+                "portal:library_prices"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse(
+                        "portal:home"
+                    ),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "价格规则",
+                    "url": reverse(
+                        "portal:library_prices"
+                    ),
+                },
+                {
+                    "label": "新增规则",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.change_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_edit(
+    request,
+    policy_id,
+):
+    from pricing.models import PricePolicy
+
+    policy = get_object_or_404(
+        PricePolicy,
+        id=policy_id,
+    )
+
+    form = PricePolicyPortalForm(
+        request.POST or None,
+        instance=policy,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        policy = form.save()
+
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    return render(
+        request,
+        "portal/library/prices/form.html",
+        {
+            "form": form,
+            "form_title": "编辑价格规则",
+            "form_description": (
+                policy.name or str(policy)
+            ),
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_price_policy_detail",
+                args=[policy.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse(
+                        "portal:home"
+                    ),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "价格规则",
+                    "url": reverse(
+                        "portal:library_prices"
+                    ),
+                },
+                {
+                    "label": (
+                        policy.name
+                        or f"规则 #{policy.id}"
+                    ),
+                    "url": reverse(
+                        "portal:library_price_policy_detail",
+                        args=[policy.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.change_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_toggle_active(
+    request,
+    policy_id,
+):
+    from django.core.exceptions import ValidationError
+    from pricing.models import PricePolicy
+
+    policy = get_object_or_404(
+        PricePolicy,
+        id=policy_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    old_state = policy.is_active
+    policy.is_active = not old_state
+
+    try:
+        policy.full_clean()
+
+    except ValidationError as exc:
+        policy.is_active = old_state
+
+        messages.error(
+            request,
+            "无法重新启用该规则："
+            + "；".join(exc.messages),
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    policy.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if policy.is_active:
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"价格规则“{policy.name or policy}”已停用。"
+            "历史订单价格快照不会改变。",
+        )
+
+    return redirect(
+        "portal:library_price_policy_detail",
+        policy_id=policy.id,
+    )
+
+
+@staff_member_required
+def library_price_policy_simulator(
+    request,
+):
+    return render(
+        request,
+        "portal/library/prices/simulator.html",
+        build_price_policy_simulator_context(
+            request
+        ),
+    )
+
+
 # =============================================================================
 # Workflow / 出单流程
 # =============================================================================

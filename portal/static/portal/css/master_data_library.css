@@ -568,3 +568,294 @@ textarea.master-form-control {
         flex-direction: column;
     }
 }
+
+/* =========================================================
+   价格规则
+   ========================================================= */
+
+.price-filter-form {
+    display: grid;
+    grid-template-columns:
+        minmax(220px, 1.5fr)
+        repeat(4, minmax(145px, 0.8fr))
+        auto;
+    align-items: end;
+    gap: 12px;
+}
+
+.price-filter-search label,
+.price-filter-item label {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.price-filter-search input,
+.price-filter-item input,
+.price-filter-item select {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    outline: none;
+    background: white;
+    color: #111827;
+    font: inherit;
+}
+
+.price-filter-search input:focus,
+.price-filter-item input:focus,
+.price-filter-item select:focus {
+    border-color: rgba(37, 99, 235, 0.65);
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.price-filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.price-policy-table {
+    min-width: 1160px;
+}
+
+.price-policy-id {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.price-category-cell {
+    max-width: 260px;
+    line-height: 1.45;
+}
+
+.price-number {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-weight: 750;
+}
+
+.price-date-range {
+    display: grid;
+    gap: 2px;
+    color: #475569;
+    font-size: 12px;
+}
+
+.status-pill.warning {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.status-pill.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.status-pill.neutral {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.master-stat-card small {
+    display: block;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.price-panel-description {
+    margin: -5px 0 16px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.price-product-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.price-product-grid a {
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #334155;
+    text-decoration: none;
+}
+
+.price-product-grid a:hover {
+    border-color: rgba(37, 99, 235, 0.45);
+    background: white;
+}
+
+.price-product-grid strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #1d4ed8;
+    font-size: 13px;
+}
+
+.price-product-grid span {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.price-form-notice {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.price-form-section {
+    padding: 0 0 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.price-form-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.price-form-section h2 {
+    margin: 0 0 16px;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.price-form-global-errors {
+    margin-bottom: 20px;
+    padding: 14px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fef2f2;
+}
+
+.price-simulator-form {
+    max-width: 900px;
+    margin-bottom: 22px;
+}
+
+.price-simulation-result {
+    display: grid;
+    gap: 20px;
+}
+
+.price-simulation-success {
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.price-simulation-failed {
+    border-color: rgba(239, 68, 68, 0.30);
+}
+
+.price-simulation-failed h2 {
+    margin: 14px 0 7px;
+}
+
+.price-simulation-failed p {
+    margin: 0;
+    color: #64748b;
+}
+
+.price-simulation-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.price-simulation-heading h2 {
+    margin: 12px 0 0;
+    font-size: 21px;
+}
+
+.price-simulation-numbers {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.price-simulation-numbers > div {
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: #f8fafc;
+}
+
+.price-simulation-numbers span {
+    display: block;
+    margin-bottom: 7px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.price-simulation-numbers strong {
+    display: block;
+    color: #111827;
+    font-size: 18px;
+}
+
+.price-match-explanation {
+    margin-top: 17px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+@media (max-width: 1200px) {
+    .price-filter-form {
+        grid-template-columns:
+            repeat(3, minmax(180px, 1fr));
+    }
+
+    .price-filter-actions {
+        align-self: end;
+    }
+}
+
+@media (max-width: 900px) {
+    .price-product-grid {
+        grid-template-columns:
+            repeat(2, minmax(160px, 1fr));
+    }
+
+    .price-simulation-numbers {
+        grid-template-columns:
+            repeat(2, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .price-filter-form,
+    .price-product-grid,
+    .price-simulation-numbers {
+        grid-template-columns: 1fr;
+    }
+
+    .price-simulation-heading {
+        flex-direction: column;
+    }
+}

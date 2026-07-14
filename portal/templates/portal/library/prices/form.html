@@ -1,0 +1,253 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}
+{{ form_title }} | 价格规则
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/master_data_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="master-breadcrumb">
+    {% for item in breadcrumbs %}
+        {% if not forloop.first %}
+            <span>›</span>
+        {% endif %}
+
+        {% if item.url %}
+            <a href="{{ item.url }}">
+                {{ item.label }}
+            </a>
+        {% else %}
+            <span>{{ item.label }}</span>
+        {% endif %}
+    {% endfor %}
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ form_title }}</h1>
+        <p>{{ form_description }}</p>
+    </div>
+</section>
+
+<section class="price-form-notice">
+    <strong>规则优先级：</strong>
+    具体工厂和具体分类规则优先于工厂通用规则，
+    工厂通用规则优先于全局回退规则。
+</section>
+
+<section class="portal-panel master-form-panel">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="master-form-errors
+                        price-form-global-errors">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="price-form-section">
+            <h2>规则识别</h2>
+
+            <div class="master-form-grid">
+                <div class="master-form-field">
+                    <label for="{{ form.name.id_for_label }}">
+                        {{ form.name.label }}
+                    </label>
+                    {{ form.name }}
+
+                    {% if form.name.help_text %}
+                        <div class="master-form-help">
+                            {{ form.name.help_text }}
+                        </div>
+                    {% endif %}
+
+                    <div class="master-form-errors">
+                        {{ form.name.errors }}
+                    </div>
+                </div>
+
+                <div class="master-form-field
+                            master-checkbox-field">
+                    <label for="{{ form.is_active.id_for_label }}">
+                        {{ form.is_active.label }}
+                    </label>
+                    {{ form.is_active }}
+
+                    <div class="master-form-errors">
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-form-section">
+            <h2>适用范围</h2>
+
+            <div class="master-form-grid">
+                <div class="master-form-field">
+                    <label for="{{ form.factory.id_for_label }}">
+                        {{ form.factory.label }}
+                    </label>
+                    {{ form.factory }}
+
+                    <div class="master-form-help">
+                        {{ form.factory.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.factory.errors }}
+                    </div>
+                </div>
+
+                <div class="master-form-field">
+                    <label for="{{ form.category.id_for_label }}">
+                        {{ form.category.label }}
+                    </label>
+                    {{ form.category }}
+
+                    <div class="master-form-help">
+                        {{ form.category.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.category.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-form-section">
+            <h2>生效时间</h2>
+
+            <div class="master-form-grid">
+                <div class="master-form-field">
+                    <label for="{{ form.start_date.id_for_label }}">
+                        {{ form.start_date.label }}
+                    </label>
+                    {{ form.start_date }}
+
+                    <div class="master-form-help">
+                        {{ form.start_date.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.start_date.errors }}
+                    </div>
+                </div>
+
+                <div class="master-form-field">
+                    <label for="{{ form.end_date.id_for_label }}">
+                        {{ form.end_date.label }}
+                    </label>
+                    {{ form.end_date }}
+
+                    <div class="master-form-help">
+                        {{ form.end_date.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.end_date.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-form-section">
+            <h2>价格</h2>
+
+            <div class="master-form-grid">
+                <div class="master-form-field">
+                    <label for="{{ form.hospital_unit_price.id_for_label }}">
+                        {{ form.hospital_unit_price.label }}
+                    </label>
+                    {{ form.hospital_unit_price }}
+
+                    <div class="master-form-errors">
+                        {{ form.hospital_unit_price.errors }}
+                    </div>
+                </div>
+
+                <div class="master-form-field">
+                    <label for="{{ form.factory_unit_price.id_for_label }}">
+                        {{ form.factory_unit_price.label }}
+                    </label>
+                    {{ form.factory_unit_price }}
+
+                    <div class="master-form-errors">
+                        {{ form.factory_unit_price.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-form-section">
+            <h2>临期折扣</h2>
+
+            <div class="master-form-grid">
+                <div class="master-form-field">
+                    <label for="{{ form.expiration_threshold_days.id_for_label }}">
+                        {{ form.expiration_threshold_days.label }}
+                    </label>
+                    {{ form.expiration_threshold_days }}
+
+                    <div class="master-form-help">
+                        {{ form.expiration_threshold_days.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.expiration_threshold_days.errors }}
+                    </div>
+                </div>
+
+                <div class="master-form-field">
+                    <label for="{{ form.expiration_discount_percent.id_for_label }}">
+                        {{ form.expiration_discount_percent.label }}
+                    </label>
+                    {{ form.expiration_discount_percent }}
+
+                    <div class="master-form-help">
+                        {{ form.expiration_discount_percent.help_text }}
+                    </div>
+
+                    <div class="master-form-errors">
+                        {{ form.expiration_discount_percent.errors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-form-section">
+            <h2>备注</h2>
+
+            <div class="master-form-field">
+                {{ form.notes }}
+
+                <div class="master-form-errors">
+                    {{ form.notes.errors }}
+                </div>
+            </div>
+        </div>
+
+        <div class="master-form-actions">
+            <a class="portal-button"
+               href="{{ cancel_url }}">
+                取消
+            </a>
+
+            <button
+                class="portal-button primary"
+                type="submit">
+                {{ submit_text }}
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
