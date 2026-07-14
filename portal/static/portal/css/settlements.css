@@ -494,3 +494,238 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================
+   Settlement account detail
+   ========================================================== */
+
+.settlement-detail-title {
+    margin-top: 10px;
+}
+
+.settlement-date-value {
+    font-size: 17px !important;
+}
+
+.settlement-detail-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.4fr)
+        minmax(300px, 0.8fr);
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.settlement-action-panel {
+    padding: 20px;
+}
+
+.settlement-action-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.settlement-form-row {
+    display: grid;
+    gap: 12px;
+}
+
+.settlement-form-row.two-columns {
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+}
+
+.settlement-action-form label {
+    display: block;
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.settlement-action-form input,
+.settlement-action-form select,
+.settlement-action-form textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid #dbe3ef;
+    border-radius: 11px;
+    background: white;
+    color: #0f172a;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.settlement-action-form textarea {
+    min-height: 78px;
+    resize: vertical;
+}
+
+.settlement-action-form small {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.settlement-form-errors,
+.errorlist {
+    margin: 5px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 12px;
+    list-style: none;
+}
+
+.settlement-action-disabled {
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.settlement-current-due-date {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.settlement-current-due-date span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.settlement-current-due-date strong {
+    color: #0f172a;
+}
+
+.settlement-history-panel {
+    padding: 20px;
+}
+
+.settlement-history-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.settlement-history-table th,
+.settlement-history-table td {
+    padding: 12px 8px;
+    vertical-align: top;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.settlement-history-table th:nth-child(1) {
+    width: 9%;
+}
+
+.settlement-history-table th:nth-child(2) {
+    width: 10%;
+}
+
+.settlement-history-table th:nth-child(3) {
+    width: 10%;
+}
+
+.settlement-history-table th:nth-child(4) {
+    width: 13%;
+}
+
+.settlement-history-table th:nth-child(5) {
+    width: 10%;
+}
+
+.settlement-history-table th:nth-child(6) {
+    width: 8%;
+}
+
+.settlement-history-table th:nth-child(7) {
+    width: 18%;
+}
+
+.settlement-history-table th:nth-child(8) {
+    width: 22%;
+}
+
+.settlement-reversal-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.settlement-reversal-form input {
+    width: 100%;
+    min-width: 100px;
+    min-height: 34px;
+    padding: 6px 8px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.settlement-danger-button {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fff;
+    color: #b91c1c;
+    cursor: pointer;
+    font-weight: 750;
+}
+
+.settlement-danger-button:hover {
+    background: #fef2f2;
+}
+
+.settlement-audit-note {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 10px;
+}
+
+.settlement-detail-link {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.settlement-detail-link:hover {
+    color: #1d4ed8;
+}
+
+.detail-progress {
+    margin-top: 10px;
+}
+
+@media (max-width: 1000px) {
+    .settlement-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settlement-history-panel {
+        overflow-x: auto;
+    }
+
+    .settlement-history-table {
+        min-width: 1050px;
+    }
+}
+
+@media (max-width: 620px) {
+    .settlement-form-row.two-columns {
+        grid-template-columns: 1fr;
+    }
+}

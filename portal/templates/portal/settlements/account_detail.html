@@ -1,0 +1,371 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}
+{{ account.document.document_number }} | 发票与结算
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/settlements.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="settlement-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+
+    <span>›</span>
+
+    <a href="{% url 'portal:settlement_home' %}">
+        发票与结算
+    </a>
+
+    <span>›</span>
+
+    {% if is_receivable %}
+        <a href="{% url 'portal:settlement_receivables' %}">
+            医院应收
+        </a>
+    {% else %}
+        <a href="{% url 'portal:settlement_payables' %}">
+            工厂应付
+        </a>
+    {% endif %}
+
+    <span>›</span>
+    <span>{{ account.document.document_number }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <span class="transaction-direction {% if is_receivable %}receivable{% else %}payable{% endif %}">
+            {{ account.portal_direction_label }}
+        </span>
+
+        <h1 class="settlement-detail-title">
+            {{ account.document.document_number }}
+        </h1>
+
+        <p>
+            {{ counterparty_label }}：
+            {{ account.counterparty_name }}
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{{ account.portal_document_url }}">
+            查看正式文档
+        </a>
+
+        <a class="portal-button"
+           href="{{ account.portal_order_url }}">
+            查看订单
+        </a>
+    </div>
+</section>
+
+<section class="settlement-kpi-grid account-kpis">
+    <article class="settlement-kpi">
+        <span>原始金额</span>
+        <strong>
+            {{ account.currency }}
+            {{ account.original_amount|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{{ posted_label }}</span>
+        <strong>
+            {{ account.currency }}
+            {{ account.portal_posted_amount|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{{ remaining_label }}</span>
+        <strong>
+            {{ account.currency }}
+            {{ account.portal_remaining_amount|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>开立日期</span>
+        <strong class="settlement-date-value">
+            {{ account.issue_date|date:"Y-m-d" }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi {% if account.portal_status == 'overdue' %}overdue{% endif %}">
+        <span>状态</span>
+
+        <strong>
+            {{ account.portal_status_label }}
+        </strong>
+
+        <div class="settlement-progress detail-progress">
+            <span style="width: {{ account.portal_progress }}%;"></span>
+        </div>
+    </article>
+</section>
+
+<section class="settlement-detail-grid">
+    <article class="portal-panel settlement-action-panel">
+        <div class="settlement-section-heading">
+            <h2>{{ payment_action_label }}</h2>
+
+            <p>
+                登记银行实际发生的{{ payment_noun }}。
+                登记后将自动重新计算余额和状态。
+            </p>
+        </div>
+
+        {% if can_record_payment %}
+            <form method="post"
+                  action="{% url 'portal:settlement_record_payment' account.id %}"
+                  class="settlement-action-form">
+                {% csrf_token %}
+
+                {% if payment_form.non_field_errors %}
+                    <div class="settlement-form-errors">
+                        {{ payment_form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="settlement-form-row two-columns">
+                    <div>
+                        <label for="{{ payment_form.payment_date.id_for_label }}">
+                            {{ payment_form.payment_date.label }}
+                        </label>
+
+                        {{ payment_form.payment_date }}
+                        {{ payment_form.payment_date.errors }}
+                    </div>
+
+                    <div>
+                        <label for="{{ payment_form.amount.id_for_label }}">
+                            {{ payment_form.amount.label }}
+                        </label>
+
+                        {{ payment_form.amount }}
+                        {{ payment_form.amount.errors }}
+
+                        {% if payment_form.amount.help_text %}
+                            <small>
+                                {{ payment_form.amount.help_text }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="settlement-form-row two-columns">
+                    <div>
+                        <label for="{{ payment_form.method.id_for_label }}">
+                            {{ payment_form.method.label }}
+                        </label>
+
+                        {{ payment_form.method }}
+                        {{ payment_form.method.errors }}
+                    </div>
+
+                    <div>
+                        <label for="{{ payment_form.reference.id_for_label }}">
+                            {{ payment_form.reference.label }}
+                        </label>
+
+                        {{ payment_form.reference }}
+                        {{ payment_form.reference.errors }}
+                    </div>
+                </div>
+
+                <div class="settlement-form-row">
+                    <label for="{{ payment_form.notes.id_for_label }}">
+                        {{ payment_form.notes.label }}
+                    </label>
+
+                    {{ payment_form.notes }}
+                    {{ payment_form.notes.errors }}
+                </div>
+
+                <button class="portal-button primary"
+                        type="submit">
+                    {{ payment_action_label }}
+                </button>
+            </form>
+        {% else %}
+            <div class="settlement-action-disabled">
+                {% if account.portal_status == "cancelled" %}
+                    该结算账户已经取消，不能登记收付款。
+                {% else %}
+                    该结算账户已经结清。
+                {% endif %}
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="portal-panel settlement-action-panel">
+        <div class="settlement-section-heading">
+            <h2>付款截止日期</h2>
+
+            <p>
+                Invoice 默认来自生成时的付款条件；
+                Factory PO 可以在此手动设置。
+            </p>
+        </div>
+
+        <div class="settlement-current-due-date">
+            <span>当前截止日期</span>
+
+            <strong>
+                {% if account.due_date %}
+                    {{ account.due_date|date:"Y-m-d" }}
+                {% else %}
+                    未设置
+                {% endif %}
+            </strong>
+        </div>
+
+        {% if account.portal_status != "cancelled" %}
+            <form method="post"
+                  action="{% url 'portal:settlement_update_due_date' account.id %}"
+                  class="settlement-action-form">
+                {% csrf_token %}
+
+                {% if due_date_form.non_field_errors %}
+                    <div class="settlement-form-errors">
+                        {{ due_date_form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="settlement-form-row">
+                    <label for="{{ due_date_form.due_date.id_for_label }}">
+                        {{ due_date_form.due_date.label }}
+                    </label>
+
+                    {{ due_date_form.due_date }}
+                    {{ due_date_form.due_date.errors }}
+                </div>
+
+                <button class="portal-button"
+                        type="submit">
+                    保存截止日期
+                </button>
+            </form>
+        {% endif %}
+    </article>
+</section>
+
+<section class="portal-panel settlement-history-panel">
+    <div class="settlement-section-heading">
+        <h2>{{ payment_noun }}流水</h2>
+
+        <p>
+            有效流水参与金额累计；
+            已冲销流水只作为审计记录保留。
+        </p>
+    </div>
+
+    <div class="portal-table-wrap">
+        <table class="portal-table settlement-history-table">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>金额</th>
+                    <th>方式</th>
+                    <th>银行参考号</th>
+                    <th>登记人</th>
+                    <th>状态</th>
+                    <th>备注 / 冲销原因</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for transaction in transactions %}
+                    <tr>
+                        <td>
+                            {{ transaction.payment_date|date:"Y-m-d" }}
+                        </td>
+
+                        <td class="settlement-money-strong">
+                            {{ account.currency }}
+                            {{ transaction.amount|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            {{ transaction.get_method_display }}
+                        </td>
+
+                        <td>
+                            {{ transaction.reference|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ transaction.created_by.get_full_name|default:transaction.created_by.username }}
+                        </td>
+
+                        <td>
+                            <span class="transaction-status {{ transaction.status }}">
+                                {{ transaction.get_status_display }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if transaction.status == "reversed" %}
+                                <strong>冲销：</strong>
+                                {{ transaction.reversal_reason }}
+
+                                {% if transaction.reversed_by %}
+                                    <div class="settlement-audit-note">
+                                        操作人：
+                                        {{ transaction.reversed_by.get_full_name|default:transaction.reversed_by.username }}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                {{ transaction.notes|default:"—" }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if transaction.status == "posted" %}
+                                <form method="post"
+                                      action="{% url 'portal:settlement_reverse_transaction' transaction.id %}"
+                                      class="settlement-reversal-form">
+                                    {% csrf_token %}
+
+                                    <input
+                                        type="text"
+                                        name="reversal_reason"
+                                        maxlength="500"
+                                        required
+                                        placeholder="冲销原因"
+                                    >
+
+                                    <button class="settlement-danger-button"
+                                            type="submit">
+                                        冲销
+                                    </button>
+                                </form>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8"
+                            class="portal-empty">
+                            当前没有{{ payment_noun }}流水。
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

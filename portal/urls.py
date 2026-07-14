@@ -1,3 +1,4 @@
+from portal import settlement_views
 from django.urls import path
 
 from . import views
@@ -202,6 +203,27 @@ urlpatterns = [
         "settlements/transactions/",
         views.settlement_transactions,
         name="settlement_transactions",
+    ),
+
+    path(
+        "settlements/<int:account_id>/",
+        settlement_views.settlement_account_detail,
+        name="settlement_account_detail",
+    ),
+    path(
+        "settlements/<int:account_id>/payment/add/",
+        settlement_views.settlement_record_payment,
+        name="settlement_record_payment",
+    ),
+    path(
+        "settlements/<int:account_id>/due-date/",
+        settlement_views.settlement_update_due_date,
+        name="settlement_update_due_date",
+    ),
+    path(
+        "settlements/transactions/<int:transaction_id>/reverse/",
+        settlement_views.settlement_reverse_transaction,
+        name="settlement_reverse_transaction",
     ),
 
 ]

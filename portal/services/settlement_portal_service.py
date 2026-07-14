@@ -233,6 +233,11 @@ def decorate_account(account):
 
     account.portal_progress = progress
 
+    account.portal_detail_url = reverse(
+        "portal:settlement_account_detail",
+        args=[account.id],
+    )
+
     account.portal_document_url = reverse(
         "portal:document_detail",
         args=[document.id],
