@@ -2,6 +2,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from workflow.models import DocumentWorkflowItem
+from workflow.services.workflow_price_validation_service import (
+    validate_workflow_price_snapshots,
+)
 from shipments.services.shipment_validation_service import validate_shipment_batch
 
 
@@ -48,42 +51,114 @@ def decide_workflow_status(item, validation_status):
 
 
 @transaction.atomic
-def validate_document_workflow_item(item, save=True):
+def validate_document_workflow_item(
+    item,
+    save=True,
+):
     """
     校验一个 DocumentWorkflowItem。
 
-    核心逻辑：
-      WorkflowItem -> ShipmentBatch -> validate_shipment_batch(save=False)
-
-    这里不把结果写到 ShipmentBatch，
-    而是写到 DocumentWorkflowItem。
+    验证包含：
+    1. ShipmentBatch 来源、数量、Serial、有效期；
+    2. OrderItem 正式价格快照；
+    3. 综合决定是否允许生成文件。
     """
     item = (
         DocumentWorkflowItem.objects
         .select_for_update()
-        .select_related("shipment_batch", "order")
+        .select_related(
+            "shipment_batch",
+            "order",
+        )
         .get(id=item.id)
     )
 
-    batch = item.shipment_batch
-
-    result = validate_shipment_batch(
-        batch=batch,
+    batch_result = validate_shipment_batch(
+        batch=item.shipment_batch,
         save=False,
     )
 
-    batch_status = result.get("validation_status")
-    workflow_validation_status = map_batch_validation_status_to_workflow_status(
-        batch_status
+    price_result = (
+        validate_workflow_price_snapshots(
+            workflow_item=item,
+        )
     )
+
+    errors = list(
+        batch_result.get("errors")
+        or []
+    )
+
+    errors.extend(
+        price_result.get("errors")
+        or []
+    )
+
+    warnings = list(
+        batch_result.get("warnings")
+        or []
+    )
+
+    warnings.extend(
+        price_result.get("warnings")
+        or []
+    )
+
+    if errors:
+        validation_status = (
+            DocumentWorkflowItem
+            .ValidationStatus
+            .BLOCKED
+        )
+
+    elif warnings:
+        validation_status = (
+            DocumentWorkflowItem
+            .ValidationStatus
+            .NEEDS_REVIEW
+        )
+
+    else:
+        validation_status = (
+            DocumentWorkflowItem
+            .ValidationStatus
+            .READY
+        )
 
     workflow_status = decide_workflow_status(
         item=item,
-        validation_status=workflow_validation_status,
+        validation_status=validation_status,
+    )
+
+    result = dict(batch_result)
+
+    result.update(
+        {
+            "can_generate_documents": (
+                validation_status
+                == DocumentWorkflowItem
+                .ValidationStatus
+                .READY
+            ),
+            "validation_status": (
+                validation_status
+            ),
+            "errors": errors,
+            "warnings": warnings,
+            "price_validation": (
+                price_result
+            ),
+            "checked_at": (
+                timezone.now().isoformat()
+            ),
+        }
     )
 
     if save:
-        item.validation_status = workflow_validation_status
+        item.validation_status = (
+            validation_status
+        )
+
         item.validation_data = result
         item.validated_at = timezone.now()
         item.workflow_status = workflow_status
