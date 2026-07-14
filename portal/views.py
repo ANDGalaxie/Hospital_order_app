@@ -1274,6 +1274,45 @@ def library_price_policy_simulator(
 
 
 # =============================================================================
+# Document Center / 文档中心
+# =============================================================================
+
+
+@staff_member_required
+def document_center(request):
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def document_detail(
+    request,
+    document_id,
+):
+    from portal.services.document_center_portal_service import (
+        build_document_detail_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/detail.html",
+        build_document_detail_context(
+            request,
+            document_id,
+        ),
+    )
+
+
+# =============================================================================
 # Workflow / 出单流程
 # =============================================================================
 

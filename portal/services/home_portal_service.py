@@ -65,7 +65,7 @@ def build_home_context(request):
             "description": "集中管理 Factory Request、PO、Invoice 等文件",
             "icon": "portal/img/app-icons/documents.png",
             "theme": "blue",
-            "url": "/admin/documents/",
+            "url": "/portal/documents/",
             "badge": counters.get("documents"),
             "status_text": "文档",
         },

@@ -1,0 +1,343 @@
+.document-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.document-breadcrumb a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.document-stat-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.document-stat-card {
+    padding: 17px;
+    border: 1px solid #e2e8f0;
+    border-radius: 15px;
+    background: white;
+}
+
+.document-stat-card span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.document-stat-card strong {
+    display: block;
+    margin-top: 7px;
+    color: #0f172a;
+    font-size: 24px;
+}
+
+.document-filter-panel {
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: white;
+}
+
+.document-filter-form {
+    display: grid;
+    grid-template-columns:
+        minmax(240px, 1.5fr)
+        repeat(5, minmax(130px, 0.8fr))
+        auto;
+    align-items: end;
+    gap: 11px;
+}
+
+.document-filter-form label {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.document-filter-form input,
+.document-filter-form select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 11px;
+    border: 1px solid #dbe3ef;
+    border-radius: 11px;
+    background: white;
+    color: #0f172a;
+    font: inherit;
+}
+
+.document-filter-actions {
+    display: flex;
+    gap: 7px;
+}
+
+.document-table {
+    min-width: 1180px;
+}
+
+.document-number-link {
+    color: #1d4ed8;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.document-type-pill {
+    display: inline-flex;
+    padding: 6px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.document-type-pill.invoice {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.document-type-pill.po {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.document-type-pill.request {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+.document-muted {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.document-amount {
+    white-space: nowrap;
+    font-weight: 750;
+}
+
+.document-file-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.document-file-status a,
+.document-file-status span {
+    padding: 4px 7px;
+    border-radius: 7px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.document-file-status .missing {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.document-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 18px;
+}
+
+.document-pagination a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.document-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.document-title-row h1 {
+    margin: 0;
+}
+
+.document-detail-stat-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.document-detail-stat-grid > div {
+    padding: 17px;
+    border: 1px solid #e2e8f0;
+    border-radius: 15px;
+    background: white;
+}
+
+.document-detail-stat-grid span {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.document-detail-stat-grid strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 20px;
+}
+
+.document-detail-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.document-full-width {
+    grid-column: 1 / -1;
+}
+
+.document-detail-list {
+    display: grid;
+    gap: 13px;
+}
+
+.document-detail-list > div {
+    display: grid;
+    grid-template-columns: 145px 1fr;
+    gap: 13px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.document-detail-list > div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.document-detail-list span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.document-detail-list strong {
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.document-detail-list a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.document-related-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 17px;
+}
+
+.document-file-card {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.document-file-card strong {
+    overflow-wrap: anywhere;
+    font-size: 12px;
+}
+
+.document-file-card span {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.document-file-card .document-file-ok {
+    color: #047857;
+    font-weight: 750;
+}
+
+.document-file-card .document-file-missing {
+    color: #b91c1c;
+    font-weight: 750;
+}
+
+.document-snapshot summary {
+    cursor: pointer;
+    color: #1d4ed8;
+    font-weight: 750;
+}
+
+.document-snapshot pre {
+    max-height: 620px;
+    overflow: auto;
+    margin: 16px 0 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 11px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.document-notes {
+    color: #475569;
+    line-height: 1.65;
+}
+
+@media (max-width: 1200px) {
+    .document-stat-grid {
+        grid-template-columns:
+            repeat(3, minmax(140px, 1fr));
+    }
+
+    .document-filter-form {
+        grid-template-columns:
+            repeat(3, minmax(170px, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .document-detail-stat-grid,
+    .document-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .document-full-width {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 620px) {
+    .document-stat-grid,
+    .document-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .document-detail-list > div {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+}

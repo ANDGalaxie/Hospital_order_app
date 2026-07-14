@@ -152,4 +152,15 @@ urlpatterns = [
         views.library_price_policy_toggle_active,
         name="library_price_policy_toggle_active",
     ),
+    path(
+        "documents/",
+        views.document_center,
+        name="document_center",
+    ),
+    path(
+        "documents/<int:document_id>/",
+        views.document_detail,
+        name="document_detail",
+    ),
+
 ]
