@@ -79,7 +79,7 @@ def build_home_context(request):
             "description": "查看财务表现和业务趋势",
             "icon": "portal/img/app-icons/finance.png",
             "theme": "orange",
-            "url": "/admin/finance/",
+            "url": "/portal/finance/",
             "badge": None,
             "status_text": "分析",
         },

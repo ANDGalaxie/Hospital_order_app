@@ -1,11 +1,12 @@
 from portal import settlement_views
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
 app_name = "portal"
 
 urlpatterns = [
+    path("finance/", include("finance.urls")),
     path("", views.home, name="home"),
 
     path("workflow/", views.workflow_list, name="workflow_list"),
