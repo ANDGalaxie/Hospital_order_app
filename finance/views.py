@@ -1,9 +1,13 @@
 from django.contrib.auth.decorators import (
     login_required,
 )
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.dateparse import parse_date
 
+from finance.services.finance_export_service import (
+    build_finance_export_xlsx,
+)
 from finance.services.settlement_finance_service import (
     build_settlement_finance_dashboard_data,
     format_money,
@@ -109,9 +113,8 @@ def parse_filter_date(
     return parsed_value
 
 
-@login_required
-def settlement_dashboard(request):
-    filter_errors = []
+def parse_finance_filters(request):
+    errors = []
 
     date_from_raw = request.GET.get(
         "date_from",
@@ -146,13 +149,13 @@ def settlement_dashboard(request):
     date_from = parse_filter_date(
         date_from_raw,
         "开始日期",
-        filter_errors,
+        errors,
     )
 
     date_to = parse_filter_date(
         date_to_raw,
         "结束日期",
-        filter_errors,
+        errors,
     )
 
     if (
@@ -160,28 +163,12 @@ def settlement_dashboard(request):
         and date_to
         and date_from > date_to
     ):
-        filter_errors.append(
+        errors.append(
             "开始日期不能晚于结束日期。"
         )
 
         date_from = None
         date_to = None
-
-    dashboard_data = (
-        build_settlement_finance_dashboard_data(
-            reporting_currency="EUR",
-            date_from=date_from,
-            date_to=date_to,
-            hospital_query=hospital_query,
-            factory_query=factory_query,
-            order_query=order_query,
-            status=status,
-        )
-    )
-
-    reporting_currency = dashboard_data[
-        "reporting_currency"
-    ]
 
     filter_values = {
         "date_from": date_from_raw,
@@ -192,10 +179,66 @@ def settlement_dashboard(request):
         "status": status,
     }
 
-    has_active_filters = any(
-        str(value or "").strip()
-        for value in filter_values.values()
+    parsed_filters = {
+        "date_from": date_from,
+        "date_to": date_to,
+        "hospital_query": (
+            hospital_query
+        ),
+        "factory_query": (
+            factory_query
+        ),
+        "order_query": order_query,
+        "status": status,
+    }
+
+    return {
+        "errors": errors,
+        "filter_values": filter_values,
+        "parsed_filters": (
+            parsed_filters
+        ),
+        "has_active_filters": any(
+            str(value or "").strip()
+            for value in (
+                filter_values.values()
+            )
+        ),
+    }
+
+
+@login_required
+def settlement_dashboard(request):
+    filter_state = (
+        parse_finance_filters(
+            request
+        )
     )
+
+    dashboard_data = (
+        build_settlement_finance_dashboard_data(
+            reporting_currency="EUR",
+            **filter_state[
+                "parsed_filters"
+            ],
+        )
+    )
+
+    reporting_currency = dashboard_data[
+        "reporting_currency"
+    ]
+
+    query_string = (
+        request.GET.urlencode()
+    )
+
+    if query_string:
+        export_url = (
+            "export.xlsx?"
+            + query_string
+        )
+    else:
+        export_url = "export.xlsx"
 
     context = {
         **dashboard_data,
@@ -207,11 +250,20 @@ def settlement_dashboard(request):
                 request.user
             )
         ),
-        "filter_values": filter_values,
-        "filter_errors": filter_errors,
-        "has_active_filters": (
-            has_active_filters
+        "filter_values": (
+            filter_state[
+                "filter_values"
+            ]
         ),
+        "filter_errors": (
+            filter_state["errors"]
+        ),
+        "has_active_filters": (
+            filter_state[
+                "has_active_filters"
+            ]
+        ),
+        "export_url": export_url,
         "accrual_rows": (
             build_accrual_rows(
                 dashboard_data[
@@ -238,3 +290,57 @@ def settlement_dashboard(request):
         ),
         context,
     )
+
+
+@login_required
+def settlement_dashboard_export(
+    request,
+):
+    filter_state = (
+        parse_finance_filters(
+            request
+        )
+    )
+
+    if filter_state["errors"]:
+        return HttpResponse(
+            "\n".join(
+                filter_state["errors"]
+            ),
+            status=400,
+            content_type=(
+                "text/plain; charset=utf-8"
+            ),
+        )
+
+    export_result = (
+        build_finance_export_xlsx(
+            reporting_currency="EUR",
+            **filter_state[
+                "parsed_filters"
+            ],
+        )
+    )
+
+    response = HttpResponse(
+        export_result["content"],
+        content_type=(
+            "application/vnd."
+            "openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+
+    response[
+        "Content-Disposition"
+    ] = (
+        'attachment; filename="'
+        + export_result["filename"]
+        + '"'
+    )
+
+    response[
+        "X-Content-Type-Options"
+    ] = "nosniff"
+
+    return response

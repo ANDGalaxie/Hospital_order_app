@@ -127,10 +127,9 @@ def get_order_party_names(
     )
 
 
-def build_settlement_finance_dashboard_data(
+def build_filtered_account_queryset(
     *,
     reporting_currency="EUR",
-    today=None,
     date_from=None,
     date_to=None,
     hospital_query="",
@@ -139,26 +138,9 @@ def build_settlement_finance_dashboard_data(
     status="",
 ):
     """
-    根据正式结算账户和有效收付款流水，
-    构造财务实绩 Dashboard 数据。
-
-    不读取当前产品价格，不重新计算文档金额。
-
-    统计范围：
-    - 排除已取消的结算账户
-    - 排除已冲销的收付款流水
-    - 第一版仅统计指定记账币种
+    返回财务 Dashboard 与 XLSX 导出
+    共用的结算账户 QuerySet。
     """
-    today = (
-        today
-        or timezone.localdate()
-    )
-
-    due_soon_end = (
-        today
-        + timedelta(days=30)
-    )
-
     account_queryset = (
         SettlementAccount.objects
         .exclude(
@@ -271,7 +253,7 @@ def build_settlement_finance_dashboard_data(
             )
         )
 
-    accounts = list(
+    return (
         account_queryset
         .select_related(
             "document",
@@ -282,6 +264,57 @@ def build_settlement_finance_dashboard_data(
         .order_by(
             "issue_date",
             "id",
+        )
+    )
+
+
+def build_settlement_finance_dashboard_data(
+    *,
+    reporting_currency="EUR",
+    today=None,
+    date_from=None,
+    date_to=None,
+    hospital_query="",
+    factory_query="",
+    order_query="",
+    status="",
+):
+    """
+    根据正式结算账户和有效收付款流水，
+    构造财务实绩 Dashboard 数据。
+
+    不读取当前产品价格，不重新计算文档金额。
+
+    统计范围：
+    - 排除已取消的结算账户
+    - 排除已冲销的收付款流水
+    - 第一版仅统计指定记账币种
+    """
+    today = (
+        today
+        or timezone.localdate()
+    )
+
+    due_soon_end = (
+        today
+        + timedelta(days=30)
+    )
+
+    accounts = list(
+        build_filtered_account_queryset(
+            reporting_currency=(
+                reporting_currency
+            ),
+            date_from=date_from,
+            date_to=date_to,
+            hospital_query=(
+                hospital_query
+            ),
+            factory_query=(
+                factory_query
+            ),
+            order_query=order_query,
+            status=status,
         )
     )
 

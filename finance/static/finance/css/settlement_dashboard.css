@@ -420,3 +420,11 @@
         grid-column: auto;
     }
 }
+
+.finance-export-button {
+    background: #f97316;
+}
+
+.finance-export-button:hover {
+    background: #ea580c;
+}
