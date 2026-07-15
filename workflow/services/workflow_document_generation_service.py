@@ -619,6 +619,7 @@ def build_batch_factory_po_data(
     return po_data
 
 
+@transaction.atomic
 def save_generated_document_record_for_batch(
     batch: ShipmentBatch,
     document_type: str,
@@ -640,6 +641,22 @@ def save_generated_document_record_for_batch(
             "generated_by": generated_by,
         },
     )
+
+    if obj.document_type in {
+        GeneratedDocument
+        .DocumentType
+        .HOSPITAL_INVOICE,
+        GeneratedDocument
+        .DocumentType
+        .FACTORY_PO,
+    }:
+        from settlements.services.settlement_auto_service import (
+            ensure_settlement_account_for_document,
+        )
+
+        ensure_settlement_account_for_document(
+            obj
+        )
 
     return obj
 
