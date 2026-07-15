@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.db.models import Q
 from django.utils import timezone
 
 from settlements.models import (
@@ -130,6 +131,12 @@ def build_settlement_finance_dashboard_data(
     *,
     reporting_currency="EUR",
     today=None,
+    date_from=None,
+    date_to=None,
+    hospital_query="",
+    factory_query="",
+    order_query="",
+    status="",
 ):
     """
     根据正式结算账户和有效收付款流水，
@@ -152,7 +159,7 @@ def build_settlement_finance_dashboard_data(
         + timedelta(days=30)
     )
 
-    accounts = list(
+    account_queryset = (
         SettlementAccount.objects
         .exclude(
             status=(
@@ -164,6 +171,108 @@ def build_settlement_finance_dashboard_data(
         .filter(
             currency=reporting_currency
         )
+    )
+
+    if date_from:
+        account_queryset = (
+            account_queryset.filter(
+                issue_date__gte=date_from
+            )
+        )
+
+    if date_to:
+        account_queryset = (
+            account_queryset.filter(
+                issue_date__lte=date_to
+            )
+        )
+
+    hospital_query = str(
+        hospital_query or ""
+    ).strip()
+
+    if hospital_query:
+        account_queryset = (
+            account_queryset.filter(
+                Q(
+                    document__order__hospital__name__icontains=(
+                        hospital_query
+                    )
+                )
+                |
+                Q(
+                    document__order__hospital_name__icontains=(
+                        hospital_query
+                    )
+                )
+                |
+                Q(
+                    direction=(
+                        SettlementAccount
+                        .Direction
+                        .RECEIVABLE
+                    ),
+                    counterparty_name__icontains=(
+                        hospital_query
+                    ),
+                )
+            )
+        )
+
+    factory_query = str(
+        factory_query or ""
+    ).strip()
+
+    if factory_query:
+        account_queryset = (
+            account_queryset.filter(
+                Q(
+                    document__order__factory__name__icontains=(
+                        factory_query
+                    )
+                )
+                |
+                Q(
+                    direction=(
+                        SettlementAccount
+                        .Direction
+                        .PAYABLE
+                    ),
+                    counterparty_name__icontains=(
+                        factory_query
+                    ),
+                )
+            )
+        )
+
+    order_query = str(
+        order_query or ""
+    ).strip()
+
+    if order_query:
+        account_queryset = (
+            account_queryset.filter(
+                document__order__bon_de_commande__icontains=(
+                    order_query
+                )
+            )
+        )
+
+    valid_statuses = {
+        choice_value
+        for choice_value, choice_label
+        in SettlementAccount.Status.choices
+    }
+
+    if status in valid_statuses:
+        account_queryset = (
+            account_queryset.filter(
+                status=status
+            )
+        )
+
+    accounts = list(
+        account_queryset
         .select_related(
             "document",
             "document__order",
@@ -792,6 +901,17 @@ def build_settlement_finance_dashboard_data(
         ),
         "due_soon_receivables": (
             due_soon_receivables
+        ),
+        "filters": {
+            "date_from": date_from,
+            "date_to": date_to,
+            "hospital_query": hospital_query,
+            "factory_query": factory_query,
+            "order_query": order_query,
+            "status": status,
+        },
+        "status_choices": list(
+            SettlementAccount.Status.choices
         ),
         "generated_at": timezone.now(),
     }

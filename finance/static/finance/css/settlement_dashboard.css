@@ -282,3 +282,141 @@
         flex-direction: column;
     }
 }
+
+.finance-filter-panel {
+    margin-bottom: 22px;
+    padding: 17px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.finance-filter-form {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(135px, 0.8fr))
+        repeat(3, minmax(150px, 1fr))
+        minmax(150px, 0.9fr)
+        auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.filter-field {
+    min-width: 0;
+}
+
+.filter-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.filter-field input,
+.filter-field select {
+    width: 100%;
+    min-height: 39px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 13px;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+    border-color: #f97316;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.finance-filter-submit,
+.finance-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 39px;
+    box-sizing: border-box;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.finance-filter-submit {
+    border: 0;
+    background: #f97316;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.finance-filter-reset {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+}
+
+.finance-filter-errors {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.finance-chart-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    margin: 4px 0 18px;
+    overflow: hidden;
+}
+
+.finance-chart {
+    display: block;
+    max-width: 100%;
+}
+
+@media (max-width: 1450px) {
+    .finance-filter-form {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .finance-filter-form {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 520px) {
+    .finance-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        grid-column: auto;
+    }
+}

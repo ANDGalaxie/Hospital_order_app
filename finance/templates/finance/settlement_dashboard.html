@@ -49,6 +49,133 @@
     </div>
 </section>
 
+<section class="finance-filter-panel">
+    <form
+        method="get"
+        class="finance-filter-form"
+    >
+        <div class="filter-field">
+            <label for="date_from">
+                开立日期从
+            </label>
+
+            <input
+                id="date_from"
+                type="date"
+                name="date_from"
+                value="{{ filter_values.date_from }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="date_to">
+                开立日期至
+            </label>
+
+            <input
+                id="date_to"
+                type="date"
+                name="date_to"
+                value="{{ filter_values.date_to }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="hospital">
+                医院
+            </label>
+
+            <input
+                id="hospital"
+                type="text"
+                name="hospital"
+                value="{{ filter_values.hospital }}"
+                placeholder="医院名称"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="factory">
+                工厂
+            </label>
+
+            <input
+                id="factory"
+                type="text"
+                name="factory"
+                value="{{ filter_values.factory }}"
+                placeholder="工厂名称"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="order">
+                订单号
+            </label>
+
+            <input
+                id="order"
+                type="text"
+                name="order"
+                value="{{ filter_values.order }}"
+                placeholder="Bon de commande"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="status">
+                结算状态
+            </label>
+
+            <select
+                id="status"
+                name="status"
+            >
+                <option value="">
+                    全部状态
+                </option>
+
+                {% for value, label in status_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if filter_values.status == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button
+                type="submit"
+                class="finance-filter-submit"
+            >
+                筛选
+            </button>
+
+            {% if has_active_filters %}
+                <a
+                    href="/portal/finance/"
+                    class="finance-filter-reset"
+                >
+                    清除
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if filter_errors %}
+        <div class="finance-filter-errors">
+            {% for error in filter_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+
 <section class="kpi-grid">
     {% for card in kpi_cards %}
         <article
@@ -89,7 +216,15 @@
             </span>
         </div>
 
-        <div class="table-scroll">
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="accrual-finance-chart"
+                class="finance-chart"
+                aria-label="权责发生趋势图"
+            ></canvas>
+        </div>
+<div class="table-scroll">
             <table class="finance-table">
                 <thead>
                     <tr>
@@ -141,7 +276,15 @@
             </span>
         </div>
 
-        <div class="table-scroll">
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="cash-finance-chart"
+                class="finance-chart"
+                aria-label="实际现金流趋势图"
+            ></canvas>
+        </div>
+<div class="table-scroll">
             <table class="finance-table">
                 <thead>
                     <tr>
@@ -396,4 +539,13 @@
     · 有效流水：
     {{ summary.transaction_count }}
 </footer>
+
+{{ chart_data|json_script:"finance-chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{% static 'finance/js/settlement_dashboard.js' %}"
+    defer
+></script>
 {% endblock %}
