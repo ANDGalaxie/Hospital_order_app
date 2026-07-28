@@ -20,6 +20,11 @@ urlpatterns = [
     path("orders/", views.order_list, name="order_list"),
     path("orders/upload/", views.order_upload, name="order_upload"),
     path("orders/<int:order_id>/", views.order_detail, name="order_detail"),
+    path(
+        "orders/<int:order_id>/factory-upload/",
+        views.order_factory_upload,
+        name="order_factory_upload",
+    ),
     path("orders/<int:order_id>/edit/", views.order_edit, name="order_edit"),
     path("orders/<int:order_id>/action/", views.order_action, name="order_action"),
 
@@ -27,6 +32,15 @@ urlpatterns = [
     path("factory/upload/", views.factory_upload, name="factory_upload"),
     path("factory/<int:confirmation_id>/", views.factory_detail, name="factory_detail"),
     path("factory/<int:confirmation_id>/action/", views.factory_action, name="factory_action"),
+    path("shipments/", views.shipment_list, name="shipment_list"),
+    path("shipments/<int:batch_id>/", views.shipment_detail, name="shipment_detail"),
+    path("backorders/", views.backorder_list, name="backorder_list"),
+    path(
+        "backorders/export.xlsx",
+        views.backorder_export_xlsx,
+        name="backorder_export_xlsx",
+    ),
+    path("backorders/<int:backorder_id>/", views.backorder_detail, name="backorder_detail"),
 
     path("library/", views.library_home, name="library_home"),
     path(

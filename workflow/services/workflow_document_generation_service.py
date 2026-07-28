@@ -744,6 +744,24 @@ def generate_factory_po_for_workflow_item(
     batch = item.shipment_batch
     order = item.order
 
+    if batch.inventory_allocation_id:
+        return {
+            "generated_document": None,
+            "generated_document_id": None,
+            "document_type": GeneratedDocument.DocumentType.FACTORY_PO,
+            "document_number": "",
+            "pdf_path": "",
+            "html_path": "",
+            "data_path": "",
+            "warnings": [
+                (
+                    f"ShipmentBatch {batch.id} 来源于库存分配，"
+                    "当前流程跳过 Factory PO 生成。"
+                )
+            ],
+            "skipped": True,
+        }
+
     numbers = get_batch_document_numbers(batch)
 
     company_info = load_json_config(
@@ -888,16 +906,26 @@ def generate_documents_for_workflow_item(
         generated_by=generated_by,
     )
 
-    po_result = generate_factory_po_for_workflow_item(
-        item=item,
-        generated_by=generated_by,
-    )
+    if item.shipment_batch.inventory_allocation_id:
+        po_result = generate_factory_po_for_workflow_item(
+            item=item,
+            generated_by=generated_by,
+        )
+        po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+        po_document = None
+    else:
+        po_result = generate_factory_po_for_workflow_item(
+            item=item,
+            generated_by=generated_by,
+        )
+        po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+        po_document = po_result["generated_document"]
 
     item.invoice_status = DocumentWorkflowItem.DocumentStatus.GENERATED
-    item.po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+    item.po_status = po_status
     item.workflow_status = DocumentWorkflowItem.WorkflowStatus.GENERATED
     item.invoice_document = invoice_result["generated_document"]
-    item.po_document = po_result["generated_document"]
+    item.po_document = po_document
 
     item.save(
         update_fields=[

@@ -5,12 +5,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from factory_confirmations.models import FactoryConfirmation
+from orders.models import Order
 from shipments.models import ShipmentBatch, ShipmentBatchItem
 from workflow.models import DocumentWorkflowItem
+from documents.models import GeneratedDocument
 
 from factories.models import Factory
 from factory_confirmations.services.factory_confirmation_extraction_service import (
     extract_factory_confirmation_for_confirmation,
+    finalize_factory_confirmation_after_order_match,
     recalculate_order_items_from_shipment_batches,
 )
 from datetime import datetime
@@ -276,10 +279,30 @@ def build_factory_detail_context(request, confirmation_id):
 
     shipment_batch = get_shipment_batch(confirmation)
     workflow_item = get_workflow_item(confirmation)
+    generated_documents = []
+
+    if shipment_batch:
+        generated_documents = list(
+            GeneratedDocument.objects.filter(
+                shipment_batch=shipment_batch,
+            ).order_by("-generated_at", "-id")
+        )
 
     data = confirmation.extracted_confirmation_data or {}
     django_data = data.get("django") or {}
     warnings = data.get("warnings") or []
+    requires_manual_confirmation = bool(
+        django_data.get("requires_manual_confirmation")
+    )
+    can_finalize = bool(
+        confirmation.order_id
+        and (
+            confirmation.extraction_status
+            != FactoryConfirmation.ExtractionStatus.SUCCESS
+            or requires_manual_confirmation
+            or not shipment_batch
+        )
+    )
 
     pdf_url = None
     if confirmation.confirmation_pdf:
@@ -305,15 +328,44 @@ def build_factory_detail_context(request, confirmation_id):
         "product_count": len(product_counter),
         "shipment_batch": shipment_batch,
         "workflow_item": workflow_item,
+        "generated_documents": generated_documents,
         "django_data": django_data,
         "warnings": warnings,
+        "order_choices": Order.objects.order_by("bon_de_commande"),
+        "requires_manual_confirmation": requires_manual_confirmation,
+        "can_finalize": can_finalize,
     }
 
-def build_factory_upload_context(request):
+def build_factory_upload_context(
+    request,
+    *,
+    selected_order_id=None,
+    default_confirmation_type=None,
+):
+    selected_order = None
+
+    if selected_order_id:
+        selected_order = (
+            Order.objects.select_related("factory")
+            .filter(id=selected_order_id)
+            .first()
+        )
+
+    selected_factory_id = ""
+    if selected_order and selected_order.factory_id:
+        selected_factory_id = selected_order.factory_id
+
     return {
         "confirmation_type_choices": FactoryConfirmation.ConfirmationType.choices,
         "factory_choices": Factory.objects.order_by("name"),
-        "default_confirmation_type": FactoryConfirmation.ConfirmationType.INITIAL,
+        "order_choices": Order.objects.order_by("bon_de_commande"),
+        "selected_order": selected_order,
+        "selected_order_id": selected_order.id if selected_order else "",
+        "selected_factory_id": selected_factory_id,
+        "default_confirmation_type": (
+            default_confirmation_type
+            or FactoryConfirmation.ConfirmationType.INITIAL
+        ),
     }
 
 
@@ -322,6 +374,9 @@ def create_and_extract_factory_confirmation(
     uploaded_file,
     confirmation_type,
     factory_id,
+    order_id,
+    bon_de_commande_manual_confirmed,
+    bon_de_commande_manual_note,
     user,
 ):
     """
@@ -338,12 +393,29 @@ def create_and_extract_factory_confirmation(
     if factory_id:
         factory = Factory.objects.filter(id=factory_id).first()
 
+    order = None
+    if order_id:
+        order = Order.objects.filter(id=order_id).first()
+
     confirmation = FactoryConfirmation.objects.create(
         confirmation_type=confirmation_type or FactoryConfirmation.ConfirmationType.INITIAL,
         factory=factory,
+        order=order,
         confirmation_pdf=uploaded_file,
         created_by=user,
         extraction_status=FactoryConfirmation.ExtractionStatus.NOT_STARTED,
+        bon_de_commande_manual_confirmed=bool(
+            bon_de_commande_manual_confirmed
+        ),
+        bon_de_commande_manual_note=(
+            bon_de_commande_manual_note or ""
+        ).strip(),
+        bon_de_commande_manual_confirmed_by=(
+            user if bon_de_commande_manual_confirmed else None
+        ),
+        bon_de_commande_manual_confirmed_at=(
+            timezone.now() if bon_de_commande_manual_confirmed else None
+        ),
     )
 
     try:
@@ -352,11 +424,25 @@ def create_and_extract_factory_confirmation(
 
         django_data = (confirmation.extracted_confirmation_data or {}).get("django") or {}
         workflow_item_id = django_data.get("workflow_item_id")
-        workflow_validation_status = django_data.get("workflow_validation_status")
         workflow_validation_result = django_data.get("workflow_validation_result") or {}
+        requires_manual_confirmation = django_data.get("requires_manual_confirmation")
 
         errors = workflow_validation_result.get("errors") or []
         warnings = workflow_validation_result.get("warnings") or []
+
+        if requires_manual_confirmation:
+            return (
+                confirmation,
+                False,
+                "工厂采购文件已提取，但识别编号与已选择订单不一致。请人工确认后继续。",
+            )
+
+        if confirmation.order_id and not workflow_item_id:
+            return (
+                confirmation,
+                False,
+                "工厂采购文件已提取，但尚未完成后续处理。请在详情页继续。",
+            )
 
         if errors:
             return (
@@ -388,7 +474,69 @@ def create_and_extract_factory_confirmation(
     except Exception as exc:
         confirmation.refresh_from_db()
         error_text = confirmation.extraction_error or str(exc)
+
+        if (
+            confirmation.extraction_status
+            == FactoryConfirmation.ExtractionStatus.NOT_STARTED
+        ):
+            confirmation.extraction_status = (
+                FactoryConfirmation.ExtractionStatus.FAILED
+            )
+            confirmation.extraction_error = error_text
+            confirmation.save(
+                update_fields=[
+                    "extraction_status",
+                    "extraction_error",
+                    "updated_at",
+                ]
+            )
+
         return confirmation, False, error_text
+
+
+def associate_order_and_finalize_factory_confirmation(
+    *,
+    confirmation_id,
+    order_id,
+    bon_de_commande_manual_confirmed=False,
+    bon_de_commande_manual_note="",
+    user=None,
+):
+    confirmation = (
+        FactoryConfirmation.objects
+        .select_related("order", "factory")
+        .get(id=confirmation_id)
+    )
+
+    order = Order.objects.get(id=order_id)
+    confirmation.order = order
+    confirmation.bon_de_commande_manual_confirmed = bool(
+        bon_de_commande_manual_confirmed
+    )
+    confirmation.bon_de_commande_manual_note = (
+        bon_de_commande_manual_note or ""
+    ).strip()
+    confirmation.bon_de_commande_manual_confirmed_by = (
+        user if bon_de_commande_manual_confirmed else None
+    )
+    confirmation.bon_de_commande_manual_confirmed_at = (
+        timezone.now() if bon_de_commande_manual_confirmed else None
+    )
+    confirmation.save(
+        update_fields=[
+            "order",
+            "bon_de_commande_manual_confirmed",
+            "bon_de_commande_manual_note",
+            "bon_de_commande_manual_confirmed_by",
+            "bon_de_commande_manual_confirmed_at",
+            "updated_at",
+        ]
+    )
+
+    return finalize_factory_confirmation_after_order_match(
+        confirmation=confirmation,
+        user=user,
+    )
 
 def reextract_factory_confirmation_for_portal(confirmation_id):
     """

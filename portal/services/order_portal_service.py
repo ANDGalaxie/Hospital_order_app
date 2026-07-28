@@ -430,6 +430,7 @@ def build_order_list_context(request):
 def build_order_detail_context(request, order_id):
     from django.shortcuts import get_object_or_404
     from orders.models import Order, OrderItem
+    from shipments.models import ShipmentBatch
     from workflow.models import DocumentWorkflowItem
     from portal.services.order_item_crop_service import get_order_item_row_crop_url
 
@@ -626,6 +627,19 @@ def build_order_detail_context(request, order_id):
         factory_name = getattr(order.factory, "name", None) or str(order.factory)
 
     factory_request_document = get_latest_factory_request_document(order)
+    shipment_batches = list(
+        ShipmentBatch.objects.filter(order=order).order_by("-batch_number", "-id")
+    )
+    latest_batch = shipment_batches[0] if shipment_batches else None
+    total_shipped = sum(
+        int(item.confirmed_quantity or 0)
+        for item in order_items
+    )
+    total_remaining = sum(
+        int(item.backordered_quantity or 0)
+        for item in order_items
+    )
+    has_valid_batch = bool(shipment_batches)
 
     return {
         "lang": lang,
@@ -665,6 +679,22 @@ def build_order_detail_context(request, order_id):
         "edit_url": reverse("portal:order_edit", args=[order.id]),
         "action_url": reverse("portal:order_action", args=[order.id]),
         "factory_request_url": document_url(factory_request_document),
+        "total_shipped": total_shipped,
+        "total_remaining": total_remaining,
+        "latest_batch": latest_batch,
+        "backorder_total": total_remaining,
+        "upload_initial_factory_url": reverse(
+            "portal:order_factory_upload",
+            args=[order.id],
+        ) + "?type=initial",
+        "upload_replenishment_factory_url": reverse(
+            "portal:order_factory_upload",
+            args=[order.id],
+        ) + "?type=replenishment",
+        "show_initial_factory_upload": not has_valid_batch,
+        "show_replenishment_factory_upload": (
+            has_valid_batch and total_remaining > 0
+        ),
     }
 
 

@@ -139,9 +139,9 @@ def get_or_create_order_shipment_folder(order):
 
     month, _ = ShipmentMonth.objects.update_or_create(
         month_key=month_key,
-        defaults={
-            "display_name": month_key,
-        },
+        #defaults={
+        #    "display_name": month_key,
+        #},
     )
 
     order_folder, _ = ShipmentOrderFolder.objects.update_or_create(

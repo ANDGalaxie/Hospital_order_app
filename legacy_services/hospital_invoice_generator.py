@@ -71,7 +71,18 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from rapidfuzz import fuzz, process
-from weasyprint import HTML
+
+
+def get_weasyprint_html():
+    try:
+        from weasyprint import HTML
+    except Exception as exc:
+        raise RuntimeError(
+            "WeasyPrint is not available. Hospital invoice PDF generation "
+            "requires WeasyPrint and its system libraries."
+        ) from exc
+
+    return HTML
 
 # 统一编号模块：
 # - Invoice 和 Purchase Order 共用同一个 document_registry.json
@@ -1580,7 +1591,7 @@ def write_html_and_pdf(
 
     base_url = project_root.resolve().as_uri() + "/"
 
-    HTML(
+    get_weasyprint_html()(
         string=html_content,
         base_url=base_url,
     ).write_pdf(str(pdf_path))

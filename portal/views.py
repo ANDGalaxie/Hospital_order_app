@@ -5,11 +5,15 @@ Portal views.
 业务逻辑尽量放在 portal/services/* 或各 app 的 services/* 里，避免 views.py 变得过重。
 """
 
+from urllib.parse import quote
+
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from portal.forms.factory_library_forms import (
     FactoryPortalForm,
@@ -32,6 +36,7 @@ from portal.services.common import (
     safe_redirect_after_action,
 )
 from portal.services.factory_portal_service import (
+    associate_order_and_finalize_factory_confirmation,
     build_factory_detail_context,
     build_factory_list_context,
     build_factory_upload_context,
@@ -50,6 +55,18 @@ from portal.services.order_portal_service import (
     run_order_extraction,
     save_order_manual_edit,
     validate_portal_order_after_extraction,
+)
+from portal.services.shipment_portal_service import (
+    build_shipment_detail_context,
+    build_shipment_list_context,
+)
+from portal.services.backorder_export_service import build_backorder_xlsx
+from portal.services.backorder_portal_service import (
+    build_backorder_detail_context,
+    build_backorder_list_context,
+    build_backorder_queryset,
+    create_inventory_shipment_for_allocation,
+    reserve_inventory_for_backorder,
 )
 from portal.services.workflow_portal_service import (
     build_workflow_detail_context,
@@ -1637,6 +1654,95 @@ def workflow_item_action(request, item_id):
     return redirect(next_url)
 
 
+@staff_member_required
+def shipment_list(request):
+    return render(
+        request,
+        "portal/shipments/list.html",
+        build_shipment_list_context(request),
+    )
+
+
+@staff_member_required
+def shipment_detail(request, batch_id):
+    return render(
+        request,
+        "portal/shipments/detail.html",
+        build_shipment_detail_context(request, batch_id),
+    )
+
+
+@staff_member_required
+def backorder_list(request):
+    return render(
+        request,
+        "portal/backorders/list.html",
+        build_backorder_list_context(request),
+    )
+
+
+@staff_member_required
+def backorder_export_xlsx(request):
+    content = build_backorder_xlsx(
+        build_backorder_queryset(request.GET)
+    )
+    export_date = timezone.localdate().isoformat()
+    filename = f"待补发库_{export_date}.xlsx"
+    fallback_filename = f"backorders_{export_date}.xlsx"
+
+    response = HttpResponse(
+        content,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="{fallback_filename}"; '
+        f"filename*=UTF-8''{quote(filename, safe='')}"
+    )
+    return response
+
+
+@staff_member_required
+def backorder_detail(request, backorder_id):
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "reserve_inventory":
+            try:
+                reserve_inventory_for_backorder(
+                    backorder_id=backorder_id,
+                    quantity_requested=request.POST.get("quantity_requested"),
+                    user=request.user,
+                )
+                messages.success(request, "库存已预留。")
+            except Exception as exc:
+                messages.error(request, f"库存预留失败：{exc}")
+
+            return redirect("portal:backorder_detail", backorder_id=backorder_id)
+
+        if action == "create_inventory_shipment":
+            try:
+                create_inventory_shipment_for_allocation(
+                    allocation_id=request.POST.get("allocation_id"),
+                )
+                messages.success(
+                    request,
+                    "库存补发 ShipmentBatch 已创建，并已进入 Workflow。",
+                )
+            except Exception as exc:
+                messages.error(request, f"创建库存补发批次失败：{exc}")
+
+            return redirect("portal:backorder_detail", backorder_id=backorder_id)
+
+    return render(
+        request,
+        "portal/backorders/detail.html",
+        build_backorder_detail_context(request, backorder_id),
+    )
+
+
 # =============================================================================
 # 医院订单
 # =============================================================================
@@ -1882,22 +1988,38 @@ def factory_upload(request):
     if request.method == "POST":
         uploaded_file = request.FILES.get("confirmation_pdf")
         confirmation_type = request.POST.get("confirmation_type")
-        factory_id = request.POST.get("factory_id")
+        order_id = request.POST.get("order_id")
 
         if not uploaded_file:
             messages.error(request, "请先选择工厂采购 PDF。")
             return render(
                 request,
                 "portal/factory/upload.html",
-                build_factory_upload_context(request),
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
             )
 
-        confirmation, success, message_text = create_and_extract_factory_confirmation(
-            uploaded_file=uploaded_file,
-            confirmation_type=confirmation_type,
-            factory_id=factory_id,
-            user=request.user,
-        )
+        try:
+            confirmation, success, message_text = create_and_extract_factory_confirmation(
+                uploaded_file=uploaded_file,
+                confirmation_type=confirmation_type,
+                order_id=order_id,
+                user=request.user,
+            )
+        except Exception as exc:
+            messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
+            )
 
         confirmation.refresh_from_db()
 
@@ -1911,7 +2033,71 @@ def factory_upload(request):
     return render(
         request,
         "portal/factory/upload.html",
-        build_factory_upload_context(request),
+        build_factory_upload_context(
+            request,
+            selected_order_id=request.GET.get("order_id"),
+            default_confirmation_type=request.GET.get("type"),
+        ),
+    )
+
+
+@staff_member_required
+def order_factory_upload(request, order_id):
+    if request.method == "POST":
+        uploaded_file = request.FILES.get("confirmation_pdf")
+        confirmation_type = request.POST.get("confirmation_type")
+
+        if not uploaded_file:
+            messages.error(request, "请先选择工厂采购 PDF。")
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+
+        try:
+            confirmation, success, message_text = create_and_extract_factory_confirmation(
+                uploaded_file=uploaded_file,
+                confirmation_type=confirmation_type,
+                order_id=order_id,
+                user=request.user,
+            )
+        except Exception as exc:
+            messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+
+        confirmation.refresh_from_db()
+
+        return _redirect_after_factory_processing(
+            request=request,
+            confirmation=confirmation,
+            success=success,
+            message_text=message_text,
+        )
+
+    return render(
+        request,
+        "portal/factory/upload.html",
+        build_factory_upload_context(
+            request,
+            selected_order_id=order_id,
+            default_confirmation_type=request.GET.get("type"),
+            order_locked=True,
+        ),
     )
 
 
@@ -1972,6 +2158,25 @@ def factory_action(request, confirmation_id):
             messages.error(
                 request,
                 f"保存 Serial 修改失败：{exc}",
+            )
+
+        return redirect("portal:factory_detail", confirmation_id=confirmation_id)
+
+    if action == "associate_order":
+        try:
+            associate_order_and_finalize_factory_confirmation(
+                confirmation_id=confirmation_id,
+                order_id=request.POST.get("order_id"),
+                user=request.user,
+            )
+            messages.success(
+                request,
+                "订单已关联，并已继续完成 ShipmentBatch / Workflow 同步。",
+            )
+        except Exception as exc:
+            messages.error(
+                request,
+                f"关联订单并继续处理失败：{exc}",
             )
 
         return redirect("portal:factory_detail", confirmation_id=confirmation_id)
@@ -2079,4 +2284,3 @@ def settlement_transactions(request):
             request
         ),
     )
-

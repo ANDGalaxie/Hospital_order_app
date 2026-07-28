@@ -29,6 +29,20 @@ try:
 except Exception:
     sync_backorders_for_order = None
 
+try:
+    from workflow.services.workflow_sync_service import (
+        sync_document_workflow_item_for_batch,
+    )
+except Exception:
+    sync_document_workflow_item_for_batch = None
+
+try:
+    from workflow.services.workflow_validation_service import (
+        validate_document_workflow_item,
+    )
+except Exception:
+    validate_document_workflow_item = None
+
 
 def get_model_field_names(model):
     return {field.name for field in model._meta.fields}
@@ -405,5 +419,32 @@ def create_shipment_batch_from_inventory_allocation(allocation):
         sync_backorders_for_order(order)
 
     rebuild_inventory_product_folders()
+
+    if sync_document_workflow_item_for_batch is None:
+        raise ValueError(
+            "Workflow 同步服务不可用，不能为库存补发创建 WorkflowItem。"
+        )
+
+    workflow_sync_result = sync_document_workflow_item_for_batch(batch)
+
+    if isinstance(workflow_sync_result, tuple):
+        workflow_item = workflow_sync_result[0]
+    else:
+        workflow_item = workflow_sync_result
+
+    if workflow_item is None:
+        raise ValueError(
+            f"ShipmentBatch {batch.id} 已创建，但没有成功创建 WorkflowItem。"
+        )
+
+    if validate_document_workflow_item is None:
+        raise ValueError(
+            "Workflow 校验服务不可用，不能完成库存补发工作流校验。"
+        )
+
+    validate_document_workflow_item(
+        workflow_item,
+        save=True,
+    )
 
     return batch

@@ -27,6 +27,51 @@
     <form method="post" enctype="multipart/form-data" class="clean-upload-form">
         {% csrf_token %}
 
+        <div class="portal-panel">
+            <div class="detail-info-grid">
+                <div>
+                    <label class="detail-label" for="order_id">Hospital Order</label>
+                    <select id="order_id" name="order_id" class="portal-input">
+                        <option value="">自动匹配</option>
+                        {% for order in order_choices %}
+                            <option
+                                value="{{ order.id }}"
+                                {% if selected_order_id|stringformat:'s' == order.id|stringformat:'s' %}selected{% endif %}
+                            >
+                                {{ order.bon_de_commande }}{% if order.hospital_name %} / {{ order.hospital_name }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="detail-label" for="confirmation_type">发货类型</label>
+                    <select id="confirmation_type" name="confirmation_type" class="portal-input">
+                        {% for value, label in confirmation_type_choices %}
+                            <option value="{{ value }}" {% if value == default_confirmation_type %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="detail-label" for="factory_id">Factory</label>
+                    <select id="factory_id" name="factory_id" class="portal-input">
+                        <option value="">自动或留空</option>
+                        {% for factory in factory_choices %}
+                            <option
+                                value="{{ factory.id }}"
+                                {% if selected_factory_id|stringformat:'s' == factory.id|stringformat:'s' %}selected{% endif %}
+                            >
+                                {{ factory.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <div class="upload-drop-card">
             <div class="upload-file-icon">
                 PDF
@@ -51,17 +96,25 @@
             </div>
         </div>
 
-        <input
-            type="hidden"
-            name="confirmation_type"
-            value="{{ default_confirmation_type }}"
-        >
+        <div class="portal-panel">
+            <label class="detail-label">
+                <input
+                    type="checkbox"
+                    name="bon_de_commande_manual_confirmed"
+                    value="1"
+                >
+                当 PDF 中 bon de commande 缺失或与所选订单不一致时，允许人工确认继续处理
+            </label>
 
-        <input
-            type="hidden"
-            name="factory_id"
-            value=""
-        >
+            <label class="detail-label" for="bon_de_commande_manual_note">人工确认说明</label>
+            <textarea
+                id="bon_de_commande_manual_note"
+                name="bon_de_commande_manual_note"
+                class="portal-textarea"
+                rows="3"
+                placeholder="例如：工厂文件未显示订单号，但业务已人工核对属于该订单。"
+            ></textarea>
+        </div>
 
         <div class="upload-hint">
             <strong>提示：</strong>

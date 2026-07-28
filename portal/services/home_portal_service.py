@@ -3,6 +3,8 @@ from portal.services.common import (
     get_user_display_name,
     safe_count,
 )
+from backorders.models import BackorderLine
+from shipments.models import ShipmentBatch
 
 
 def build_home_context(request):
@@ -20,6 +22,11 @@ def build_home_context(request):
             "settlements",
             "SettlementAccount",
         ),
+        "shipment_batches": ShipmentBatch.objects.count(),
+        "active_backorders": BackorderLine.objects.filter(
+            is_active=True,
+            remaining_quantity__gt=0,
+        ).count(),
     }
 
     modules = [
@@ -62,6 +69,26 @@ def build_home_context(request):
             "url": "/portal/workflow/",
             "badge": counters.get("workflow"),
             "status_text": "流程项",
+        },
+        {
+            "title": "Shipment Batches",
+            "subtitle": "查看发货批次、数量快照与工作流状态",
+            "description": "集中查看每一批已发货记录",
+            "icon": "portal/img/app-icons/workflow.png",
+            "theme": "violet",
+            "url": "/portal/shipments/",
+            "badge": counters.get("shipment_batches"),
+            "status_text": "发货批次",
+        },
+        {
+            "title": "Backorder Library",
+            "subtitle": "查看待发产品并进入工厂补发或库存补发",
+            "description": "集中处理当前 active backorder lines",
+            "icon": "portal/img/app-icons/library.png",
+            "theme": "teal",
+            "url": "/portal/backorders/",
+            "badge": counters.get("active_backorders"),
+            "status_text": "待发行",
         },
         {
             "title": "文档中心",

@@ -220,6 +220,104 @@ def save_factory_confirmation_json(
     return json_path
 
 
+def get_confirmation_extracted_data(
+    confirmation: FactoryConfirmation,
+) -> Dict[str, Any]:
+    data = confirmation.extracted_confirmation_data or {}
+
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    data.setdefault("warnings", [])
+    data.setdefault("django", {})
+
+    return data
+
+
+def stamp_confirmation_debug_metadata(
+    confirmation: FactoryConfirmation,
+    factory_data: Dict[str, Any],
+    *,
+    workspace: Optional[Path] = None,
+    json_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    django_data = factory_data.setdefault("django", {})
+    django_data["factory_confirmation_id"] = confirmation.id
+
+    if confirmation.order_id:
+        django_data["selected_order_id"] = confirmation.order_id
+        django_data["order_id"] = confirmation.order_id
+        django_data["order_bon_de_commande"] = confirmation.order.bon_de_commande
+        django_data["order_match_source"] = "selected_order"
+    else:
+        django_data.setdefault("order_match_source", "auto_match")
+
+    django_data["manual_confirmation"] = bool(
+        confirmation.bon_de_commande_manual_confirmed
+    )
+    django_data["manual_note"] = (
+        confirmation.bon_de_commande_manual_note or ""
+    )
+
+    if workspace is not None:
+        django_data["workspace"] = str(workspace)
+
+    if json_path is not None:
+        django_data["saved_json_path"] = str(json_path)
+
+    return django_data
+
+
+def save_confirmation_extraction_state(
+    confirmation: FactoryConfirmation,
+    factory_data: Dict[str, Any],
+    *,
+    shipping_date=None,
+    extraction_status=None,
+    extraction_error="",
+) -> Dict[str, Any]:
+    workspace = get_factory_confirmation_workspace(confirmation)
+    json_path = save_factory_confirmation_json(
+        confirmation=confirmation,
+        data=factory_data,
+    )
+
+    stamp_confirmation_debug_metadata(
+        confirmation,
+        factory_data,
+        workspace=workspace,
+        json_path=json_path,
+    )
+
+    confirmation.extracted_confirmation_data = json_safe(factory_data)
+    confirmation.extraction_status = (
+        extraction_status
+        or FactoryConfirmation.ExtractionStatus.SUCCESS
+    )
+    confirmation.extraction_error = extraction_error
+    confirmation.extracted_at = timezone.now()
+    confirmation.shipping_date = shipping_date
+
+    confirmation.save(
+        update_fields=[
+            "extracted_confirmation_data",
+            "extraction_status",
+            "extraction_error",
+            "extracted_at",
+            "shipping_date",
+            "updated_at",
+        ]
+    )
+
+    return factory_data
+
+
 # ============================================================
 # 3. bon de commande 提取与订单匹配
 # ============================================================
@@ -779,6 +877,92 @@ def sync_confirmation_to_shipment_and_workflow(
     return shipment_batch, workflow_item, workflow_validation_result
 
 
+@transaction.atomic
+def finalize_factory_confirmation_after_order_match(
+    confirmation: FactoryConfirmation,
+    user=None,
+):
+    """
+    基于已有 extracted_confirmation_data 继续执行后处理。
+
+    用于：
+      1. 预选订单上传后，OCR 已完成但需要人工确认；
+      2. 未自动匹配时，人工补选订单后继续；
+      3. 重复执行时尽量保持幂等。
+    """
+    if not confirmation.order_id:
+        raise ValueError("FactoryConfirmation 还没有关联医院订单。")
+
+    factory_data = get_confirmation_extracted_data(
+        confirmation
+    )
+
+    header = factory_data.get("factory_document", {}) or {}
+    shipping_date = parse_iso_date(
+        header.get("shipping_date_only_iso")
+    )
+
+    validate_confirmation_batch_sequence(
+        confirmation
+    )
+
+    serial_count = create_serial_items_from_factory_data(
+        confirmation=confirmation,
+        factory_data=factory_data,
+    )
+
+    django_data = stamp_confirmation_debug_metadata(
+        confirmation,
+        factory_data,
+    )
+    django_data["serial_item_count_created"] = serial_count
+    django_data["finalized_after_order_match"] = True
+    django_data["finalized_by_user_id"] = getattr(
+        user,
+        "id",
+        None,
+    )
+
+    save_confirmation_extraction_state(
+        confirmation=confirmation,
+        factory_data=factory_data,
+        shipping_date=shipping_date,
+        extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
+        extraction_error="",
+    )
+
+    shipment_batch, workflow_item, workflow_validation_result = (
+        sync_confirmation_to_shipment_and_workflow(
+            confirmation=confirmation,
+            factory_data=factory_data,
+        )
+    )
+
+    django_data["shipment_batch_id"] = shipment_batch.id
+    django_data["workflow_item_id"] = workflow_item.id if workflow_item else None
+    django_data["workflow_validation_status"] = (
+        workflow_item.validation_status if workflow_item else None
+    )
+    django_data["workflow_status"] = (
+        workflow_item.workflow_status if workflow_item else None
+    )
+    django_data["workflow_validation_result"] = json_safe(
+        workflow_item.validation_data
+        if workflow_item and workflow_item.validation_data
+        else workflow_validation_result
+    )
+
+    save_confirmation_extraction_state(
+        confirmation=confirmation,
+        factory_data=factory_data,
+        shipping_date=shipping_date,
+        extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
+        extraction_error="",
+    )
+
+    return shipment_batch, workflow_item, workflow_validation_result
+
+
 # ============================================================
 # 7. 主入口：提取工厂采购文件
 # ============================================================
@@ -813,10 +997,12 @@ def extract_factory_confirmation_for_confirmation(
     try:
         factory_data = extract_factory_confirmation(pdf_path)
         factory_data.setdefault("warnings", [])
+        factory_data.setdefault("django", {})
 
         # --------------------------------------------------------
         # 1. 自动匹配医院订单
         # --------------------------------------------------------
+        had_preselected_order = bool(confirmation.order_id)
         matched_order = attach_order_from_factory_confirmation_data(
             confirmation=confirmation,
             factory_data=factory_data,
@@ -828,124 +1014,63 @@ def extract_factory_confirmation_for_confirmation(
             header.get("shipping_date_only_iso")
         )
 
+        django_data = stamp_confirmation_debug_metadata(
+            confirmation,
+            factory_data,
+        )
+        detected_bon = django_data.get("detected_bon_de_commande")
+
         # 没有匹配到订单时：保存提取结果，但不继续创建 Serial / Shipment / Workflow。
         if matched_order is None:
-            workspace = get_factory_confirmation_workspace(confirmation)
-            json_path = save_factory_confirmation_json(
+            save_confirmation_extraction_state(
                 confirmation=confirmation,
-                data=factory_data,
-            )
-
-            django_data = factory_data.setdefault("django", {})
-            django_data["factory_confirmation_id"] = confirmation.id
-            django_data["workspace"] = str(workspace)
-            django_data["saved_json_path"] = str(json_path)
-
-            confirmation.extracted_confirmation_data = json_safe(factory_data)
-            confirmation.extraction_status = FactoryConfirmation.ExtractionStatus.FAILED
-            confirmation.extraction_error = (
+                factory_data=factory_data,
+                shipping_date=shipping_date,
+                extraction_status=FactoryConfirmation.ExtractionStatus.FAILED,
+                extraction_error=(
                 "工厂采购文件已提取，但没有自动匹配到医院订单。"
                 "请在详情页或 Admin 中人工确认关联订单后重新提取。"
+                ),
             )
-            confirmation.extracted_at = timezone.now()
-            confirmation.shipping_date = shipping_date
+            return factory_data
 
-            confirmation.save(
-                update_fields=[
-                    "extracted_confirmation_data",
-                    "extraction_status",
-                    "extraction_error",
-                    "extracted_at",
-                    "shipping_date",
-                    "updated_at",
-                ]
+        selected_normalized = normalize_order_number(
+            matched_order.bon_de_commande
+        )
+        detected_normalized = normalize_order_number(
+            detected_bon
+        )
+
+        if (
+            had_preselected_order
+            and detected_normalized
+            and selected_normalized
+            and detected_normalized != selected_normalized
+            and not confirmation.bon_de_commande_manual_confirmed
+        ):
+            django_data["requires_manual_confirmation"] = True
+            save_confirmation_extraction_state(
+                confirmation=confirmation,
+                factory_data=factory_data,
+                shipping_date=shipping_date,
+                extraction_status=FactoryConfirmation.ExtractionStatus.FAILED,
+                extraction_error=(
+                    "工厂采购文件已提取，且已保留 OCR 结果。"
+                    "识别到的 bon de commande 与已选择订单不一致，"
+                    "需要人工确认后才能继续生成 ShipmentBatch / Workflow。"
+                ),
             )
-
             return factory_data
 
         # --------------------------------------------------------
         # 2. 检查批次顺序并创建 SerialItem
         # --------------------------------------------------------
-        validate_confirmation_batch_sequence(confirmation)
-
-        serial_count = create_serial_items_from_factory_data(
+        finalize_factory_confirmation_after_order_match(
             confirmation=confirmation,
-            factory_data=factory_data,
+            user=None,
         )
-
-        workspace = get_factory_confirmation_workspace(confirmation)
-        json_path = save_factory_confirmation_json(
-            confirmation=confirmation,
-            data=factory_data,
-        )
-
-        django_data = factory_data.setdefault("django", {})
-        django_data["order_id"] = confirmation.order_id
-        django_data["factory_confirmation_id"] = confirmation.id
-        django_data["serial_item_count_created"] = serial_count
-        django_data["workspace"] = str(workspace)
-        django_data["saved_json_path"] = str(json_path)
-
-        # 先保存 FactoryConfirmation 的基础提取状态。
-        confirmation.extracted_confirmation_data = json_safe(factory_data)
-        confirmation.extraction_status = FactoryConfirmation.ExtractionStatus.SUCCESS
-        confirmation.extraction_error = ""
-        confirmation.extracted_at = timezone.now()
-        confirmation.shipping_date = shipping_date
-
-        confirmation.save(
-            update_fields=[
-                "extracted_confirmation_data",
-                "extraction_status",
-                "extraction_error",
-                "extracted_at",
-                "shipping_date",
-                "updated_at",
-            ]
-        )
-
-        # --------------------------------------------------------
-        # 3. 同步 ShipmentBatch / Workflow
-        # --------------------------------------------------------
-        (
-            shipment_batch,
-            workflow_item,
-            workflow_validation_result,
-        ) = sync_confirmation_to_shipment_and_workflow(
-            confirmation=confirmation,
-            factory_data=factory_data,
-        )
-
-        django_data["shipment_batch_id"] = shipment_batch.id
-        django_data["workflow_item_id"] = workflow_item.id if workflow_item else None
-        django_data["workflow_validation_status"] = (
-            workflow_item.validation_status if workflow_item else None
-        )
-        django_data["workflow_status"] = (
-            workflow_item.workflow_status if workflow_item else None
-        )
-        django_data["workflow_validation_result"] = json_safe(
-            workflow_item.validation_data
-            if workflow_item and workflow_item.validation_data
-            else workflow_validation_result
-        )
-
-        # 同步和验证后，warnings 可能有新增，所以需要再保存一次。
-        confirmation.extracted_confirmation_data = json_safe(factory_data)
-        confirmation.save(
-            update_fields=[
-                "extracted_confirmation_data",
-                "updated_at",
-            ]
-        )
-
-        # 同步最终 JSON 文件，方便后续排查。
-        save_factory_confirmation_json(
-            confirmation=confirmation,
-            data=factory_data,
-        )
-
-        return factory_data
+        confirmation.refresh_from_db()
+        return get_confirmation_extracted_data(confirmation)
 
     except Exception as exc:
         error_text = traceback.format_exc()

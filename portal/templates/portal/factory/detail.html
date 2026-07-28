@@ -72,6 +72,19 @@
             </div>
 
             <div class="info-item">
+                <span class="info-label">关联 Hospital Order</span>
+                <strong>
+                    {% if confirmation.order_id %}
+                        <a href="{% url 'portal:order_detail' confirmation.order_id %}">
+                            {{ confirmation.order.bon_de_commande }}
+                        </a>
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="info-item">
                 <span class="info-label">工厂</span>
                 <strong>{{ factory_name }}</strong>
             </div>
@@ -103,6 +116,22 @@
             </div>
 
             <div class="info-item">
+                <span class="info-label">发货类型</span>
+                <strong>{{ confirmation.get_confirmation_type_display }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">人工确认</span>
+                <strong>
+                    {% if confirmation.bon_de_commande_manual_confirmed %}
+                        是
+                    {% else %}
+                        否
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="info-item">
                 <span class="info-label">产品数</span>
                 <strong>{{ product_count }}</strong>
             </div>
@@ -126,6 +155,11 @@
             <div>
                 <span>识别到的 bon de commande</span>
                 <strong>{{ django_data.detected_bon_de_commande|default:"—" }}</strong>
+            </div>
+
+            <div>
+                <span>人工说明</span>
+                <strong>{{ confirmation.bon_de_commande_manual_note|default:"—" }}</strong>
             </div>
 
             <div>
@@ -158,6 +192,68 @@
     </div>
 </div>
 
+{% if can_finalize %}
+<div class="portal-panel warning-panel">
+    <div class="panel-header">
+        <div>
+            <h2>继续处理</h2>
+            <p>OCR 结果已保留。可在这里关联订单并继续生成 ShipmentBatch / Workflow。</p>
+        </div>
+    </div>
+
+    <form
+        method="post"
+        action="{% url 'portal:factory_action' confirmation.id %}"
+        class="serial-edit-form"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="action" value="associate_order">
+
+        <div class="detail-info-grid">
+            <div>
+                <label class="detail-label" for="associate_order_id">Hospital Order</label>
+                <select id="associate_order_id" name="order_id" class="portal-input">
+                    {% for order in order_choices %}
+                        <option
+                            value="{{ order.id }}"
+                            {% if confirmation.order_id == order.id %}selected{% endif %}
+                        >
+                            {{ order.bon_de_commande }}{% if order.hospital_name %} / {{ order.hospital_name }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="detail-label">
+                    <input
+                        type="checkbox"
+                        name="bon_de_commande_manual_confirmed"
+                        value="1"
+                        {% if confirmation.bon_de_commande_manual_confirmed %}checked{% endif %}
+                    >
+                    编号不一致时人工确认继续
+                </label>
+            </div>
+        </div>
+
+        <label class="detail-label" for="manual_note">人工确认说明</label>
+        <textarea
+            id="manual_note"
+            name="bon_de_commande_manual_note"
+            class="portal-textarea"
+            rows="3"
+        >{{ confirmation.bon_de_commande_manual_note }}</textarea>
+
+        <div class="serial-edit-actions">
+            <button class="portal-button primary" type="submit">
+                关联订单并继续后处理
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
 {% if confirmation.extraction_error %}
 <div class="portal-panel danger-panel">
     <div class="panel-header">
@@ -183,6 +279,28 @@
     <ul class="warning-list">
         {% for warning in warnings %}
             <li>{{ warning }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if generated_documents %}
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>已生成文件</h2>
+            <p>当前批次关联的 GeneratedDocument</p>
+        </div>
+    </div>
+
+    <ul class="warning-list">
+        {% for document in generated_documents %}
+            <li>
+                {{ document.document_type }} / {{ document.document_number }}
+                {% if document.pdf_file %}
+                    <a href="{{ document.pdf_file.url }}" target="_blank">PDF</a>
+                {% endif %}
+            </li>
         {% endfor %}
     </ul>
 </div>

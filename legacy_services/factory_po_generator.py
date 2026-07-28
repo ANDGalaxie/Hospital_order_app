@@ -94,7 +94,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
+
+
+def get_weasyprint_html():
+    try:
+        from weasyprint import HTML
+    except Exception as exc:
+        raise RuntimeError(
+            "WeasyPrint is not available. Factory PO PDF generation "
+            "requires WeasyPrint and its system libraries."
+        ) from exc
+
+    return HTML
 
 # 统一编号模块：保证同一个医院订单的 Invoice 和 PO 使用同一个流水号。
 # 需要确保 src/document_numbering.py 已经存在。
@@ -1006,7 +1017,7 @@ def write_html_and_pdf(
 
     base_url = project_root.resolve().as_uri() + "/"
 
-    HTML(
+    get_weasyprint_html()(
         string=html_content,
         base_url=base_url,
     ).write_pdf(str(pdf_path))
