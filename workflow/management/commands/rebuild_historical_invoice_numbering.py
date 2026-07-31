@@ -3,6 +3,11 @@ from tempfile import TemporaryDirectory
 
 from django.core.management.base import BaseCommand, CommandError
 
+from workflow.services.historical_invoice_numbering_apply_service import (
+    apply_historical_invoice_numbering,
+    backup_historical_invoice_numbering,
+    timestamped_backup_root,
+)
 from workflow.services.historical_invoice_numbering_prerender_service import (
     build_historical_invoice_numbering_plan,
     prerender_historical_invoice,
@@ -10,16 +15,15 @@ from workflow.services.historical_invoice_numbering_prerender_service import (
 )
 
 
-APPLY_DISABLED_MESSAGE = (
-    "Production apply is disabled because the atomic file replacement "
-    "phase has not yet been implemented and validated."
+APPLY_CONFIRMATION_REQUIRED_MESSAGE = (
+    "Historical Invoice apply requires --confirm-historical-invoice-renumbering."
 )
 
 
 class Command(BaseCommand):
     help = (
-        "Read-only historical Hospital Invoice numbering plan and isolated "
-        "temporary prerender validation."
+        "Historical Hospital Invoice numbering plan, isolated temporary prerender "
+        "validation, and explicit production apply."
     )
 
     def add_arguments(self, parser):
@@ -31,27 +35,84 @@ class Command(BaseCommand):
         parser.add_argument(
             "--apply",
             action="store_true",
-            help="Disabled: production apply is not implemented.",
+            help="Execute the historical Hospital Invoice renumbering apply.",
         )
         parser.add_argument(
-            "--confirm-all-documents-are-unissued",
+            "--confirm-historical-invoice-renumbering",
             action="store_true",
-            help="Accepted for safety compatibility; it cannot enable --apply.",
+            help="Required confirmation flag for production apply.",
+        )
+        parser.add_argument(
+            "--backup-root",
+            default="",
+            help="Optional explicit backup root directory.",
         )
 
     def handle(self, *args, **options):
-        if options["apply"]:
-            raise CommandError(APPLY_DISABLED_MESSAGE)
-
         plan = build_historical_invoice_numbering_plan()
         self._write_plan(plan)
 
-        if not options["validate_render"]:
+        if options["validate_render"] and not options["apply"]:
+            self._run_validate_render(plan)
+            return
+
+        if not options["apply"]:
             self.stdout.write(
                 "DRY-RUN: no database records or production files were changed."
             )
             return
 
+        if not options["confirm_historical_invoice_renumbering"]:
+            raise CommandError(APPLY_CONFIRMATION_REQUIRED_MESSAGE)
+
+        backup_root = None
+        try:
+            requested_root = (
+                Path(options["backup_root"]).expanduser()
+                if options["backup_root"]
+                else None
+            )
+            backup_root = timestamped_backup_root(requested_root)
+            backup = backup_historical_invoice_numbering(
+                plan=plan,
+                backup_root=backup_root,
+            )
+            self.stdout.write(
+                "BACKUP "
+                f"root={backup['backup_root']} "
+                f"database={backup['database_backup_path']} "
+                f"files={backup['files_backup_path']} "
+                f"mapping={backup['mapping_path']}"
+            )
+            apply_result = apply_historical_invoice_numbering(plan=plan)
+            self.stdout.write(
+                "APPLY "
+                f"document_sequences={apply_result['document_sequence_update_count']} "
+                f"generated_documents={apply_result['generated_document_update_count']} "
+                f"regenerated_invoices={apply_result['regenerated_invoice_count']}"
+            )
+            post_plan = build_historical_invoice_numbering_plan()
+            post_summary = post_plan["summary"]
+            temp_sequence_count = self._count_temp_sequences()
+            temp_document_count = self._count_temp_documents()
+            self.stdout.write(
+                "POST-APPLY "
+                f"orders={post_summary['order_count']} "
+                f"correct={post_summary['correct_order_count']} "
+                f"incorrect={post_summary['incorrect_order_count']} "
+                f"document_sequences_to_update={post_summary['document_sequence_update_count']} "
+                f"affected_hospital_invoices={post_summary['affected_hospital_invoice_count']} "
+                f"temp_sequences={temp_sequence_count} "
+                f"temp_documents={temp_document_count}"
+            )
+        except Exception as exc:
+            backup_text = str(backup_root) if backup_root else ""
+            raise CommandError(
+                f"Historical Invoice apply failed: {type(exc).__name__}: {exc}. "
+                f"backup_root={backup_text}"
+            )
+
+    def _run_validate_render(self, plan):
         failures = []
         results = []
         affected = plan["affected_invoice_items"]
@@ -131,8 +192,7 @@ class Command(BaseCommand):
             f"business_snapshot_matches={snapshot_match_count} "
             f"production_files_unchanged={unchanged_count} "
             f"temporary_directory_cleaned={temporary_cleaned} "
-            f"blockers={plan['summary']['blocker_count']} "
-            "production_apply=BLOCKED"
+            f"blockers={plan['summary']['blocker_count']}"
         )
         if failures:
             detail = " | ".join(
@@ -142,6 +202,21 @@ class Command(BaseCommand):
             raise CommandError(
                 f"Historical Invoice prerender validation failed: {detail}"
             )
+
+    def _count_temp_sequences(self):
+        from documents.models import DocumentSequence
+
+        return DocumentSequence.objects.filter(
+            invoice_number__startswith="TEMP-INVOICE-ORDER-"
+        ).count()
+
+    def _count_temp_documents(self):
+        from documents.models import GeneratedDocument
+
+        return GeneratedDocument.objects.filter(
+            document_type=GeneratedDocument.DocumentType.HOSPITAL_INVOICE,
+            document_number__startswith="TEMP-INVOICE-DOC-",
+        ).count()
 
     def _write_plan(self, plan):
         summary = plan["summary"]
@@ -155,8 +230,7 @@ class Command(BaseCommand):
             f"affected_hospital_invoices={summary['affected_hospital_invoice_count']} "
             f"expected_full_numbers_unique={summary['expected_document_numbers_unique']} "
             f"blockers={summary['blocker_count']} "
-            f"validate_render_allowed={summary['validate_render_allowed']} "
-            "production_apply=BLOCKED"
+            f"validate_render_allowed={summary['validate_render_allowed']}"
         )
         for item in plan["invoice_items"]:
             self.stdout.write(

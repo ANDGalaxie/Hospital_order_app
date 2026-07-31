@@ -551,23 +551,45 @@ class HistoricalInvoiceNumberingPrerenderTests(TestCase):
             )
         self.assertEqual(before, self._production_fingerprints())
 
-    def test_22_apply_is_always_blocked(self):
+    def test_22_apply_requires_explicit_confirmation(self):
         with self.assertRaisesMessage(
             CommandError,
-            "Production apply is disabled because the atomic file replacement "
-            "phase has not yet been implemented and validated.",
+            "Historical Invoice apply requires --confirm-historical-invoice-renumbering.",
         ):
             call_command(
                 "rebuild_historical_invoice_numbering",
                 apply=True,
             )
 
-    def test_23_apply_with_confirmation_is_still_blocked(self):
-        with self.assertRaisesMessage(CommandError, "Production apply is disabled"):
+    def test_23_apply_accepts_explicit_confirmation_flag(self):
+        backup_root = Path(self.media_directory.name) / "command-backup"
+        with patch(
+            "workflow.management.commands.rebuild_historical_invoice_numbering."
+            "timestamped_backup_root",
+            return_value=backup_root,
+        ), patch(
+            "workflow.management.commands.rebuild_historical_invoice_numbering."
+            "backup_historical_invoice_numbering",
+            return_value={
+                "backup_root": str(backup_root),
+                "database_backup_path": str(backup_root / "database.dump"),
+                "files_backup_path": str(backup_root / "files"),
+                "mapping_path": str(backup_root / "mapping.json"),
+            },
+        ), patch(
+            "workflow.management.commands.rebuild_historical_invoice_numbering."
+            "apply_historical_invoice_numbering",
+            return_value={
+                "document_sequence_update_count": 2,
+                "generated_document_update_count": 4,
+                "regenerated_invoice_count": 4,
+            },
+        ):
             call_command(
                 "rebuild_historical_invoice_numbering",
                 apply=True,
-                confirm_all_documents_are_unissued=True,
+                confirm_historical_invoice_renumbering=True,
+                stdout=StringIO(),
             )
 
     def test_24_repeated_dry_run_output_is_stable(self):
