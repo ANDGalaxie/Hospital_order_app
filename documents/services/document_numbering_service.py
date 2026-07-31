@@ -242,7 +242,7 @@ def compute_expected_invoice_sequence(order, orders=None):
 
 def build_expected_invoice_number(order, orders=None):
     sequence = compute_expected_invoice_sequence(order, orders)
-    return {"year": order.order_date.year, "month": order.order_date.month, "sequence": sequence, "sort_key": invoice_order_sort_key(order), "invoice_number": f"Invoice {order.order_date:%Y%m}{sequence:02d}"}
+    return {"year": order.order_date.year, "month": order.order_date.month, "sequence": sequence, "sort_key": invoice_order_sort_key(order), "invoice_number": f"Invoice {order.order_date:%Y}{sequence:02d}{order.order_date:%m}"}
 
 
 @transaction.atomic
