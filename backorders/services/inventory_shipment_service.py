@@ -11,6 +11,9 @@ from backorders.models import (
 from backorders.services.inventory_service import rebuild_inventory_product_folders
 from orders.models import OrderItem
 from shipments.models import ShipmentBatch, ShipmentBatchItem
+from shipments.services.shipment_history_service import (
+    rebuild_order_shipment_history,
+)
 
 try:
     from shipments.models import BackorderSnapshotItem
@@ -79,167 +82,19 @@ def get_quantity_from_batch_item(batch_item):
 
 
 def recalculate_order_items_from_shipment_batches(order, warnings=None):
-    """
-    从所有 ShipmentBatchItem 累计更新 OrderItem。
-
-    OrderItem.confirmed_quantity = 累计已发数量
-    OrderItem.backordered_quantity = requested_quantity - 累计已发数量
-    """
     if warnings is None:
         warnings = []
-
-    shipped_map = Counter()
-
-    batch_items = (
-        ShipmentBatchItem.objects
-        .filter(batch__order=order)
-        .select_related("batch")
-    )
-
-    for batch_item in batch_items:
-        product_code = str(batch_item.product_code or "").strip()
-        shipped_quantity = get_quantity_from_batch_item(batch_item)
-
-        if product_code:
-            shipped_map[product_code] += shipped_quantity
-
-    order_product_codes = set(
-        order.items.values_list("product_code", flat=True)
-    )
-
-    extra_codes = [
-        code for code in shipped_map.keys()
-        if code not in order_product_codes
-    ]
-
-    if extra_codes:
-        warnings.append(
-            "发货批次中出现医院订单里没有的产品，需要人工确认："
-            + ", ".join(extra_codes)
-        )
-
-    for order_item in order.items.all():
-        product_code = str(order_item.product_code or "").strip()
-        requested_quantity = int(order_item.requested_quantity or 0)
-        confirmed_quantity = int(shipped_map.get(product_code, 0))
-
-        backordered_quantity = max(
-            requested_quantity - confirmed_quantity,
-            0,
-        )
-
-        order_item.confirmed_quantity = confirmed_quantity
-        order_item.backordered_quantity = backordered_quantity
-
-        if confirmed_quantity <= 0:
-            order_item.status = OrderItem.Status.BACKORDERED
-
-        elif confirmed_quantity < requested_quantity:
-            order_item.status = OrderItem.Status.PARTIALLY_CONFIRMED
-
-        else:
-            order_item.status = OrderItem.Status.CONFIRMED
-
-        if confirmed_quantity > requested_quantity:
-            warnings.append(
-                f"产品 {product_code}: 累计已发数量 {confirmed_quantity} "
-                f"大于医院订单数量 {requested_quantity}，可能存在超发。"
-            )
-
-        order_item.save(
-            update_fields=[
-                "confirmed_quantity",
-                "backordered_quantity",
-                "status",
-                "updated_at",
-            ]
-        )
-
+    result = rebuild_order_shipment_history(order)
+    warnings.extend(result.get("warnings") or [])
     return warnings
 
 
 def update_batch_summary(batch):
-    """
-    更新 ShipmentBatch 的汇总字段。
-    如果某些字段不存在，会自动跳过。
-    """
-    shipped_total = 0
-
-    for item in ShipmentBatchItem.objects.filter(batch=batch):
-        shipped_total += get_quantity_from_batch_item(item)
-
-    remaining_total = 0
-
-    for order_item in batch.order.items.all():
-        remaining_total += int(order_item.backordered_quantity or 0)
-
-    update_fields = []
-
-    if hasattr(batch, "shipped_this_batch_quantity"):
-        batch.shipped_this_batch_quantity = shipped_total
-        update_fields.append("shipped_this_batch_quantity")
-
-    if hasattr(batch, "remaining_after_batch_quantity"):
-        batch.remaining_after_batch_quantity = remaining_total
-        update_fields.append("remaining_after_batch_quantity")
-
-    if hasattr(batch, "status"):
-        # 尽量兼容不同 Status 命名。
-        if remaining_total == 0:
-            if hasattr(ShipmentBatch, "Status") and hasattr(ShipmentBatch.Status, "COMPLETE"):
-                batch.status = ShipmentBatch.Status.COMPLETE
-            elif hasattr(ShipmentBatch, "Status") and hasattr(ShipmentBatch.Status, "COMPLETED"):
-                batch.status = ShipmentBatch.Status.COMPLETED
-            else:
-                batch.status = "complete"
-        else:
-            if hasattr(ShipmentBatch, "Status") and hasattr(ShipmentBatch.Status, "PARTIAL"):
-                batch.status = ShipmentBatch.Status.PARTIAL
-            elif hasattr(ShipmentBatch, "Status") and hasattr(ShipmentBatch.Status, "PARTIALLY_SHIPPED"):
-                batch.status = ShipmentBatch.Status.PARTIALLY_SHIPPED
-            else:
-                batch.status = "partial"
-
-        update_fields.append("status")
-
-    if update_fields:
-        batch.save(update_fields=update_fields)
+    rebuild_order_shipment_history(batch.order)
 
 
 def rebuild_backorder_snapshot_for_batch(batch):
-    """
-    创建这个 ShipmentBatch 之后的待发快照。
-
-    快照含义：
-      当前 batch 发完之后，每个 OrderItem 还剩多少。
-    """
-    if BackorderSnapshotItem is None:
-        return
-
-    BackorderSnapshotItem.objects.filter(batch=batch).delete()
-
-    field_names = get_model_field_names(BackorderSnapshotItem)
-
-    for order_item in batch.order.items.all():
-        kwargs = {
-            "batch": batch,
-            "order": batch.order,
-            "product": order_item.product,
-            "product_code": order_item.product_code,
-            "description": order_item.description,
-            "requested_quantity": order_item.requested_quantity,
-            "confirmed_quantity": order_item.confirmed_quantity,
-            "remaining_quantity": order_item.backordered_quantity,
-            "backordered_quantity": order_item.backordered_quantity,
-        }
-
-        safe_kwargs = {
-            key: value
-            for key, value in kwargs.items()
-            if key in field_names
-        }
-
-        BackorderSnapshotItem.objects.create(**safe_kwargs)
+    rebuild_order_shipment_history(batch.order)
 
 
 def validate_inventory_allocation_before_shipment(allocation):
@@ -405,15 +260,7 @@ def create_shipment_batch_from_inventory_allocation(allocation):
         ]
     )
 
-    warnings = []
-
-    recalculate_order_items_from_shipment_batches(
-        order=order,
-        warnings=warnings,
-    )
-
-    update_batch_summary(batch)
-    rebuild_backorder_snapshot_for_batch(batch)
+    rebuild_order_shipment_history(order)
 
     if sync_backorders_for_order:
         sync_backorders_for_order(order)

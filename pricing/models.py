@@ -63,7 +63,7 @@ class PricePolicy(models.Model):
 
     临期折扣判断日期：
         由调用方显式提供 reference_date。
-        正式 Factory PO 应使用 PO document date。
+        正式 Factory PO 应使用本批 FactoryConfirmation.shipping_date。
     """
 
     name = models.CharField(

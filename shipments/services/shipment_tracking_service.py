@@ -9,7 +9,9 @@ from shipments.models import (
     ShipmentOrderFolder,
     ShipmentBatch,
     ShipmentBatchItem,
-    BackorderSnapshotItem,
+)
+from shipments.services.shipment_history_service import (
+    rebuild_order_shipment_history,
 )
 try:
     from pricing.services.price_policy_service import get_hospital_order_date
@@ -19,11 +21,15 @@ except Exception:
 
 def get_batch_date(confirmation):
     """
-    发货批次日期：
-    优先使用工厂确认文件 shipping_date。
-    如果没有，则使用今天。
+    发货批次日期只能来自 FactoryConfirmation.shipping_date。
     """
-    return confirmation.shipping_date or timezone.localdate()
+    if not confirmation.shipping_date:
+        raise ValueError(
+            "FactoryConfirmation 缺少 shipping_date，"
+            "不能创建 ShipmentBatch；未使用当前日期回退。"
+        )
+
+    return confirmation.shipping_date
 
 
 def get_month_key(batch_date):
@@ -60,38 +66,6 @@ def build_shipped_map_from_serial_items(order, confirmation):
             counter[serial.product_code] += 1
 
     return counter
-
-
-def build_previous_shipped_map(order, exclude_batch=None):
-    """
-    统计这个订单在之前所有批次里已经发过多少。
-    """
-    qs = ShipmentBatchItem.objects.filter(
-        batch__order=order,
-    )
-
-    if exclude_batch is not None:
-        qs = qs.exclude(batch=exclude_batch)
-
-    counter = Counter()
-
-    for item in qs:
-        counter[item.product_code] += int(item.shipped_quantity or 0)
-
-    return counter
-
-
-def calculate_batch_status(total_remaining, has_over_shipped, shipped_this_batch):
-    if has_over_shipped:
-        return ShipmentBatch.Status.OVER_SHIPPED
-
-    if shipped_this_batch <= 0:
-        return ShipmentBatch.Status.NEEDS_REVIEW
-
-    if total_remaining > 0:
-        return ShipmentBatch.Status.PARTIAL
-
-    return ShipmentBatch.Status.COMPLETE
 
 
 def get_order_folder_date(order):
@@ -188,16 +162,10 @@ def sync_shipment_batch_from_factory_confirmation(confirmation):
         batch.batch_number = get_next_batch_number(order)
 
     batch.shipped_items.all().delete()
-    batch.backorder_items.all().delete()
 
     shipped_this_batch_map = build_shipped_map_from_serial_items(
         order=order,
         confirmation=confirmation,
-    )
-
-    previous_shipped_map = build_previous_shipped_map(
-        order=order,
-        exclude_batch=batch,
     )
 
     # 创建本批已发记录
@@ -211,58 +179,7 @@ def sync_shipment_batch_from_factory_confirmation(confirmation):
             product_code=product_code,
             shipped_quantity=int(qty),
         )
-
-    total_requested = 0
-    shipped_this_batch_total = 0
-    total_shipped_after_batch_total = 0
-    remaining_total = 0
-    has_over_shipped = False
-
-    # 创建待发快照
-    for order_item in order.items.all().order_by("id"):
-        product_code = order_item.product_code
-        requested = int(order_item.requested_quantity or 0)
-
-        shipped_before = int(previous_shipped_map.get(product_code, 0))
-        shipped_this_batch = int(shipped_this_batch_map.get(product_code, 0))
-        total_shipped_after = shipped_before + shipped_this_batch
-
-        remaining = requested - total_shipped_after
-        is_over_shipped = remaining < 0
-
-        if is_over_shipped:
-            has_over_shipped = True
-
-        display_remaining = max(remaining, 0)
-
-        BackorderSnapshotItem.objects.create(
-            batch=batch,
-            product=order_item.product,
-            product_code=product_code,
-            requested_quantity=requested,
-            shipped_before_batch_quantity=shipped_before,
-            shipped_this_batch_quantity=shipped_this_batch,
-            total_shipped_after_batch_quantity=total_shipped_after,
-            remaining_quantity=display_remaining,
-            is_over_shipped=is_over_shipped,
-        )
-
-        total_requested += requested
-        shipped_this_batch_total += shipped_this_batch
-        total_shipped_after_batch_total += total_shipped_after
-        remaining_total += display_remaining
-
-    batch.total_requested_quantity = total_requested
-    batch.shipped_this_batch_quantity = shipped_this_batch_total
-    batch.total_shipped_after_batch_quantity = total_shipped_after_batch_total
-    batch.remaining_after_batch_quantity = remaining_total
-    batch.status = calculate_batch_status(
-        total_remaining=remaining_total,
-        has_over_shipped=has_over_shipped,
-        shipped_this_batch=shipped_this_batch_total,
-    )
-
-    batch.save()
+    rebuild_order_shipment_history(order)
 
     return batch
 

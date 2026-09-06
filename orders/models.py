@@ -60,6 +60,15 @@ class Order(models.Model):
         help_text="医院订单号，例如 150222",
     )
 
+    order_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=(
+            "医院原始订单的下单日期。"
+            "仅来自医院订单 OCR 或人工确认，不允许日期回退。"
+        ),
+    )
+
     hospital_name = models.CharField(
         max_length=255,
         blank=True,

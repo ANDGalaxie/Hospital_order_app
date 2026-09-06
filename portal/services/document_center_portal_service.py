@@ -351,6 +351,27 @@ def build_file_info(field_file):
     except Exception:
         result["url"] = ""
 
+    # Static media URLs are commonly cached by the browser/web server.
+    # Include the actual file modification marker so a regenerated PDF
+    # is fetched immediately without changing the storage path.
+    version = None
+    try:
+        modified_at = field_file.storage.get_modified_time(field_file.name)
+        if modified_at:
+            version = int(modified_at.timestamp() * 1000000)
+    except Exception:
+        version = None
+
+    if version is None:
+        try:
+            version = field_file.storage.size(field_file.name)
+        except Exception:
+            version = None
+
+    if result["url"] and version is not None:
+        separator = "&" if "?" in result["url"] else "?"
+        result["url"] = f"{result['url']}{separator}v={version}"
+
     try:
         result["exists"] = (
             field_file.storage.exists(

@@ -1,6 +1,9 @@
 from django.apps import apps
 from django.urls import reverse
 
+from backorders.models import BackorderLine
+from shipments.models import ShipmentBatch
+
 
 def safe_count(app_label, model_name):
     """
@@ -28,6 +31,11 @@ def build_library_home_context(request):
     hospital_count = safe_count("hospitals", "Hospital")
     factory_count = safe_count("factories", "Factory")
     price_count = safe_count("pricing", "PricePolicy")
+    shipment_batch_count = ShipmentBatch.objects.count()
+    active_backorder_count = BackorderLine.objects.filter(
+        is_active=True,
+        remaining_quantity__gt=0,
+    ).count()
 
     modules = [
         {
@@ -61,6 +69,22 @@ def build_library_home_context(request):
             "theme": "orange",
             "url": reverse("portal:library_prices"),
             "badge": price_count,
+        },
+        {
+            "title": "发货批次库",
+            "subtitle": "查看每一批发货记录、数量快照与工作流状态。",
+            "icon": "portal/img/app-icons/workflow.png",
+            "theme": "violet",
+            "url": reverse("portal:shipment_list"),
+            "badge": shipment_batch_count,
+        },
+        {
+            "title": "待补发库",
+            "subtitle": "查看当前待补发行并进入工厂补发或库存补发。",
+            "icon": "portal/img/app-icons/library.png",
+            "theme": "teal",
+            "url": reverse("portal:backorder_list"),
+            "badge": active_backorder_count,
         },
     ]
 

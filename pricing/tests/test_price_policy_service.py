@@ -246,6 +246,62 @@ class PricePolicyEngineTests(TestCase):
         with self.assertRaises(ValidationError):
             overlapping.full_clean()
 
+    def test_conflicting_top_scope_is_blocking(self):
+        first = PricePolicy.objects.create(
+            name="Conflicting first",
+            factory=self.factory,
+            category=self.category,
+            start_date=date(2026, 1, 1),
+            hospital_unit_price=Decimal(
+                "250.00"
+            ),
+            factory_unit_price=Decimal(
+                "120.00"
+            ),
+            expiration_discount_rate=Decimal(
+                "0.30"
+            ),
+            expiration_threshold_days=365,
+            is_active=True,
+        )
+        second = PricePolicy.objects.create(
+            name="Conflicting second",
+            factory=self.factory,
+            category=self.category,
+            start_date=date(2026, 1, 1),
+            hospital_unit_price=Decimal(
+                "260.00"
+            ),
+            factory_unit_price=Decimal(
+                "130.00"
+            ),
+            expiration_discount_rate=Decimal(
+                "0.30"
+            ),
+            expiration_threshold_days=365,
+            is_active=True,
+        )
+
+        resolved = resolve_price_policy_for_product(
+            product=self.product,
+            target_date=date(2026, 3, 1),
+        )
+
+        self.assertIsNone(
+            resolved["policy"]
+        )
+        self.assertTrue(
+            resolved["is_ambiguous"]
+        )
+        self.assertIn(
+            str(first.id),
+            resolved["errors"][0],
+        )
+        self.assertIn(
+            str(second.id),
+            resolved["errors"][0],
+        )
+
     def test_category_must_belong_to_factory(self):
         other_factory = Factory.objects.create(
             name="TEST FACTORY B",
@@ -310,7 +366,7 @@ class PricePolicyEngineTests(TestCase):
             Decimal("84.00"),
         )
 
-    def test_apply_policy_writes_complete_snapshot(self):
+    def test_apply_policy_freezes_only_hospital_snapshot(self):
         policy = self.create_policy(
             name="Snapshot policy",
             factory=self.factory,
@@ -333,6 +389,7 @@ class PricePolicyEngineTests(TestCase):
                 "hospital_orders/test.pdf"
             ),
             factory=self.factory,
+            order_date=date(2026, 6, 15),
             extracted_order_data={
                 "header": {
                     "order_date": "2026-06-15",
@@ -366,17 +423,14 @@ class PricePolicyEngineTests(TestCase):
             item.hospital_unit_price,
             Decimal("250.00"),
         )
-        self.assertEqual(
+        self.assertIsNone(
             item.factory_unit_price,
-            Decimal("120.00"),
         )
-        self.assertEqual(
+        self.assertIsNone(
             item.expiration_discount_rate,
-            Decimal("0.3000"),
         )
-        self.assertEqual(
+        self.assertIsNone(
             item.expiration_threshold_days,
-            365,
         )
         self.assertEqual(
             item.price_policy_date,

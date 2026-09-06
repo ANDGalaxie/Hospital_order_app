@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from factory_confirmations.models import SerialItem
 from pricing.services.price_policy_service import (
     calculate_expiration_pricing,
+    resolve_factory_unit_price,
 )
 from shipments.models import ShipmentBatchItem
 
@@ -204,6 +205,9 @@ def get_expected_batch_quantities(batch):
 
 def build_batch_price_snapshot(
     batch,
+    factory_shipping_date=None,
+    factory=None,
+    factory_shipping_date_source="",
 ) -> Dict[str, Any]:
     """
     对当前 ShipmentBatch 进行 Serial 级价格计算。
@@ -212,11 +216,10 @@ def build_batch_price_snapshot(
 
         expiration_date
         <
-        batch.batch_date
-        + OrderItem.expiration_threshold_days
+        factory_shipping_date
+        + PricePolicy.expiration_threshold_days
 
-    价格来源只允许：
-        OrderItem 价格快照
+    工厂价格和折扣规则统一来自该日期有效的 PricePolicy。
 
     不允许回退：
         Product 当前价格
@@ -229,8 +232,9 @@ def build_batch_price_snapshot(
     result = {
         "batch_id": batch.id,
         "order_id": batch.order_id,
-        "reference_date": (
-            batch.batch_date
+        "reference_date": None,
+        "price_basis_type": (
+            "factory_shipping_date"
         ),
         "product_rows": [],
         "po_groups": [],
@@ -260,12 +264,84 @@ def build_batch_price_snapshot(
         )
         return result
 
-    if not batch.batch_date:
+    if batch.factory_confirmation_id:
+        confirmation = (
+            batch.factory_confirmation
+        )
+        shipping_date = (
+            confirmation.shipping_date
+        )
+
+        if not shipping_date:
+            errors.append(
+                "FactoryConfirmation 缺少 shipping_date，"
+                "无法解析本批工厂价格或折扣。"
+            )
+            return result
+
+        if not batch.batch_date:
+            errors.append(
+                "ShipmentBatch 缺少 batch_date，"
+                "无法确认工厂价格基准日期。"
+            )
+            return result
+
+        if batch.batch_date != shipping_date:
+            errors.append(
+                "ShipmentBatch.batch_date "
+                f"({batch.batch_date}) 与 "
+                "FactoryConfirmation.shipping_date "
+                f"({shipping_date}) 不一致。"
+            )
+            return result
+
+        effective_factory = (
+            factory
+            or confirmation.factory
+            or batch.order.factory
+        )
+        date_source = (
+            "factory_confirmation.shipping_date"
+        )
+
+    elif batch.inventory_allocation_id:
+        shipping_date = factory_shipping_date
+
+        if not shipping_date:
+            errors.append(
+                "当前库存补发批次没有可用的工厂实际"
+                "发货日期。请使用 "
+                "--factory-shipping-date YYYY-MM-DD 指定。"
+            )
+            return result
+
+        effective_factory = (
+            factory
+            or batch.order.factory
+        )
+        date_source = (
+            factory_shipping_date_source
+            or "explicit_factory_shipping_date"
+        )
+
+    else:
         errors.append(
-            "ShipmentBatch 缺少 batch_date，"
-            "无法计算临期折扣。"
+            "Factory PO 定价要求 ShipmentBatch 关联 "
+            "FactoryConfirmation 或 InventoryAllocation。"
         )
         return result
+
+    if not effective_factory:
+        errors.append(
+            "无法确定本批 Factory PO 的工厂。"
+        )
+        return result
+
+    result["reference_date"] = shipping_date
+    result["factory_shipping_date_source"] = (
+        date_source
+    )
+    result["factory_id"] = effective_factory.id
 
     expected_quantities = (
         get_expected_batch_quantities(batch)
@@ -370,25 +446,53 @@ def build_batch_price_snapshot(
             )
             continue
 
-        base_factory_price = to_decimal(
-            order_item.factory_unit_price
-        )
-
         hospital_price = to_decimal(
             order_item.hospital_unit_price
         )
 
-        discount_rate = to_decimal(
-            order_item
-            .expiration_discount_rate
+        factory_resolution = (
+            resolve_factory_unit_price(
+                product=order_item.product,
+                factory=effective_factory,
+                reference_date=shipping_date,
+            )
         )
 
+        if factory_resolution["errors"]:
+            for resolution_error in (
+                factory_resolution["errors"]
+            ):
+                errors.append(
+                    f"产品 {product_code}："
+                    f"{resolution_error}"
+                )
+            continue
+
+        factory_policy = (
+            factory_resolution["policy"]
+        )
+        base_factory_price = to_decimal(
+            factory_resolution["unit_price"]
+        )
+        discount_rate = to_decimal(
+            factory_resolution[
+                "expiration_discount_rate"
+            ]
+        )
         threshold_days = (
-            order_item
-            .expiration_threshold_days
+            factory_resolution[
+                "expiration_threshold_days"
+            ]
         )
 
         row_has_error = False
+
+        if factory_policy is None:
+            errors.append(
+                f"产品 {product_code} 在发货日期 "
+                f"{shipping_date} 找不到唯一有效工厂价格。"
+            )
+            row_has_error = True
 
         if (
             base_factory_price is None
@@ -396,7 +500,7 @@ def build_batch_price_snapshot(
         ):
             errors.append(
                 f"产品 {product_code} "
-                "缺少有效工厂采购价快照。"
+                "缺少有效工厂采购价。"
             )
             row_has_error = True
 
@@ -410,17 +514,10 @@ def build_batch_price_snapshot(
             )
             row_has_error = True
 
-        if not order_item.price_policy_id:
-            errors.append(
-                f"产品 {product_code} "
-                "没有 PricePolicy 快照。"
-            )
-            row_has_error = True
-
         if discount_rate is None:
             errors.append(
                 f"产品 {product_code} "
-                "缺少临期折扣率快照。"
+                "缺少临期折扣率。"
             )
             row_has_error = True
 
@@ -440,7 +537,7 @@ def build_batch_price_snapshot(
         ):
             errors.append(
                 f"产品 {product_code} "
-                "缺少有效临期门槛快照。"
+                "缺少有效临期门槛。"
             )
             row_has_error = True
 
@@ -452,7 +549,7 @@ def build_batch_price_snapshot(
                 base_factory_price
             ),
             expiration_date=expiration_date,
-            reference_date=batch.batch_date,
+            reference_date=shipping_date,
             expiration_threshold_days=(
                 threshold_days
             ),
@@ -551,15 +648,20 @@ def build_batch_price_snapshot(
                     int(threshold_days)
                 ),
                 "price_policy_id": (
-                    order_item.price_policy_id
+                    factory_policy.id
                 ),
                 "price_policy_name": (
-                    order_item.price_policy.name
-                    if order_item.price_policy
-                    else ""
+                    factory_policy.name
+                    or ""
                 ),
                 "price_policy_date": (
-                    order_item.price_policy_date
+                    shipping_date
+                ),
+                "factory_shipping_date": (
+                    shipping_date
+                ),
+                "price_basis_type": (
+                    "factory_shipping_date"
                 ),
                 "hospital_amount": (
                     Decimal("0.00")
@@ -614,7 +716,6 @@ def build_batch_price_snapshot(
             product_code,
             str(base_unit_price),
             str(applied_discount_rate),
-            str(final_unit_price),
         )
 
         if po_group_key not in (
@@ -656,6 +757,19 @@ def build_batch_price_snapshot(
                 ),
                 "expiration_threshold_days": (
                     int(threshold_days)
+                ),
+                "factory_shipping_date": (
+                    shipping_date
+                ),
+                "price_basis_type": (
+                    "factory_shipping_date"
+                ),
+                "price_policy_id": (
+                    factory_policy.id
+                ),
+                "price_policy_name": (
+                    factory_policy.name
+                    or ""
                 ),
             }
 

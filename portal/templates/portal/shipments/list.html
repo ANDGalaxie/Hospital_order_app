@@ -1,12 +1,24 @@
 {% extends "portal/base.html" %}
 
-{% block title %}Shipment Batches{% endblock %}
+{% block title %}发货批次库{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<span>发货批次库</span>
+{% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>Shipment Batches</h1>
-        <p>查看所有发货批次及其 Workflow 状态。</p>
+        <h1>发货批次库</h1>
+        <p>查看所有发货批次、数量快照和工作流状态。</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:library_home' %}">返回资料库</a>
     </div>
 </section>
 
@@ -39,17 +51,17 @@
     <table class="portal-table">
         <thead>
             <tr>
-                <th>Batch</th>
-                <th>Date</th>
-                <th>Order</th>
-                <th>Hospital</th>
+                <th>批次</th>
+                <th>发货日期</th>
+                <th>医院订单</th>
+                <th>医院</th>
                 <th>来源</th>
                 <th>类型</th>
-                <th>Shipped</th>
-                <th>Remaining</th>
-                <th>Validation</th>
-                <th>Status</th>
-                <th>Workflow</th>
+                <th>本批发货数量</th>
+                <th>批次后待发数量</th>
+                <th>校验状态</th>
+                <th>批次状态</th>
+                <th>工作流</th>
                 <th></th>
             </tr>
         </thead>
@@ -61,13 +73,13 @@
                     <td>{{ row.order_number }}</td>
                     <td>{{ row.hospital_name }}</td>
                     <td>{{ row.source_type }}</td>
-                    <td>{{ row.confirmation_type }}</td>
+                    <td><span class="status-pill info">{{ row.confirmation_type }}</span></td>
                     <td>{{ row.shipped_quantity }}</td>
                     <td>{{ row.remaining_quantity }}</td>
                     <td>{{ row.validation_status }}</td>
                     <td>{{ row.status }}</td>
                     <td><span class="status-pill {{ row.workflow_class }}">{{ row.workflow_text }}</span></td>
-                    <td><a class="mini-button ghost" href="{{ row.detail_url }}">查看</a></td>
+                    <td><a class="mini-button ghost" href="{{ row.detail_url }}">详情</a></td>
                 </tr>
             {% empty %}
                 <tr><td colspan="12" class="empty-cell">暂无发货批次。</td></tr>

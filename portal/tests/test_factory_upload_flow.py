@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from backorders.models import BackorderLine, BackorderOrderFolder
 from factories.models import Factory
-from factory_confirmations.models import FactoryConfirmation
+from factory_confirmations.models import FactoryConfirmation, SerialItem
 from orders.models import Order, OrderItem
 from portal.services.factory_portal_service import get_shipment_batch
 from pricing.models import PricePolicy
@@ -117,17 +117,17 @@ class FactoryUploadPortalFlowTests(TestCase):
         payload = {
             "confirmation_pdf": self.uploaded_pdf(),
             "order_id": str(self.order.id),
-            "factory_id": str(self.factory.id),
             "confirmation_type": FactoryConfirmation.ConfirmationType.INITIAL,
-            "bon_de_commande_manual_note": "",
         }
         payload.update(overrides)
         return payload
 
     def extractor_result(self, detected_bon=None):
         result = {
+            "source_pdf": "mock-factory-confirmation.pdf",
             "factory_document": {
                 "shipping_date_only_iso": "2026-07-16",
+                "total_completed": 2,
             },
             "serial_items": [
                 {
@@ -141,7 +141,20 @@ class FactoryUploadPortalFlowTests(TestCase):
                     "expiration_date_iso": "2027-07-17",
                 },
             ],
-            "summary": {},
+            "summary_by_product": [
+                {
+                    "product_code": self.product.code,
+                    "confirmed_quantity": 2,
+                    "delivered_quantity_sum": 2.0,
+                    "serial_numbers": ["SERIAL-001", "SERIAL-002"],
+                }
+            ],
+            "debug": {"page_count": 1, "pages_text_length": []},
+            "summary": {
+                "serial_item_count": 2,
+                "product_type_count": 1,
+                "total_completed": 2,
+            },
             "warnings": [],
         }
         if detected_bon is not None:
@@ -212,8 +225,17 @@ class FactoryUploadPortalFlowTests(TestCase):
 
         confirmation = FactoryConfirmation.objects.latest("id")
         self.assertEqual(confirmation.order_id, self.order.id)
+        self.assertEqual(
+            SerialItem.objects.filter(factory_confirmation=confirmation).count(),
+            2,
+        )
         self.assertTrue(
             ShipmentBatch.objects.filter(factory_confirmation=confirmation).exists()
+        )
+        self.assertTrue(
+            DocumentWorkflowItem.objects.filter(
+                shipment_batch__factory_confirmation=confirmation,
+            ).exists()
         )
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
@@ -223,10 +245,7 @@ class FactoryUploadPortalFlowTests(TestCase):
 
         self.client.post(
             reverse("portal:factory_upload"),
-            self.confirmation_payload(
-                bon_de_commande_manual_confirmed="1",
-                bon_de_commande_manual_note="manual ok",
-            ),
+            self.confirmation_payload(),
         )
 
         confirmation = FactoryConfirmation.objects.latest("id")
@@ -234,28 +253,28 @@ class FactoryUploadPortalFlowTests(TestCase):
         self.assertTrue(
             ShipmentBatch.objects.filter(factory_confirmation=confirmation).exists()
         )
+        self.assertIn(
+            "PDF 识别编号为 999999",
+            confirmation.bon_de_commande_manual_note,
+        )
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.extract_factory_confirmation")
-    def test_selected_order_mismatch_without_confirmation_blocks_finalize(self, extract_mock, _sync_mock):
-        extract_mock.return_value = self.extractor_result(detected_bon="999999")
+    def test_selected_order_with_missing_factory_is_blocked(self, extract_mock, _sync_mock):
+        extract_mock.return_value = self.extractor_result(detected_bon=None)
+        self.order.factory = None
+        self.order.save(update_fields=["factory"])
 
-        self.client.post(
+        response = self.client.post(
             reverse("portal:factory_upload"),
             self.confirmation_payload(),
         )
 
-        confirmation = FactoryConfirmation.objects.latest("id")
-        self.assertEqual(
-            confirmation.extraction_status,
-            FactoryConfirmation.ExtractionStatus.FAILED,
-        )
-        self.assertFalse(
-            ShipmentBatch.objects.filter(factory_confirmation=confirmation).exists()
-        )
-        self.assertIn(
-            "需要人工确认",
-            confirmation.extraction_error,
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(FactoryConfirmation.objects.exists())
+        self.assertContains(
+            response,
+            "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。",
         )
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.extract_factory_confirmation")
@@ -297,8 +316,6 @@ class FactoryUploadPortalFlowTests(TestCase):
             {
                 "action": "associate_order",
                 "order_id": str(self.order.id),
-                "bon_de_commande_manual_confirmed": "1",
-                "bon_de_commande_manual_note": "matched later",
             },
         )
 

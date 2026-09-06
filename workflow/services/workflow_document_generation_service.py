@@ -490,7 +490,6 @@ def generate_documents_for_workflow_item(
 ) -> Dict[str, Any]:
     item = (
         DocumentWorkflowItem.objects
-        .select_for_update()
         .select_related("order", "shipment_batch")
         .get(id=item.id)
     )

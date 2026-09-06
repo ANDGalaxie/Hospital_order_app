@@ -155,6 +155,18 @@ def get_or_create_document_numbers(
     )
 
     if existing:
+        if not existing.po_number:
+            existing.po_number = build_po_number(
+                document_date=doc_date,
+                sequence=existing.sequence,
+            )
+            existing.save(
+                update_fields=[
+                    "po_number",
+                    "updated_at",
+                ]
+            )
+
         return {
             "created": False,
             "sequence_id": existing.id,
@@ -260,5 +272,14 @@ def get_or_create_expected_invoice_numbers(order):
     existing=DocumentSequence.objects.select_for_update().filter(month_key=month_key, bon_de_commande=order.bon_de_commande).first()
     if existing:
         return {**expected, "sequence_id": existing.id, "created": False}
-    obj=DocumentSequence.objects.create(month_key=month_key, bon_de_commande=order.bon_de_commande, sequence=expected["sequence"], invoice_number=expected["invoice_number"], po_number="")
+    obj = DocumentSequence.objects.create(
+        month_key=month_key,
+        bon_de_commande=order.bon_de_commande,
+        sequence=expected["sequence"],
+        invoice_number=expected["invoice_number"],
+        po_number=build_po_number(
+            document_date=order.order_date,
+            sequence=expected["sequence"],
+        ),
+    )
     return {**expected, "sequence_id": obj.id, "created": True}

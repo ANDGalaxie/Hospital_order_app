@@ -7,6 +7,9 @@ from django.contrib.auth import (
 from django.test import TestCase
 
 from factories.models import Factory
+from factory_confirmations.models import (
+    FactoryConfirmation,
+)
 from orders.models import Order, OrderItem
 from pricing.models import PricePolicy
 from products.models import (
@@ -119,6 +122,7 @@ class WorkflowPriceValidationTests(
                 "hospital_orders/test.pdf"
             ),
             factory=self.factory,
+            order_date=date(2026, 6, 15),
             created_by=self.user,
         )
 
@@ -148,10 +152,32 @@ class WorkflowPriceValidationTests(
             )
         )
 
+        self.confirmation = (
+            FactoryConfirmation.objects.create(
+                order=self.order,
+                factory=self.factory,
+                confirmation_pdf=(
+                    "factory_confirmations/test.pdf"
+                ),
+                extraction_status=(
+                    FactoryConfirmation
+                    .ExtractionStatus
+                    .SUCCESS
+                ),
+                shipping_date=date(2026, 7, 1),
+                created_by=self.user,
+            )
+        )
+
         self.batch = ShipmentBatch.objects.create(
             order=self.order,
             source_type=(
-                ShipmentBatch.SourceType.MANUAL
+                ShipmentBatch
+                .SourceType
+                .FACTORY_CONFIRMATION
+            ),
+            factory_confirmation=(
+                self.confirmation
             ),
             batch_number=1,
             batch_date=date(2026, 7, 1),
@@ -214,25 +240,20 @@ class WorkflowPriceValidationTests(
         )
 
         self.assertIn(
-            "没有命中 PricePolicy",
+            "没有命中医院 PricePolicy",
             error_text,
         )
 
         self.assertIn(
-            "缺少价格规则日期快照",
+            "缺少医院价格规则日期快照",
             error_text,
         )
 
-    def test_zero_factory_price_is_blocking(self):
-        self.order_item.factory_unit_price = (
-            Decimal("0.00")
-        )
-
-        self.order_item.save(
-            update_fields=[
-                "factory_unit_price",
-                "updated_at",
-            ]
+    def test_invalid_dated_factory_price_is_blocking(self):
+        PricePolicy.objects.filter(
+            pk=self.policy.pk
+        ).update(
+            factory_unit_price=Decimal("0.00")
         )
 
         result = (

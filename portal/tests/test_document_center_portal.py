@@ -309,3 +309,31 @@ class DocumentCenterPortalTests(
             response,
             "TEST-01",
         )
+
+
+    def test_pdf_url_contains_file_version_marker(self):
+        from datetime import datetime, timezone
+        from unittest.mock import Mock
+
+        from portal.services.document_center_portal_service import (
+            build_file_info,
+        )
+
+        field = Mock()
+        field.name = "generated/test.pdf"
+        field.url = "/media/generated/test.pdf"
+        field.storage.exists.return_value = True
+        field.storage.get_modified_time.return_value = datetime(
+            2026,
+            7,
+            30,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+        field.storage.size.return_value = 123
+
+        info = build_file_info(field)
+
+        self.assertIn("?v=", info["url"])
+        self.assertIn("1785412800000000", info["url"])

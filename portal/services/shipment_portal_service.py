@@ -8,6 +8,32 @@ from shipments.models import ShipmentBatch
 from workflow.models import DocumentWorkflowItem
 
 
+def shipment_source_label(value):
+    return {
+        ShipmentBatch.SourceType.FACTORY_CONFIRMATION: "工厂文件",
+        ShipmentBatch.SourceType.INVENTORY_ALLOCATION: "库存补发",
+        ShipmentBatch.SourceType.MANUAL: "人工记录",
+    }.get(value, value or "—")
+
+
+def shipment_validation_label(value):
+    return {
+        ShipmentBatch.ValidationStatus.READY: "可生成文件",
+        ShipmentBatch.ValidationStatus.NEEDS_REVIEW: "需要人工检查",
+        ShipmentBatch.ValidationStatus.BLOCKED: "禁止生成",
+    }.get(value, value or "—")
+
+
+def shipment_status_label(value):
+    return {
+        ShipmentBatch.Status.OPEN: "待处理",
+        ShipmentBatch.Status.PARTIAL: "部分完成",
+        ShipmentBatch.Status.COMPLETE: "已完成",
+        ShipmentBatch.Status.OVER_SHIPPED: "超发",
+        ShipmentBatch.Status.NEEDS_REVIEW: "需要人工检查",
+    }.get(value, value or "—")
+
+
 def build_shipment_list_context(request):
     query = (request.GET.get("q") or "").strip()
     source_type = request.GET.get("source_type") or "all"
@@ -58,7 +84,7 @@ def build_shipment_list_context(request):
                 "batch_date": batch.batch_date,
                 "order_number": batch.order.bon_de_commande,
                 "hospital_name": batch.order.hospital_name or "—",
-                "source_type": batch.source_type,
+                "source_type": shipment_source_label(batch.source_type),
                 "confirmation_type": (
                     batch.factory_confirmation.get_confirmation_type_display()
                     if batch.factory_confirmation_id
@@ -66,8 +92,8 @@ def build_shipment_list_context(request):
                 ),
                 "shipped_quantity": batch.shipped_this_batch_quantity,
                 "remaining_quantity": batch.remaining_after_batch_quantity,
-                "validation_status": batch.validation_status,
-                "status": batch.status,
+                "validation_status": shipment_validation_label(batch.validation_status),
+                "status": shipment_status_label(batch.status),
                 "workflow_text": workflow_text,
                 "workflow_class": workflow_class,
                 "detail_url": reverse("portal:shipment_detail", args=[batch.id]),
@@ -109,6 +135,9 @@ def build_shipment_detail_context(request, batch_id):
         "lang": get_portal_lang(request),
         "user_display_name": get_user_display_name(request.user),
         "batch": batch,
+        "source_type_text": shipment_source_label(batch.source_type),
+        "validation_status_text": shipment_validation_label(batch.validation_status),
+        "status_text": shipment_status_label(batch.status),
         "workflow_item": workflow_item,
         "shipped_items": batch.shipped_items.order_by("product_code", "id"),
         "backorder_items": batch.backorder_items.order_by("product_code", "id"),

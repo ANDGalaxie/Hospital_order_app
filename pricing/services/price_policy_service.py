@@ -1,4 +1,3 @@
-import json
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, Optional
@@ -6,64 +5,23 @@ from typing import Any, Dict, Optional
 from django.db import transaction
 from django.db.models import Q
 
-from documents.services.document_numbering_service import (
-    parse_document_date,
-)
 from pricing.models import PricePolicy
 
 
 MONEY_QUANT = Decimal("0.01")
 
-DEFAULT_EXPIRATION_THRESHOLD_DAYS = 365
-DEFAULT_EXPIRATION_DISCOUNT_RATE = Decimal("0.30")
-
-
-def try_parse_date(value: Any):
-    if not value:
-        return None
-
-    try:
-        return parse_document_date(value)
-    except Exception:
-        return None
-
-
 def get_hospital_order_date(order):
     """
-    价格阶段判断日期 = 医院订单 Date de commande。
+    医院价格基准日期只能来自正式 Order.order_date。
     """
-    data = (
-        getattr(order, "extracted_order_data", None)
-        or {}
-    )
-
-    if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except Exception:
-            data = {}
-
-    raw_date = (
-        data.get("header", {}).get("order_date")
-        or data.get("summary", {}).get("order_date")
-    )
-
-    parsed = try_parse_date(raw_date)
-
-    if parsed:
-        return parsed, "hospital_order_date"
-
-    for attr in [
-        "document_date",
-        "manual_document_date",
+    order_date = getattr(
+        order,
         "order_date",
-        "selected_date",
-    ]:
-        value = getattr(order, attr, None)
-        parsed = try_parse_date(value)
+        None,
+    )
 
-        if parsed:
-            return parsed, attr
+    if order_date:
+        return order_date, "order.order_date"
 
     return None, ""
 
@@ -148,6 +106,8 @@ def resolve_price_policy_for_product(
         "scope": "",
         "message": "",
         "warnings": [],
+        "errors": [],
+        "is_ambiguous": False,
         "target_date": (
             target_date.isoformat()
             if target_date
@@ -238,7 +198,7 @@ def resolve_price_policy_for_product(
         )
         return result
 
-    def priority(policy):
+    def specificity(policy):
         factory_specificity = (
             1
             if (
@@ -255,24 +215,36 @@ def resolve_price_policy_for_product(
             else 0
         )
 
-        start_date_priority = (
-            policy.start_date
-            or date.min
-        )
-
         return (
             factory_specificity,
             category_specificity,
-            start_date_priority,
-            policy.id or 0,
         )
 
-    candidates.sort(
-        key=priority,
-        reverse=True,
+    top_specificity = max(
+        specificity(policy)
+        for policy in candidates
     )
+    top_candidates = [
+        policy
+        for policy in candidates
+        if specificity(policy) == top_specificity
+    ]
 
-    policy = candidates[0]
+    if len(top_candidates) != 1:
+        policy_ids = ", ".join(
+            str(policy.id)
+            for policy in top_candidates
+        )
+        result["is_ambiguous"] = True
+        result["errors"].append(
+            "同一有效价格作用域存在多条 PricePolicy："
+            f"product={product}, date={target_date}, "
+            f"policy_ids={policy_ids}。"
+        )
+        result["message"] = result["errors"][0]
+        return result
+
+    policy = top_candidates[0]
     scope = describe_policy_scope(policy)
 
     result["policy"] = policy
@@ -284,6 +256,143 @@ def resolve_price_policy_for_product(
         f"Scope={scope}."
     )
 
+    return result
+
+
+def resolve_hospital_unit_price(
+    product,
+    hospital,
+    reference_date,
+    order_factory=None,
+) -> Dict[str, Any]:
+    """
+    解析医院订单日期有效的销售价。
+
+    当前 PricePolicy 没有 hospital scope；hospital 仅作为
+    定价依据元数据保留，作用域仍由产品、工厂与分类决定。
+    """
+    result = resolve_price_policy_for_product(
+        product=product,
+        target_date=reference_date,
+        order_factory=order_factory,
+    )
+    result = dict(result)
+    result["price_basis_type"] = (
+        "hospital_order_date"
+    )
+    result["reference_date"] = (
+        reference_date.isoformat()
+        if reference_date
+        else None
+    )
+    result["hospital_id"] = (
+        getattr(hospital, "id", None)
+    )
+
+    policy = result.get("policy")
+    price = (
+        policy.hospital_unit_price
+        if policy
+        else None
+    )
+
+    if policy and (
+        price is None
+        or Decimal(str(price)) <= 0
+    ):
+        result["errors"].append(
+            f"PricePolicy #{policy.id} "
+            "缺少有效医院销售单价。"
+        )
+
+    result["unit_price"] = price
+    return result
+
+
+def resolve_factory_unit_price(
+    product,
+    factory,
+    reference_date,
+) -> Dict[str, Any]:
+    """
+    解析本次工厂实际发货日期有效的采购价和折扣规则。
+    """
+    result = resolve_price_policy_for_product(
+        product=product,
+        target_date=reference_date,
+        order_factory=factory,
+    )
+    result = dict(result)
+    result["price_basis_type"] = (
+        "factory_shipping_date"
+    )
+    result["reference_date"] = (
+        reference_date.isoformat()
+        if reference_date
+        else None
+    )
+    result["factory_id"] = (
+        getattr(factory, "id", None)
+    )
+
+    product_factory_id = getattr(
+        product,
+        "factory_id",
+        None,
+    )
+    factory_id = getattr(
+        factory,
+        "id",
+        None,
+    )
+
+    if (
+        product_factory_id
+        and factory_id
+        and product_factory_id != factory_id
+    ):
+        result["errors"].append(
+            "产品所属工厂与本批 "
+            "FactoryConfirmation 工厂不一致。"
+        )
+
+    policy = result.get("policy")
+    price = (
+        policy.factory_unit_price
+        if policy
+        else None
+    )
+
+    if policy and (
+        price is None
+        or Decimal(str(price)) <= 0
+    ):
+        result["errors"].append(
+            f"PricePolicy #{policy.id} "
+            "缺少有效工厂采购单价。"
+        )
+
+    if policy and (
+        policy.expiration_discount_rate is None
+        or policy.expiration_threshold_days is None
+        or policy.expiration_threshold_days <= 0
+    ):
+        result["errors"].append(
+            f"PricePolicy #{policy.id} "
+            "临期折扣参数不完整。"
+        )
+
+    result["unit_price"] = price
+    result["expiration_discount_rate"] = (
+        policy.expiration_discount_rate
+        if policy
+        else None
+    )
+    result["expiration_threshold_days"] = (
+        policy.expiration_threshold_days
+        if policy
+        else None
+    )
     return result
 
 
@@ -319,7 +428,7 @@ def calculate_expiration_pricing(
         <
         reference_date + threshold_days
 
-    正式 Factory PO 必须显式传入 PO document date。
+    正式 Factory PO 必须显式传入本批 FactoryConfirmation.shipping_date。
     """
     base_price = Decimal(
         str(factory_unit_price or 0)
@@ -459,40 +568,35 @@ def apply_price_policy_to_order(
             )
             continue
 
-        resolved = resolve_price_policy_for_product(
+        resolved = resolve_hospital_unit_price(
             product=product,
-            target_date=policy_date,
+            hospital=order.hospital,
+            reference_date=policy_date,
             order_factory=order.factory,
         )
 
         result["warnings"].extend(
             resolved["warnings"]
         )
+        result["errors"].extend(
+            resolved["errors"]
+        )
 
         policy: Optional[PricePolicy] = (
             resolved["policy"]
         )
 
-        if not policy:
-            result["warnings"].append(
-                f"OrderItem {item.product_code}: "
-                f"no price policy found for "
-                f"date {policy_date}. "
-                "Existing price snapshot was kept."
-            )
+        if not policy or resolved["errors"]:
+            if not resolved["errors"]:
+                result["errors"].append(
+                    f"OrderItem {item.product_code}: "
+                    f"no unique hospital price found for "
+                    f"date {policy_date}."
+                )
             continue
 
         item.hospital_unit_price = (
-            policy.hospital_unit_price
-        )
-        item.factory_unit_price = (
-            policy.factory_unit_price
-        )
-        item.expiration_discount_rate = (
-            policy.expiration_discount_rate
-        )
-        item.expiration_threshold_days = (
-            policy.expiration_threshold_days
+            resolved["unit_price"]
         )
         item.price_policy = policy
         item.price_policy_date = policy_date
@@ -504,9 +608,6 @@ def apply_price_policy_to_order(
             item.save(
                 update_fields=[
                     "hospital_unit_price",
-                    "factory_unit_price",
-                    "expiration_discount_rate",
-                    "expiration_threshold_days",
                     "price_policy",
                     "price_policy_date",
                     "price_policy_message",
@@ -522,15 +623,6 @@ def apply_price_policy_to_order(
                 "scope": resolved["scope"],
                 "hospital_unit_price": str(
                     policy.hospital_unit_price
-                ),
-                "factory_unit_price": str(
-                    policy.factory_unit_price
-                ),
-                "expiration_discount_rate": str(
-                    policy.expiration_discount_rate
-                ),
-                "expiration_threshold_days": (
-                    policy.expiration_threshold_days
                 ),
             }
         )

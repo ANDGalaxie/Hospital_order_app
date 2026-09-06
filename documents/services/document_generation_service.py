@@ -35,11 +35,13 @@ from legacy_services.factory_po_generator import (
     render_po_html,
     write_html_and_pdf as write_po_html_and_pdf,
 )
+from pricing.services.price_policy_service import (
+    resolve_factory_unit_price,
+)
 
 
 EXPIRATION_THRESHOLD_DAYS = 365
 EXPIRATION_DISCOUNT_RATE = Decimal("0.30")
-DEFAULT_FACTORY_UNIT_PRICE = Decimal("120.00")
 EXPECTED_ARRIVAL_DAYS = 3
 
 def prepare_company_info(company_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -143,29 +145,11 @@ def try_parse_business_date(value):
 
 def get_hospital_order_date(order: Order):
     """
-    从医院订单提取结果中读取 Date de commande。
-
-    优先级：
-        1. order.extracted_order_data["header"]["order_date"]
-        2. order.extracted_order_data["summary"]["order_date"]
+    医院订单业务日期只读取正式 Order.order_date。
+    OCR JSON 仅用于 migration/backfill，不在文档生成时兜底。
     """
-    data = getattr(order, "extracted_order_data", None) or {}
-
-    if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except Exception:
-            data = {}
-
-    raw_date = (
-        data.get("header", {}).get("order_date")
-        or data.get("summary", {}).get("order_date")
-    )
-
-    parsed = try_parse_business_date(raw_date)
-
-    if parsed:
-        return parsed, "hospital_order_date"
+    if order.order_date:
+        return order.order_date, "order.order_date"
 
     return None, ""
 
@@ -804,10 +788,26 @@ def build_factory_po_items_from_serials(
             unit_price = Decimal(order_item.factory_unit_price)
 
         elif order_item and order_item.product:
-            unit_price = Decimal(order_item.product.factory_unit_price or 0)
+            resolved_price = resolve_factory_unit_price(
+                product=order_item.product,
+                factory=confirmation.factory,
+                reference_date=document_date,
+            )
+            if resolved_price["errors"] or resolved_price["unit_price"] is None:
+                raise ValueError(
+                    "No valid PricePolicy factory price for "
+                    f"product={code}, date={document_date}: "
+                    + "; ".join(resolved_price["errors"])
+                )
+            unit_price = Decimal(
+                str(resolved_price["unit_price"])
+            )
 
         else:
-            unit_price = DEFAULT_FACTORY_UNIT_PRICE
+            raise ValueError(
+                f"Product {code} has no OrderItem/product "
+                "for Factory PO pricing."
+            )
 
         key = (code, discount_rate)
 
@@ -985,7 +985,7 @@ def save_generated_document_record(
     source_data: Dict[str, Any],
     generated_by,
 ) -> GeneratedDocument:
-    obj, created = GeneratedDocument.objects.update_or_create(
+    obj, created = GeneratedDocument.objects.get_or_create(
         document_type=document_type,
         document_number=document_number,
         defaults={
@@ -1000,99 +1000,63 @@ def save_generated_document_record(
     return obj
 
 
+def get_latest_batch_workflow_item(order):
+    """
+    兼容旧 Admin action，但实际生成统一委托给批次工作流，
+    避免订单级累计数量和旧价格 fallback。
+    """
+    confirmation = (
+        get_successful_factory_confirmation(
+            order
+        )
+    )
+
+    try:
+        batch = confirmation.shipment_batch
+    except Exception as exc:
+        raise ValueError(
+            "最新 FactoryConfirmation 没有关联 "
+            "ShipmentBatch，不能使用旧订单级生成入口。"
+        ) from exc
+
+    from workflow.models import (
+        DocumentWorkflowItem,
+    )
+
+    workflow_item = (
+        DocumentWorkflowItem.objects.filter(
+            order=order,
+            shipment_batch=batch,
+        )
+        .order_by("id")
+        .first()
+    )
+
+    if not workflow_item:
+        raise ValueError(
+            f"ShipmentBatch {batch.id} 没有关联 "
+            "DocumentWorkflowItem。"
+        )
+
+    return workflow_item
+
+
 @transaction.atomic
 def generate_hospital_invoice_for_order(
     order: Order,
     generated_by,
     document_date: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    validation = ensure_order_can_generate(order)
-    confirmation = get_successful_factory_confirmation(order)
-
-    sequence_date, sequence_date_source, sequence_date_warnings = resolve_factory_po_document_date(
-        order=order,
-        confirmation=confirmation,
-        manual_date=document_date,
+    from workflow.services.workflow_document_generation_service import (
+        generate_hospital_invoice_for_workflow_item,
     )
 
-    invoice_date, invoice_date_source, invoice_date_warnings = resolve_invoice_po_document_date(
-        order=order,
-        confirmation=confirmation,
-        manual_date=None,
-    )
-
-    numbers = get_or_create_document_numbers(
-        bon_de_commande=order.bon_de_commande,
-        document_date=sequence_date,
-    )
-
-    company_info = load_json_config(
-        Path(settings.BASE_DIR) / "config" / "company_info.json"
-    )
-
-    invoice_data = build_hospital_invoice_data(
-        order=order,
-        confirmation=confirmation,
-        company_info=company_info,
-        numbers=numbers,
-        invoice_date=invoice_date,
-    )
-
-    invoice_data.setdefault("warnings", []).extend(sequence_date_warnings)
-    invoice_data.setdefault("warnings", []).extend(invoice_date_warnings)
-    invoice_data.setdefault("debug", {})
-    invoice_data["debug"]["sequence_date_source"] = sequence_date_source
-    invoice_data["debug"]["invoice_date_source"] = invoice_date_source
-    invoice_data["debug"]["sequence_date"] = sequence_date.isoformat()
-    invoice_data["debug"]["invoice_date"] = invoice_date.isoformat()
-
-    workspace = get_order_document_workspace(order) / "invoices"
-    filename_base = sanitize_filename(numbers["invoice_number"])
-
-    html_path = workspace / f"{filename_base}.html"
-    pdf_path = workspace / f"{filename_base}.pdf"
-    data_path = workspace / f"{filename_base}_data.json"
-
-    html_content = render_invoice_html(
-        invoice_data=invoice_data,
-        template_dir=Path(settings.BASE_DIR) / "templates",
-        template_name="hospital_invoice.html",
-    )
-
-    write_invoice_html_and_pdf(
-        html_content=html_content,
-        html_path=html_path,
-        pdf_path=pdf_path,
-        project_root=Path(settings.BASE_DIR),
-    )
-
-    source_data = {
-        "validation": validation,
-        "numbers": numbers,
-        "invoice_data": invoice_data,
-    }
-
-    save_json_file(source_data, data_path)
-
-    generated_document = save_generated_document_record(
-        order=order,
-        document_type="hospital_invoice",
-        document_number=numbers["invoice_number"],
-        pdf_path=pdf_path,
-        html_path=html_path,
-        source_data=source_data,
+    return generate_hospital_invoice_for_workflow_item(
+        item=get_latest_batch_workflow_item(
+            order
+        ),
         generated_by=generated_by,
     )
-
-    return {
-        "generated_document_id": generated_document.id,
-        "document_type": "hospital_invoice",
-        "document_number": numbers["invoice_number"],
-        "pdf_path": str(pdf_path),
-        "html_path": str(html_path),
-        "data_path": str(data_path),
-        "warnings": invoice_data.get("warnings", []),
-    }
 
 
 @transaction.atomic
@@ -1101,101 +1065,16 @@ def generate_factory_po_for_order(
     generated_by,
     document_date: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    validation = ensure_order_can_generate(order)
-    confirmation = get_successful_factory_confirmation(order)
-
-    po_order_date, po_order_date_source, po_order_date_warnings = resolve_factory_po_document_date(
-        order=order,
-        confirmation=confirmation,
-        manual_date=document_date,
+    from workflow.services.workflow_document_generation_service import (
+        generate_factory_po_for_workflow_item,
     )
 
-    shipping_date, shipping_date_source, shipping_date_warnings = resolve_invoice_po_document_date(
-        order=order,
-        confirmation=confirmation,
-        manual_date=None,
-    )
-
-    numbers = get_or_create_document_numbers(
-        bon_de_commande=order.bon_de_commande,
-        document_date=po_order_date,
-    )
-
-    company_info = load_json_config(
-        Path(settings.BASE_DIR) / "config" / "company_info.json"
-    )
-
-    factory_info = build_factory_info_from_model(
-        confirmation.factory or order.factory
-    )
-
-    po_data = build_factory_po_data(
-        order=order,
-        confirmation=confirmation,
-        company_info=company_info,
-        factory_info=factory_info,
-        numbers=numbers,
-        po_order_date=po_order_date,
-        shipping_date=shipping_date,
-    )
-
-    po_data.setdefault("warnings", []).extend(po_order_date_warnings)
-    po_data.setdefault("warnings", []).extend(shipping_date_warnings)
-    po_data.setdefault("debug", {})
-    po_data["debug"]["po_order_date_source"] = po_order_date_source
-    po_data["debug"]["shipping_date_source"] = shipping_date_source
-    po_data["debug"]["po_order_date"] = po_order_date.isoformat()
-    po_data["debug"]["shipping_date"] = shipping_date.isoformat()
-    po_data["debug"]["discount_reference_date"] = shipping_date.isoformat()
-
-    workspace = get_order_document_workspace(order) / "purchase_orders"
-    filename_base = sanitize_filename(f"Purchase_Order_{numbers['po_number']}")
-
-    html_path = workspace / f"{filename_base}.html"
-    pdf_path = workspace / f"{filename_base}.pdf"
-    data_path = workspace / f"{filename_base}_data.json"
-
-    html_content = render_po_html(
-        po_data=po_data,
-        template_path=Path(settings.BASE_DIR)
-        / "templates"
-        / "factory_purchase_order.html",
-    )
-
-    write_po_html_and_pdf(
-        html_content=html_content,
-        html_path=html_path,
-        pdf_path=pdf_path,
-        project_root=Path(settings.BASE_DIR),
-    )
-
-    source_data = {
-        "validation": validation,
-        "numbers": numbers,
-        "po_data": po_data,
-    }
-
-    save_json_file(source_data, data_path)
-
-    generated_document = save_generated_document_record(
-        order=order,
-        document_type="factory_po",
-        document_number=numbers["po_number"],
-        pdf_path=pdf_path,
-        html_path=html_path,
-        source_data=source_data,
+    return generate_factory_po_for_workflow_item(
+        item=get_latest_batch_workflow_item(
+            order
+        ),
         generated_by=generated_by,
     )
-
-    return {
-        "generated_document_id": generated_document.id,
-        "document_type": "factory_po",
-        "document_number": numbers["po_number"],
-        "pdf_path": str(pdf_path),
-        "html_path": str(html_path),
-        "data_path": str(data_path),
-        "warnings": po_data.get("warnings", []),
-    }
 
 
 @transaction.atomic
@@ -1204,24 +1083,14 @@ def generate_all_documents_for_order(
     generated_by,
     document_date: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    invoice_result = generate_hospital_invoice_for_order(
-        order=order,
-        generated_by=generated_by,
-        document_date=document_date,
+    from workflow.services.workflow_document_generation_service import (
+        generate_documents_for_workflow_item,
     )
 
-    po_result = generate_factory_po_for_order(
-        order=order,
+    # document_date 仅为旧接口兼容参数，不参与任何价格解析。
+    return generate_documents_for_workflow_item(
+        item=get_latest_batch_workflow_item(
+            order
+        ),
         generated_by=generated_by,
-        document_date=document_date,
     )
-
-    order.status = Order.Status.DOCUMENTS_GENERATED
-    order.save(update_fields=["status", "updated_at"])
-
-    return {
-        "order_id": order.id,
-        "bon_de_commande": order.bon_de_commande,
-        "invoice": invoice_result,
-        "factory_po": po_result,
-    }

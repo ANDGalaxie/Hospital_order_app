@@ -8,6 +8,9 @@ from django.contrib.auth import (
 from django.test import TestCase
 
 from factories.models import Factory
+from factory_confirmations.models import (
+    FactoryConfirmation,
+)
 from orders.models import Order, OrderItem
 from pricing.models import PricePolicy
 from products.models import (
@@ -117,6 +120,7 @@ class BatchPriceSnapshotTests(TestCase):
                 "hospital_orders/test.pdf"
             ),
             factory=self.factory,
+            order_date=date(2026, 6, 15),
             created_by=self.user,
         )
 
@@ -146,10 +150,32 @@ class BatchPriceSnapshotTests(TestCase):
             )
         )
 
+        self.confirmation = (
+            FactoryConfirmation.objects.create(
+                order=self.order,
+                factory=self.factory,
+                confirmation_pdf=(
+                    "factory_confirmations/test.pdf"
+                ),
+                extraction_status=(
+                    FactoryConfirmation
+                    .ExtractionStatus
+                    .SUCCESS
+                ),
+                shipping_date=date(2026, 7, 1),
+                created_by=self.user,
+            )
+        )
+
         self.batch = ShipmentBatch.objects.create(
             order=self.order,
             source_type=(
-                ShipmentBatch.SourceType.MANUAL
+                ShipmentBatch
+                .SourceType
+                .FACTORY_CONFIRMATION
+            ),
+            factory_confirmation=(
+                self.confirmation
             ),
             batch_number=1,
             batch_date=date(2026, 7, 1),
@@ -263,7 +289,7 @@ class BatchPriceSnapshotTests(TestCase):
         "batch_price_snapshot_service."
         "get_batch_pricing_serial_rows"
     )
-    def test_missing_factory_snapshot_is_blocking(
+    def test_order_item_factory_snapshot_is_not_used(
         self,
         mock_serial_rows,
     ):
@@ -311,11 +337,13 @@ class BatchPriceSnapshotTests(TestCase):
             self.batch
         )
 
-        self.assertFalse(
-            result["is_valid"]
+        self.assertTrue(
+            result["is_valid"],
+            result["errors"],
         )
-
-        self.assertIn(
-            "缺少有效工厂采购价快照",
-            " ".join(result["errors"]),
+        self.assertEqual(
+            result["po_groups"][0][
+                "unit_price"
+            ],
+            Decimal("120.00"),
         )

@@ -31,6 +31,40 @@ except Exception:
 from django.db import transaction
 from django.db.models import Q
 
+
+MISSING_BON_WARNING_MARKERS = (
+    "没有提取到 BON DE COMMANDE 编号",
+    "未能从工厂采购文件中识别 bon de commande",
+)
+
+SUCCESSFUL_BON_MATCH_STATUSES = {
+    "matched_by_detected_bon_de_commande",
+    "selected_order_confirmed_by_detected_bon",
+}
+
+
+def filter_resolved_bon_warnings(confirmation, django_data, warnings):
+    """Hide stale extraction warnings without changing the raw OCR payload."""
+    canonical_bon_is_known = bool(
+        django_data.get("detected_bon_de_commande")
+        or confirmation.bon_de_commande_manual_confirmed
+        or django_data.get("order_match_status")
+        in SUCCESSFUL_BON_MATCH_STATUSES
+    )
+
+    if not canonical_bon_is_known:
+        return list(warnings or [])
+
+    return [
+        warning
+        for warning in (warnings or [])
+        if not any(
+            marker.casefold() in str(warning).casefold()
+            for marker in MISSING_BON_WARNING_MARKERS
+        )
+    ]
+
+
 def factory_status_label(value):
     value = str(value or "").lower()
 
@@ -290,7 +324,24 @@ def build_factory_detail_context(request, confirmation_id):
 
     data = confirmation.extracted_confirmation_data or {}
     django_data = data.get("django") or {}
-    warnings = data.get("warnings") or []
+    warnings = filter_resolved_bon_warnings(
+        confirmation,
+        django_data,
+        data.get("warnings") or [],
+    )
+    detected_bon = django_data.get("detected_bon_de_commande")
+    audit_messages = []
+
+    if confirmation.bon_de_commande_manual_confirmed and confirmation.order_id:
+        if not detected_bon:
+            audit_messages.append(
+                "PDF 中未识别到 bon de commande，系统按所选医院订单继续处理。"
+            )
+        elif detected_bon != confirmation.order.bon_de_commande:
+            audit_messages.append(
+                f"PDF 识别编号为 {detected_bon}，系统最终按医院订单 "
+                f"{confirmation.order.bon_de_commande} 继续处理。"
+            )
     requires_manual_confirmation = bool(
         django_data.get("requires_manual_confirmation")
     )
@@ -331,6 +382,7 @@ def build_factory_detail_context(request, confirmation_id):
         "generated_documents": generated_documents,
         "django_data": django_data,
         "warnings": warnings,
+        "audit_messages": audit_messages,
         "order_choices": Order.objects.order_by("bon_de_commande"),
         "requires_manual_confirmation": requires_manual_confirmation,
         "can_finalize": can_finalize,
@@ -341,6 +393,7 @@ def build_factory_upload_context(
     *,
     selected_order_id=None,
     default_confirmation_type=None,
+    order_locked=False,
 ):
     selected_order = None
 
@@ -351,17 +404,12 @@ def build_factory_upload_context(
             .first()
         )
 
-    selected_factory_id = ""
-    if selected_order and selected_order.factory_id:
-        selected_factory_id = selected_order.factory_id
-
     return {
         "confirmation_type_choices": FactoryConfirmation.ConfirmationType.choices,
-        "factory_choices": Factory.objects.order_by("name"),
         "order_choices": Order.objects.order_by("bon_de_commande"),
         "selected_order": selected_order,
         "selected_order_id": selected_order.id if selected_order else "",
-        "selected_factory_id": selected_factory_id,
+        "order_locked": order_locked,
         "default_confirmation_type": (
             default_confirmation_type
             or FactoryConfirmation.ConfirmationType.INITIAL
@@ -373,10 +421,7 @@ def create_and_extract_factory_confirmation(
     *,
     uploaded_file,
     confirmation_type,
-    factory_id,
     order_id,
-    bon_de_commande_manual_confirmed,
-    bon_de_commande_manual_note,
     user,
 ):
     """
@@ -388,14 +433,24 @@ def create_and_extract_factory_confirmation(
         3. 底层 service 自动识别 bon de commande 并匹配 Order
         4. 成功后创建 SerialItem / ShipmentBatch / Workflow
     """
-    factory = None
-
-    if factory_id:
-        factory = Factory.objects.filter(id=factory_id).first()
-
     order = None
     if order_id:
-        order = Order.objects.filter(id=order_id).first()
+        order = (
+            Order.objects
+            .select_related("factory")
+            .filter(id=order_id)
+            .first()
+        )
+
+        if order is None:
+            raise ValueError("未找到所选医院订单。")
+
+        if not order.factory_id:
+            raise ValueError(
+                "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。"
+            )
+
+    factory = order.factory if order and order.factory_id else None
 
     confirmation = FactoryConfirmation.objects.create(
         confirmation_type=confirmation_type or FactoryConfirmation.ConfirmationType.INITIAL,
@@ -404,17 +459,13 @@ def create_and_extract_factory_confirmation(
         confirmation_pdf=uploaded_file,
         created_by=user,
         extraction_status=FactoryConfirmation.ExtractionStatus.NOT_STARTED,
-        bon_de_commande_manual_confirmed=bool(
-            bon_de_commande_manual_confirmed
-        ),
-        bon_de_commande_manual_note=(
-            bon_de_commande_manual_note or ""
-        ).strip(),
+        bon_de_commande_manual_confirmed=bool(order),
+        bon_de_commande_manual_note="",
         bon_de_commande_manual_confirmed_by=(
-            user if bon_de_commande_manual_confirmed else None
+            user if order else None
         ),
         bon_de_commande_manual_confirmed_at=(
-            timezone.now() if bon_de_commande_manual_confirmed else None
+            timezone.now() if order else None
         ),
     )
 
@@ -498,8 +549,6 @@ def associate_order_and_finalize_factory_confirmation(
     *,
     confirmation_id,
     order_id,
-    bon_de_commande_manual_confirmed=False,
-    bon_de_commande_manual_note="",
     user=None,
 ):
     confirmation = (
@@ -508,23 +557,34 @@ def associate_order_and_finalize_factory_confirmation(
         .get(id=confirmation_id)
     )
 
+    existing_batch = get_shipment_batch(confirmation)
+
+    if (
+        existing_batch
+        and existing_batch.generated_documents.exists()
+        and confirmation.order_id
+        and str(confirmation.order_id) != str(order_id)
+    ):
+        raise ValueError(
+            "这份工厂文件已经生成正式文件，不能直接改绑到其他医院订单。"
+        )
+
     order = Order.objects.get(id=order_id)
+    if not order.factory_id:
+        raise ValueError(
+            "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。"
+        )
+
     confirmation.order = order
-    confirmation.bon_de_commande_manual_confirmed = bool(
-        bon_de_commande_manual_confirmed
-    )
-    confirmation.bon_de_commande_manual_note = (
-        bon_de_commande_manual_note or ""
-    ).strip()
-    confirmation.bon_de_commande_manual_confirmed_by = (
-        user if bon_de_commande_manual_confirmed else None
-    )
-    confirmation.bon_de_commande_manual_confirmed_at = (
-        timezone.now() if bon_de_commande_manual_confirmed else None
-    )
+    confirmation.factory = order.factory
+    confirmation.bon_de_commande_manual_confirmed = True
+    confirmation.bon_de_commande_manual_note = ""
+    confirmation.bon_de_commande_manual_confirmed_by = user
+    confirmation.bon_de_commande_manual_confirmed_at = timezone.now()
     confirmation.save(
         update_fields=[
             "order",
+            "factory",
             "bon_de_commande_manual_confirmed",
             "bon_de_commande_manual_note",
             "bon_de_commande_manual_confirmed_by",

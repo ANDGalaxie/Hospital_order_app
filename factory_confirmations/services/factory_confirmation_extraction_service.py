@@ -12,11 +12,17 @@ from django.db import transaction
 from django.utils import timezone
 
 from factory_confirmations.models import FactoryConfirmation, SerialItem
+from factory_confirmations.services.bon_de_commande_parser import (
+    extract_bon_de_commande_from_text as parse_bon_de_commande_from_text,
+)
 from orders.models import Order, OrderItem
 from products.models import Product
 from shipments.models import ShipmentBatch, ShipmentBatchItem
 from shipments.services.shipment_tracking_service import (
     sync_shipment_batch_from_factory_confirmation,
+)
+from shipments.services.shipment_history_service import (
+    rebuild_order_shipment_history,
 )
 
 from legacy_services.factory_confirmation_extractor import (
@@ -47,6 +53,10 @@ try:
     )
 except Exception:
     validate_document_workflow_item = None
+
+
+class FactoryExtractionValidationError(ValueError):
+    """工厂文件提取结果不满足安全 finalize 条件。"""
 
 
 # ============================================================
@@ -274,6 +284,55 @@ def stamp_confirmation_debug_metadata(
     return django_data
 
 
+def update_manual_confirmation_note(
+    confirmation: FactoryConfirmation,
+    detected_bon: Optional[str],
+) -> None:
+    """
+    Portal 用户明确选择订单时，自动生成人工确认审计说明。
+    """
+    if (
+        not confirmation.order_id
+        or not confirmation.bon_de_commande_manual_confirmed
+    ):
+        return
+
+    order_number = confirmation.order.bon_de_commande
+    detected_normalized = normalize_order_number(
+        detected_bon
+    )
+    selected_normalized = normalize_order_number(
+        order_number
+    )
+
+    if not detected_normalized:
+        note = (
+            f"Portal 用户明确选择医院订单 {order_number}；"
+            "PDF 中未识别到 bon de commande，系统按所选订单继续处理。"
+        )
+    elif detected_normalized != selected_normalized:
+        note = (
+            f"Portal 用户明确选择医院订单 {order_number}；"
+            f"PDF 识别编号为 {detected_bon}，系统按所选订单继续处理。"
+        )
+    else:
+        note = (
+            f"Portal 用户明确选择医院订单 {order_number}；"
+            "PDF 识别编号与所选订单一致。"
+        )
+
+    if confirmation.bon_de_commande_manual_note == note:
+        return
+
+    confirmation.bon_de_commande_manual_note = note
+    confirmation.save(
+        update_fields=[
+            "bon_de_commande_manual_note",
+            "updated_at",
+        ]
+    )
+
+
 def save_confirmation_extraction_state(
     confirmation: FactoryConfirmation,
     factory_data: Dict[str, Any],
@@ -283,16 +342,18 @@ def save_confirmation_extraction_state(
     extraction_error="",
 ) -> Dict[str, Any]:
     workspace = get_factory_confirmation_workspace(confirmation)
-    json_path = save_factory_confirmation_json(
-        confirmation=confirmation,
-        data=factory_data,
-    )
+    json_path = workspace / "factory_confirmation.json"
 
     stamp_confirmation_debug_metadata(
         confirmation,
         factory_data,
         workspace=workspace,
         json_path=json_path,
+    )
+
+    save_factory_confirmation_json(
+        confirmation=confirmation,
+        data=factory_data,
     )
 
     confirmation.extracted_confirmation_data = json_safe(factory_data)
@@ -318,6 +379,21 @@ def save_confirmation_extraction_state(
     return factory_data
 
 
+def mark_confirmation_extraction_failed(
+    confirmation: FactoryConfirmation,
+    error_message: str,
+) -> None:
+    confirmation.extraction_status = FactoryConfirmation.ExtractionStatus.FAILED
+    confirmation.extraction_error = str(error_message)
+    confirmation.save(
+        update_fields=[
+            "extraction_status",
+            "extraction_error",
+            "updated_at",
+        ]
+    )
+
+
 # ============================================================
 # 3. bon de commande 提取与订单匹配
 # ============================================================
@@ -332,26 +408,7 @@ def extract_bon_de_commande_from_text(text: str) -> Optional[str]:
         Order: BON DE COMMANDE N° 150222
         Order 150222
     """
-    normalized_text = re.sub(r"\s+", " ", str(text or "")).strip()
-
-    patterns = [
-        r"\bBON\s+DE\s+COMMANDE\s*(?:N|N°|Nº|NO|N0|NUMERO|NUMÉRO)?\s*[°º:]?\s*([0-9][0-9\s]{2,20})",
-        r"\bORDER\s*:?\s*BON\s+DE\s+COMMANDE\s*(?:N|N°|Nº|NO|N0)?\s*[°º:]?\s*([0-9][0-9\s]{2,20})",
-        r"\bORDER\s*:?\s*([0-9][0-9\s]{2,20})",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, normalized_text, flags=re.IGNORECASE)
-
-        if not match:
-            continue
-
-        digits = normalize_order_number(match.group(1))
-
-        if 3 <= len(digits) <= 12:
-            return digits
-
-    return None
+    return parse_bon_de_commande_from_text(text)
 
 
 def extract_bon_de_commande_from_factory_data(
@@ -385,9 +442,9 @@ def extract_bon_de_commande_from_factory_data(
                 candidates.append(value)
 
     for value in candidates:
-        digits = normalize_order_number(value)
-        if 3 <= len(digits) <= 12:
-            return digits
+        detected_bon = extract_bon_de_commande_from_text(str(value))
+        if detected_bon:
+            return detected_bon
 
     full_text = collect_text_from_any(factory_data)
     return extract_bon_de_commande_from_text(full_text)
@@ -543,6 +600,108 @@ EXPIRATION_DISCOUNT_RATE = Decimal("0.30")
 EXPIRATION_THRESHOLD_DAYS = 365
 
 
+def validate_factory_data_before_finalize(
+    factory_data: Dict[str, Any],
+) -> None:
+    if not isinstance(factory_data, dict):
+        raise FactoryExtractionValidationError(
+            "工厂文件提取结果格式无效，不能创建发货批次。"
+        )
+
+    serial_items = factory_data.get("serial_items") or []
+    if not isinstance(serial_items, list) or not serial_items:
+        raise FactoryExtractionValidationError(
+            "工厂文件没有提取到任何 Serial 明细，不能创建发货批次。"
+        )
+
+    total_completed = (
+        (factory_data.get("factory_document") or {})
+        .get("total_completed")
+    )
+    if total_completed is not None:
+        try:
+            completed_count = Decimal(str(total_completed))
+        except Exception as exc:
+            raise FactoryExtractionValidationError(
+                "工厂文件的 Total Completed 不是有效数字，不能创建发货批次。"
+            ) from exc
+
+        if (
+            completed_count > 0
+            and completed_count != Decimal(len(serial_items))
+        ):
+            raise FactoryExtractionValidationError(
+                f"工厂文件 Total Completed 为 {total_completed}，"
+                f"但提取到 {len(serial_items)} 条 Serial 明细，不能创建发货批次。"
+            )
+
+    seen_serial_numbers = set()
+    for index, item in enumerate(serial_items, start=1):
+        if not isinstance(item, dict):
+            raise FactoryExtractionValidationError(
+                f"工厂文件第 {index} 条 Serial 明细格式无效。"
+            )
+
+        product_code = str(item.get("product_code") or "").strip()
+        serial_number = str(item.get("serial_number") or "").strip()
+        expiration_date_iso = str(
+            item.get("expiration_date_iso") or ""
+        ).strip()
+
+        if not product_code:
+            raise FactoryExtractionValidationError(
+                f"工厂文件第 {index} 条 Serial 明细缺少产品号。"
+            )
+        if not serial_number:
+            raise FactoryExtractionValidationError(
+                f"工厂文件第 {index} 条 Serial 明细缺少 Serial Number。"
+            )
+        if not expiration_date_iso:
+            raise FactoryExtractionValidationError(
+                f"工厂文件第 {index} 条 Serial 明细缺少有效期。"
+            )
+        if serial_number in seen_serial_numbers:
+            raise FactoryExtractionValidationError(
+                f"工厂文件中的 Serial Number {serial_number} 重复，"
+                "不能创建发货批次。"
+            )
+        seen_serial_numbers.add(serial_number)
+
+    summary_by_product = factory_data.get("summary_by_product") or []
+    if not isinstance(summary_by_product, list):
+        raise FactoryExtractionValidationError(
+            "工厂文件的产品汇总格式无效，不能创建发货批次。"
+        )
+
+    summary_quantity = 0
+    for summary_item in summary_by_product:
+        if not isinstance(summary_item, dict):
+            raise FactoryExtractionValidationError(
+                "工厂文件的产品汇总格式无效，不能创建发货批次。"
+            )
+
+        try:
+            quantity = Decimal(
+                str(summary_item.get("confirmed_quantity"))
+            )
+        except Exception as exc:
+            raise FactoryExtractionValidationError(
+                "工厂文件的产品汇总数量无效，不能创建发货批次。"
+            ) from exc
+
+        if quantity != quantity.to_integral_value() or quantity < 0:
+            raise FactoryExtractionValidationError(
+                "工厂文件的产品汇总数量无效，不能创建发货批次。"
+            )
+        summary_quantity += int(quantity)
+
+    if summary_quantity != len(serial_items):
+        raise FactoryExtractionValidationError(
+            f"工厂文件产品汇总数量为 {summary_quantity}，"
+            f"但 Serial 明细数量为 {len(serial_items)}，不能创建发货批次。"
+        )
+
+
 def validate_confirmation_batch_sequence(
     confirmation: FactoryConfirmation,
 ) -> None:
@@ -625,6 +784,8 @@ def create_serial_items_from_factory_data(
     """
     if not confirmation.order_id:
         raise ValueError("工厂采购文件还没有匹配医院订单，不能创建 SerialItem。")
+
+    validate_factory_data_before_finalize(factory_data)
 
     confirmation.serial_items.all().delete()
 
@@ -722,82 +883,10 @@ def recalculate_order_items_from_shipment_batches(
     order: Order,
     warnings=None,
 ) -> None:
-    """
-    从 ShipmentBatchItem 累计计算 OrderItem 的 confirmed / backordered。
-
-    注意：
-      OrderItem.confirmed_quantity 是累计已发数量。
-      ShipmentBatchItem.shipped_quantity 是当前批次数量。
-    """
     if warnings is None:
         warnings = []
-
-    shipped_map = Counter()
-
-    batch_items = ShipmentBatchItem.objects.filter(
-        batch__order=order,
-    )
-
-    for batch_item in batch_items:
-        product_code = str(batch_item.product_code or "").strip()
-
-        if not product_code:
-            continue
-
-        shipped_quantity = int(
-            getattr(batch_item, "shipped_quantity", 0) or 0
-        )
-
-        shipped_map[product_code] += shipped_quantity
-
-    order_product_codes = set(
-        order.items.values_list("product_code", flat=True)
-    )
-
-    extra_codes = [
-        code for code in shipped_map.keys()
-        if code not in order_product_codes
-    ]
-
-    if extra_codes:
-        warnings.append(
-            "发货批次中出现了医院订单里没有的产品，需要人工确认："
-            + ", ".join(extra_codes)
-        )
-
-    for order_item in order.items.all():
-        product_code = str(order_item.product_code or "").strip()
-        requested_quantity = int(order_item.requested_quantity or 0)
-        confirmed_quantity = int(shipped_map.get(product_code, 0))
-
-        backordered_quantity = max(requested_quantity - confirmed_quantity, 0)
-
-        order_item.confirmed_quantity = confirmed_quantity
-        order_item.backordered_quantity = backordered_quantity
-
-        if confirmed_quantity <= 0:
-            order_item.status = OrderItem.Status.BACKORDERED
-
-        elif confirmed_quantity < requested_quantity:
-            order_item.status = OrderItem.Status.PARTIALLY_CONFIRMED
-
-        else:
-            order_item.status = OrderItem.Status.CONFIRMED
-
-        if confirmed_quantity > requested_quantity:
-            warnings.append(
-                f"产品 {product_code}: 累计已发数量 {confirmed_quantity} "
-                f"大于医院订单数量 {requested_quantity}，可能存在超发。"
-            )
-
-        order_item.save(
-            update_fields=[
-                "confirmed_quantity",
-                "backordered_quantity",
-                "status",
-                "updated_at",
-            ]
-        )
+    result = rebuild_order_shipment_history(order)
+    warnings.extend(result.get("warnings") or [])
 
 
 # ============================================================
@@ -837,17 +926,11 @@ def sync_confirmation_to_shipment_and_workflow(
             "sync_shipment_batch_from_factory_confirmation 没有返回 ShipmentBatch。"
         )
 
-    # 2. 从所有 ShipmentBatchItem 累计更新 OrderItem。
-    recalculate_order_items_from_shipment_batches(
-        order=confirmation.order,
-        warnings=warnings,
-    )
-
-    # 3. 同步当前待发产品库。
+    # 2. 同步当前待发产品库。
     if sync_backorders_for_order:
         sync_backorders_for_order(confirmation.order)
 
-    # 4. ShipmentBatch -> DocumentWorkflowItem。
+    # 3. ShipmentBatch -> DocumentWorkflowItem。
     workflow_item = None
     workflow_validation_result = None
 
@@ -877,90 +960,115 @@ def sync_confirmation_to_shipment_and_workflow(
     return shipment_batch, workflow_item, workflow_validation_result
 
 
-@transaction.atomic
 def finalize_factory_confirmation_after_order_match(
     confirmation: FactoryConfirmation,
     user=None,
+    factory_data: Optional[Dict[str, Any]] = None,
 ):
     """
-    基于已有 extracted_confirmation_data 继续执行后处理。
+    使用完整 extracted factory_data 执行后处理。
 
-    用于：
-      1. 预选订单上传后，OCR 已完成但需要人工确认；
-      2. 未自动匹配时，人工补选订单后继续；
-      3. 重复执行时尽量保持幂等。
+    如果调用方刚完成 OCR，应显式传入同一个 factory_data；
+    人工补选订单等后续流程才从 extracted_confirmation_data 读取。
     """
     if not confirmation.order_id:
         raise ValueError("FactoryConfirmation 还没有关联医院订单。")
 
-    factory_data = get_confirmation_extracted_data(
-        confirmation
-    )
-
-    header = factory_data.get("factory_document", {}) or {}
-    shipping_date = parse_iso_date(
-        header.get("shipping_date_only_iso")
-    )
-
-    validate_confirmation_batch_sequence(
-        confirmation
-    )
-
-    serial_count = create_serial_items_from_factory_data(
-        confirmation=confirmation,
-        factory_data=factory_data,
-    )
-
-    django_data = stamp_confirmation_debug_metadata(
-        confirmation,
-        factory_data,
-    )
-    django_data["serial_item_count_created"] = serial_count
-    django_data["finalized_after_order_match"] = True
-    django_data["finalized_by_user_id"] = getattr(
-        user,
-        "id",
-        None,
-    )
-
-    save_confirmation_extraction_state(
-        confirmation=confirmation,
-        factory_data=factory_data,
-        shipping_date=shipping_date,
-        extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
-        extraction_error="",
-    )
-
-    shipment_batch, workflow_item, workflow_validation_result = (
-        sync_confirmation_to_shipment_and_workflow(
-            confirmation=confirmation,
-            factory_data=factory_data,
+    if factory_data is None:
+        factory_data = get_confirmation_extracted_data(
+            confirmation
         )
-    )
 
-    django_data["shipment_batch_id"] = shipment_batch.id
-    django_data["workflow_item_id"] = workflow_item.id if workflow_item else None
-    django_data["workflow_validation_status"] = (
-        workflow_item.validation_status if workflow_item else None
-    )
-    django_data["workflow_status"] = (
-        workflow_item.workflow_status if workflow_item else None
-    )
-    django_data["workflow_validation_result"] = json_safe(
-        workflow_item.validation_data
-        if workflow_item and workflow_item.validation_data
-        else workflow_validation_result
-    )
+    try:
+        validate_factory_data_before_finalize(factory_data)
 
-    save_confirmation_extraction_state(
-        confirmation=confirmation,
-        factory_data=factory_data,
-        shipping_date=shipping_date,
-        extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
-        extraction_error="",
-    )
+        header = factory_data.get("factory_document", {}) or {}
+        shipping_date = parse_iso_date(
+            header.get("shipping_date_only_iso")
+        )
 
-    return shipment_batch, workflow_item, workflow_validation_result
+        if not shipping_date:
+            raise FactoryExtractionValidationError(
+                "FactoryConfirmation 无法解析 shipping_date，"
+                "不能创建 ShipmentBatch；未使用当前日期回退。"
+            )
+
+        with transaction.atomic():
+            validate_confirmation_batch_sequence(
+                confirmation
+            )
+
+            confirmation.shipping_date = (
+                shipping_date
+            )
+            confirmation.save(
+                update_fields=[
+                    "shipping_date",
+                    "updated_at",
+                ]
+            )
+
+            serial_count = create_serial_items_from_factory_data(
+                confirmation=confirmation,
+                factory_data=factory_data,
+            )
+
+            if serial_count != len(factory_data["serial_items"]):
+                raise FactoryExtractionValidationError(
+                    f"应创建 {len(factory_data['serial_items'])} 个 SerialItem，"
+                    f"实际只创建 {serial_count} 个，不能创建发货批次。"
+                )
+
+            shipment_batch, workflow_item, workflow_validation_result = (
+                sync_confirmation_to_shipment_and_workflow(
+                    confirmation=confirmation,
+                    factory_data=factory_data,
+                )
+            )
+
+            django_data = stamp_confirmation_debug_metadata(
+                confirmation,
+                factory_data,
+            )
+            django_data["serial_item_count_created"] = serial_count
+            django_data["finalized_after_order_match"] = True
+            django_data["finalized_by_user_id"] = getattr(
+                user,
+                "id",
+                None,
+            )
+            django_data["shipment_batch_id"] = shipment_batch.id
+            django_data["workflow_item_id"] = (
+                workflow_item.id if workflow_item else None
+            )
+            django_data["workflow_validation_status"] = (
+                workflow_item.validation_status if workflow_item else None
+            )
+            django_data["workflow_status"] = (
+                workflow_item.workflow_status if workflow_item else None
+            )
+            django_data["workflow_validation_result"] = json_safe(
+                workflow_item.validation_data
+                if workflow_item and workflow_item.validation_data
+                else workflow_validation_result
+            )
+
+            save_confirmation_extraction_state(
+                confirmation=confirmation,
+                factory_data=factory_data,
+                shipping_date=shipping_date,
+                extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
+                extraction_error="",
+            )
+
+        return shipment_batch, workflow_item, workflow_validation_result
+
+    except FactoryExtractionValidationError as exc:
+        mark_confirmation_extraction_failed(
+            confirmation,
+            str(exc),
+        )
+        raise
 
 
 # ============================================================
@@ -996,6 +1104,7 @@ def extract_factory_confirmation_for_confirmation(
 
     try:
         factory_data = extract_factory_confirmation(pdf_path)
+        validate_factory_data_before_finalize(factory_data)
         factory_data.setdefault("warnings", [])
         factory_data.setdefault("django", {})
 
@@ -1019,6 +1128,16 @@ def extract_factory_confirmation_for_confirmation(
             factory_data,
         )
         detected_bon = django_data.get("detected_bon_de_commande")
+        update_manual_confirmation_note(
+            confirmation,
+            detected_bon,
+        )
+        django_data["manual_confirmation"] = bool(
+            confirmation.bon_de_commande_manual_confirmed
+        )
+        django_data["manual_note"] = (
+            confirmation.bon_de_commande_manual_note or ""
+        )
 
         # 没有匹配到订单时：保存提取结果，但不继续创建 Serial / Shipment / Workflow。
         if matched_order is None:
@@ -1068,9 +1187,17 @@ def extract_factory_confirmation_for_confirmation(
         finalize_factory_confirmation_after_order_match(
             confirmation=confirmation,
             user=None,
+            factory_data=factory_data,
         )
         confirmation.refresh_from_db()
         return get_confirmation_extracted_data(confirmation)
+
+    except FactoryExtractionValidationError as exc:
+        mark_confirmation_extraction_failed(
+            confirmation,
+            str(exc),
+        )
+        return factory_data
 
     except Exception as exc:
         error_text = traceback.format_exc()

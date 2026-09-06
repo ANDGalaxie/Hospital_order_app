@@ -17,6 +17,9 @@ from factories.services.factory_matching_service import match_factory_from_data
 from orders.services.order_price_policy_service import (
     apply_and_store_order_price_policy,
 )
+from orders.services.order_date_service import (
+    resolve_extracted_order_date,
+)
 from backorders.services.backorder_sync_service import sync_backorders_for_order
 
 from legacy_services.hospital_order_extractor import (
@@ -320,20 +323,14 @@ def create_order_items_from_extracted_data(
         if product:
             description = product.description
 
-            # PricePolicy 尚未应用前，先使用产品库默认价作为回退。
-            # 后面的价格规则步骤会覆盖这些快照。
-            hospital_unit_price = (
-                product.hospital_unit_price
-                if product.hospital_unit_price is not None
-                else Decimal("0.00")
-            )
-            factory_unit_price = (
-                product.factory_unit_price
-            )
+            # 正式价格只能由带日期的 PricePolicy 解析。
+            # 不允许从 Product 当前价格回退。
+            hospital_unit_price = Decimal("0.00")
+            factory_unit_price = None
 
             price_policy_message = (
-                "Product default price loaded. "
-                "Waiting for PricePolicy application."
+                "Waiting for dated hospital PricePolicy "
+                "resolution; no Product price fallback."
             )
 
             product_match_status = (
@@ -403,6 +400,45 @@ def update_order_basic_fields_from_extracted_data(
     header = extracted_data.get("header", {})
     hospital_match = extracted_data.get("hospital", {})
     addresses = extracted_data.get("addresses", {})
+
+    order_date, order_date_source = (
+        resolve_extracted_order_date(
+            extracted_data
+        )
+    )
+    order.order_date = order_date
+
+    django_data = extracted_data.setdefault(
+        "django",
+        {},
+    )
+    django_data["order_date_source"] = (
+        order_date_source
+    )
+    django_data["order_date"] = (
+        order_date.isoformat()
+        if order_date
+        else None
+    )
+
+    if not order_date:
+        order.document_validation_status = (
+            Order.DocumentValidationStatus
+            .NEEDS_REVIEW
+        )
+        warnings = extracted_data.setdefault(
+            "warnings",
+            [],
+        )
+        warnings.append(
+            "医院订单日期无法解析，Order.order_date "
+            "保持为空，需要人工检查；未使用任何日期回退。"
+        )
+    else:
+        order.document_validation_status = (
+            Order.DocumentValidationStatus
+            .NOT_CHECKED
+        )
 
     extracted_bon = (
         summary.get("bon_de_commande")
@@ -574,6 +610,7 @@ def extract_hospital_order_for_order(
             update_fields=[
                 "hospital",
                 "hospital_name",
+                "order_date",
                 "hospital_match_status",
                 "hospital_match_message",
                 "shipping_address_data",
