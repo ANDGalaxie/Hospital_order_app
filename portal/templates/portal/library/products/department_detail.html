@@ -1,0 +1,67 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ department.name }} | 产品库{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="library-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_products' %}">产品库</a>
+    <span>›</span>
+    <span>{{ department.name }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ department.name }}</h1>
+        <p>选择该科室下的工厂。</p>
+    </div>
+</section>
+
+<section class="product-node-grid">
+    {% for item in factory_cards %}
+        <a class="product-node-card" href="{{ item.url }}">
+            <div class="node-icon factory-icon">🏭</div>
+            <h3>{{ item.name }}</h3>
+
+            {% if item.factory %}
+                <p class="node-secondary-text">
+                    {{ item.factory.legal_name|default:item.factory.name }}
+                </p>
+            {% else %}
+                <p class="node-warning-text">尚未关联工厂资料</p>
+            {% endif %}
+
+            <div class="node-stat-row">
+                <span>{{ item.category_count }} 个分类</span>
+                <span>{{ item.product_count }} 个产品</span>
+            </div>
+
+            <div class="node-arrow">›</div>
+        </a>
+    {% empty %}
+        <div class="portal-panel">
+            该科室暂时没有工厂。
+        </div>
+    {% endfor %}
+
+    {% if can_add_category %}
+        <a class="product-node-card add-node-card"
+        href="{% url 'portal:library_product_factory_add' department.id %}">
+            <div class="node-icon add-icon">＋</div>
+            <h3>新增或关联工厂</h3>
+            <p>选择已有工厂，或创建一个新工厂。</p>
+            <div class="node-arrow">›</div>
+        </a>
+    {% endif %}
+</section>
+{% endblock %}

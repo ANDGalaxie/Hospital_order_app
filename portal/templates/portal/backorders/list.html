@@ -1,0 +1,77 @@
+{% extends "portal/base.html" %}
+
+{% block title %}待补发库{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<span>待补发库</span>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>待补发库</h1>
+        <p>查看当前待补发行，并进入工厂补发或库存补发。</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:backorder_export_xlsx' %}{% if export_query_string %}?{{ export_query_string }}{% endif %}">导出 XLSX</a>
+        <a class="portal-button" href="{% url 'portal:library_home' %}">返回资料库</a>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <form method="get" class="workflow-filter-form">
+        <input class="portal-input" type="text" name="q" value="{{ query }}" placeholder="搜索订单号或产品号">
+        <select class="portal-input" name="status">
+            <option value="active" {% if status_filter == "active" %}selected{% endif %}>仅显示待补发</option>
+            <option value="all" {% if status_filter == "all" %}selected{% endif %}>全部</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <input class="portal-input" type="text" name="hospital" value="{{ hospital_filter }}" placeholder="医院">
+        <button class="portal-button" type="submit">筛选</button>
+    </form>
+</section>
+
+<section class="portal-table-wrap">
+    <table class="portal-table">
+        <thead>
+            <tr>
+                <th>医院订单</th>
+                <th>医院</th>
+                <th>产品号</th>
+                <th>订单数量</th>
+                <th>已发数量</th>
+                <th>待补发</th>
+                <th>预计发货</th>
+                <th>状态</th>
+                <th>是否有效</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.order.bon_de_commande }}</td>
+                    <td>{{ row.order.hospital_name|default:"—" }}</td>
+                    <td>{{ row.product_code }}</td>
+                    <td>{{ row.requested_quantity }}</td>
+                    <td>{{ row.shipped_quantity }}</td>
+                    <td>{{ row.remaining_quantity }}</td>
+                    <td>{{ row.expected_shipping_date|date:"Y-m-d"|default:"—" }}</td>
+                    <td>{{ row.status_text }}</td>
+                    <td>{{ row.is_active_text }}</td>
+                    <td><a class="mini-button ghost" href="{% url 'portal:backorder_detail' row.id %}">详情</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="10" class="empty-cell">暂无待发行。</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

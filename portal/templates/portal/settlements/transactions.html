@@ -1,0 +1,308 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}收付款流水 | 发票与结算{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/settlements.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="settlement-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+    <span>›</span>
+
+    <a href="{% url 'portal:settlement_home' %}">
+        发票与结算
+    </a>
+
+    <span>›</span>
+    <span>收付款流水</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>收付款流水</h1>
+
+        <p>
+            查看医院收款、工厂付款和已冲销流水。
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{% url 'portal:settlement_home' %}">
+            返回结算首页
+        </a>
+    </div>
+</section>
+
+<section class="settlement-kpi-grid account-kpis">
+    <article class="settlement-kpi">
+        <span>流水数量</span>
+        <strong>{{ transaction_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>有效流水</span>
+        <strong>{{ posted_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>已冲销</span>
+        <strong>{{ reversed_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi receivable">
+        <span>有效收款</span>
+        <strong>
+            €{{ receipt_total|floatformat:2 }}
+        </strong>
+    </article>
+
+    <article class="settlement-kpi payable">
+        <span>有效付款</span>
+        <strong>
+            €{{ payment_total|floatformat:2 }}
+        </strong>
+    </article>
+</section>
+
+<section class="settlement-filter-panel">
+    <form method="get"
+          class="settlement-filter-form transaction-filters">
+
+        <div class="settlement-filter-search">
+            <label for="transaction-search">
+                搜索
+            </label>
+
+            <input
+                id="transaction-search"
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="文档、订单、对方或银行参考号"
+            >
+        </div>
+
+        <div>
+            <label for="transaction-direction">
+                方向
+            </label>
+
+            <select id="transaction-direction"
+                    name="direction">
+                <option value="all">
+                    全部
+                </option>
+
+                {% for value, label in direction_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if direction_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="transaction-method">
+                方式
+            </label>
+
+            <select id="transaction-method"
+                    name="method">
+                <option value="all">
+                    全部
+                </option>
+
+                {% for value, label in method_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if method_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="transaction-status">
+                状态
+            </label>
+
+            <select id="transaction-status"
+                    name="status">
+                <option value="all">
+                    全部
+                </option>
+
+                {% for value, label in status_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if status_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="transaction-from">
+                日期从
+            </label>
+
+            <input id="transaction-from"
+                   type="date"
+                   name="date_from"
+                   value="{{ date_from }}">
+        </div>
+
+        <div>
+            <label for="transaction-to">
+                日期至
+            </label>
+
+            <input id="transaction-to"
+                   type="date"
+                   name="date_to"
+                   value="{{ date_to }}">
+        </div>
+
+        <div class="settlement-filter-actions">
+            <button class="portal-button primary"
+                    type="submit">
+                查询
+            </button>
+
+            <a class="portal-button"
+               href="{% url 'portal:settlement_transactions' %}">
+                重置
+            </a>
+        </div>
+    </form>
+</section>
+
+<div class="portal-table-wrap settlement-transaction-table-wrap">
+    <table class="portal-table settlement-transaction-table">
+        <colgroup>
+            <col class="transaction-col-date">
+            <col class="transaction-col-direction">
+            <col class="transaction-col-document">
+            <col class="transaction-col-party">
+            <col class="transaction-col-order">
+            <col class="transaction-col-amount">
+            <col class="transaction-col-method">
+            <col class="transaction-col-reference">
+            <col class="transaction-col-status">
+            <col class="transaction-col-user">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>日期</th>
+                <th>方向</th>
+                <th>正式文档</th>
+                <th>医院 / 工厂</th>
+                <th>订单号</th>
+                <th>金额</th>
+                <th>方式</th>
+                <th>银行参考号</th>
+                <th>状态</th>
+                <th>登记人</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for transaction in page_obj %}
+                <tr>
+                    <td>
+                        {{ transaction.payment_date|date:"Y-m-d" }}
+                    </td>
+
+                    <td>
+                        <span class="transaction-direction {{ transaction.portal_direction_class }}">
+                            {{ transaction.portal_direction_label }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a class="settlement-document-link"
+                           href="{{ transaction.portal_document_url }}">
+                            {{ transaction.account.document.document_number }}
+                        </a>
+                    </td>
+
+                    <td>
+                        {{ transaction.portal_counterparty }}
+                    </td>
+
+                    <td>
+                        <a href="{{ transaction.portal_order_url }}">
+                            {{ transaction.portal_order_number }}
+                        </a>
+                    </td>
+
+                    <td class="settlement-money-strong">
+                        {{ transaction.account.currency }}
+                        {{ transaction.amount|floatformat:2 }}
+                    </td>
+
+                    <td>
+                        {{ transaction.get_method_display }}
+                    </td>
+
+                    <td>
+                        {{ transaction.reference|default:"—" }}
+                    </td>
+
+                    <td>
+                        <span class="transaction-status {{ transaction.status }}">
+                            {{ transaction.get_status_display }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ transaction.created_by.get_full_name|default:transaction.created_by.username }}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10"
+                        class="portal-empty">
+                        当前没有收付款流水。
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="settlement-pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            上一页
+        </a>
+    {% endif %}
+
+    <span>
+        第 {{ page_obj.number }} 页，
+        共 {{ page_obj.paginator.num_pages }} 页
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
+            下一页
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

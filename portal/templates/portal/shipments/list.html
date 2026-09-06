@@ -1,0 +1,90 @@
+{% extends "portal/base.html" %}
+
+{% block title %}发货批次库{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<span>发货批次库</span>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>发货批次库</h1>
+        <p>查看所有发货批次、数量快照和工作流状态。</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:library_home' %}">返回资料库</a>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <form method="get" class="workflow-filter-form">
+        <input class="portal-input" type="text" name="q" value="{{ query }}" placeholder="搜索订单号或批次号">
+        <select class="portal-input" name="source_type">
+            <option value="all">全部来源</option>
+            {% for value, label in source_type_choices %}
+                <option value="{{ value }}" {% if source_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select class="portal-input" name="validation_status">
+            <option value="all">全部校验</option>
+            {% for value, label in validation_status_choices %}
+                <option value="{{ value }}" {% if validation_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select class="portal-input" name="status">
+            <option value="all">全部状态</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="portal-button" type="submit">筛选</button>
+    </form>
+</section>
+
+<section class="portal-table-wrap">
+    <table class="portal-table">
+        <thead>
+            <tr>
+                <th>批次</th>
+                <th>发货日期</th>
+                <th>医院订单</th>
+                <th>医院</th>
+                <th>来源</th>
+                <th>类型</th>
+                <th>本批发货数量</th>
+                <th>批次后待发数量</th>
+                <th>校验状态</th>
+                <th>批次状态</th>
+                <th>工作流</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.batch_number }}</td>
+                    <td>{{ row.batch_date|date:"Y-m-d" }}</td>
+                    <td>{{ row.order_number }}</td>
+                    <td>{{ row.hospital_name }}</td>
+                    <td>{{ row.source_type }}</td>
+                    <td><span class="status-pill info">{{ row.confirmation_type }}</span></td>
+                    <td>{{ row.shipped_quantity }}</td>
+                    <td>{{ row.remaining_quantity }}</td>
+                    <td>{{ row.validation_status }}</td>
+                    <td>{{ row.status }}</td>
+                    <td><span class="status-pill {{ row.workflow_class }}">{{ row.workflow_text }}</span></td>
+                    <td><a class="mini-button ghost" href="{{ row.detail_url }}">详情</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="12" class="empty-cell">暂无发货批次。</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

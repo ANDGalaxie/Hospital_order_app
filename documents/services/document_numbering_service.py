@@ -155,6 +155,18 @@ def get_or_create_document_numbers(
     )
 
     if existing:
+        if not existing.po_number:
+            existing.po_number = build_po_number(
+                document_date=doc_date,
+                sequence=existing.sequence,
+            )
+            existing.save(
+                update_fields=[
+                    "po_number",
+                    "updated_at",
+                ]
+            )
+
         return {
             "created": False,
             "sequence_id": existing.id,
@@ -220,3 +232,54 @@ def get_or_create_document_numbers(
         "po_number": obj.po_number,
         "document_date": doc_date.isoformat(),
     }
+
+
+# Invoice audit / future-numbering source of truth.  These helpers have no writes.
+def invoice_order_sort_key(order):
+    if not order.order_date:
+        raise ValueError(f"Order {order.id} ({order.bon_de_commande}) is missing order_date; Invoice numbering is blocked.")
+    digits = "".join(ch for ch in str(order.bon_de_commande) if ch.isdigit())
+    return (order.order_date, int(digits) if digits else float("inf"), str(order.bon_de_commande), order.id)
+
+
+def compute_expected_invoice_sequence(order, orders=None):
+    from orders.models import Order
+    if not order.order_date:
+        raise ValueError(f"Order {order.id} ({order.bon_de_commande}) is missing order_date; Invoice numbering is blocked.")
+    candidates = list(orders) if orders is not None else list(Order.objects.filter(order_date__year=order.order_date.year, order_date__month=order.order_date.month))
+    candidates = [candidate for candidate in candidates if candidate.order_date]
+    candidates.sort(key=invoice_order_sort_key)
+    return candidates.index(next(candidate for candidate in candidates if candidate.id == order.id)) + 1
+
+
+def build_expected_invoice_number(order, orders=None):
+    sequence = compute_expected_invoice_sequence(order, orders)
+    return {"year": order.order_date.year, "month": order.order_date.month, "sequence": sequence, "sort_key": invoice_order_sort_key(order), "invoice_number": f"Invoice {order.order_date:%Y}{sequence:02d}{order.order_date:%m}"}
+
+
+@transaction.atomic
+def get_or_create_expected_invoice_numbers(order):
+    from documents.models import DocumentSequence
+    expected=build_expected_invoice_number(order)
+    month_key=order.order_date.strftime("%Y-%m")
+    month_orders=list(__import__("orders.models", fromlist=["Order"]).Order.objects.filter(order_date__year=order.order_date.year, order_date__month=order.order_date.month))
+    for other in month_orders:
+        existing=DocumentSequence.objects.filter(month_key=month_key, bon_de_commande=other.bon_de_commande).first()
+        if existing:
+            other_expected=build_expected_invoice_number(other, month_orders)
+            if existing.sequence != other_expected["sequence"] or existing.invoice_number != other_expected["invoice_number"]:
+                raise ValueError(f"Invoice numbering requires historical rebuild: Order {other.id} ({other.bon_de_commande}) current={existing.invoice_number} expected={other_expected['invoice_number']}.")
+    existing=DocumentSequence.objects.select_for_update().filter(month_key=month_key, bon_de_commande=order.bon_de_commande).first()
+    if existing:
+        return {**expected, "sequence_id": existing.id, "created": False}
+    obj = DocumentSequence.objects.create(
+        month_key=month_key,
+        bon_de_commande=order.bon_de_commande,
+        sequence=expected["sequence"],
+        invoice_number=expected["invoice_number"],
+        po_number=build_po_number(
+            document_date=order.order_date,
+            sequence=expected["sequence"],
+        ),
+    )
+    return {**expected, "sequence_id": obj.id, "created": True}

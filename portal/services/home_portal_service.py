@@ -16,6 +16,10 @@ def build_home_context(request):
         "products": safe_count("products", "Product"),
         "hospitals": safe_count("hospitals", "Hospital"),
         "factories": safe_count("factories", "Factory"),
+        "settlements": safe_count(
+            "settlements",
+            "SettlementAccount",
+        ),
     }
 
     modules = [
@@ -65,7 +69,7 @@ def build_home_context(request):
             "description": "集中管理 Factory Request、PO、Invoice 等文件",
             "icon": "portal/img/app-icons/documents.png",
             "theme": "blue",
-            "url": "/admin/documents/",
+            "url": "/portal/documents/",
             "badge": counters.get("documents"),
             "status_text": "文档",
         },
@@ -75,19 +79,19 @@ def build_home_context(request):
             "description": "查看财务表现和业务趋势",
             "icon": "portal/img/app-icons/finance.png",
             "theme": "orange",
-            "url": "/admin/finance/",
+            "url": "/portal/finance/",
             "badge": None,
             "status_text": "分析",
         },
         {
-            "title": "发票管理",
-            "subtitle": "发票生成、付款状态与到期追踪",
-            "description": "管理应收发票、付款状态和提醒",
+            "title": "发票与结算",
+            "subtitle": "医院应收、工厂应付与收付款流水",
+            "description": "管理结算状态、到期日期和收付款记录",
             "icon": "portal/img/app-icons/invoice.png",
             "theme": "blue",
-            "url": "/admin/documents/",
-            "badge": None,
-            "status_text": "应收",
+            "url": "/portal/settlements/",
+            "badge": counters.get("settlements"),
+            "status_text": "结算",
         },
     ]
 

@@ -1,0 +1,130 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ product.code }} | 产品库{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="library-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_products' %}">产品库</a>
+
+    {% if department %}
+        <span>›</span>
+        <a href="{% url 'portal:library_product_department' department.id %}">
+            {{ department.name }}
+        </a>
+    {% endif %}
+
+    {% if factory_node %}
+        <span>›</span>
+        <a href="{% url 'portal:library_product_factory' factory_node.id %}">
+            {{ factory_node.name }}
+        </a>
+    {% endif %}
+
+    {% if category %}
+        <span>›</span>
+        <a href="{% url 'portal:library_product_category' category.id %}">
+            {{ category.name }}
+        </a>
+    {% endif %}
+
+    <span>›</span>
+    <span>{{ product.code }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ product.code }}</h1>
+        <p>{{ product.description|default:"暂无产品描述" }}</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="/admin/products/product/{{ product.id }}/change/">
+            在 Admin 中编辑
+        </a>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">产品资料</h2>
+
+    <div class="product-detail-grid">
+        <div class="product-detail-field">
+            <span>产品编号</span>
+            <strong>{{ product.code }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>状态</span>
+            <strong>
+                {% if product.is_active %}
+                    <span class="status-pill success">启用</span>
+                {% else %}
+                    <span class="status-pill">停用</span>
+                {% endif %}
+            </strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>科室</span>
+            <strong>{{ department.name|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>工厂入口</span>
+            <strong>{{ factory_node.name|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>产品分类</span>
+            <strong>{{ category.name|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>真实工厂</span>
+            <strong>{{ product.factory|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>医院销售价格</span>
+            <strong>{{ product.hospital_unit_price|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>工厂采购价格</span>
+            <strong>{{ product.factory_unit_price|default:"-" }}</strong>
+        </div>
+
+        <div class="product-detail-field full-width">
+            <span>产品描述</span>
+            <strong>{{ product.description|default:"-"|linebreaksbr }}</strong>
+        </div>
+
+        <div class="product-detail-field full-width">
+            <span>备注</span>
+            <strong>{{ product.notes|default:"-"|linebreaksbr }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>创建时间</span>
+            <strong>{{ product.created_at|date:"Y-m-d H:i" }}</strong>
+        </div>
+
+        <div class="product-detail-field">
+            <span>更新时间</span>
+            <strong>{{ product.updated_at|date:"Y-m-d H:i" }}</strong>
+        </div>
+    </div>
+</section>
+{% endblock %}

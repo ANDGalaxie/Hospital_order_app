@@ -9,10 +9,21 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
 
 from documents.models import GeneratedDocument
 from documents.services.document_numbering_service import parse_document_date
+
+
+def get_weasyprint_html():
+    try:
+        from weasyprint import HTML
+    except Exception as exc:
+        raise RuntimeError(
+            "WeasyPrint is not available. Factory Order Request PDF generation "
+            "requires WeasyPrint and its system libraries."
+        ) from exc
+
+    return HTML
 
 def sanitize_filename(text):
     text = str(text).strip()
@@ -298,7 +309,7 @@ def generate_factory_order_request(order, generated_by=None, document_date=None)
     project_root = Path(settings.BASE_DIR)
     base_url = project_root.resolve().as_uri() + "/"
 
-    pdf_bytes = HTML(
+    pdf_bytes = get_weasyprint_html()(
         string=html_content,
         base_url=base_url,
     ).write_pdf()

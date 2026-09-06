@@ -11,11 +11,10 @@ from documents.models import GeneratedDocument
 from documents.services.document_numbering_service import (
     get_or_create_document_numbers,
     parse_document_date,
+    get_or_create_expected_invoice_numbers,
 )
 from documents.services.document_generation_service import (
-    DEFAULT_FACTORY_UNIT_PRICE,
     EXPECTED_ARRIVAL_DAYS,
-    EXPIRATION_THRESHOLD_DAYS,
     build_factory_info_from_model,
     format_date_display,
     format_eur,
@@ -229,6 +228,7 @@ def get_batch_serial_rows(batch: ShipmentBatch) -> List[Dict[str, Any]]:
 
 
 def build_batch_invoice_items(batch: ShipmentBatch) -> Tuple[List[Dict[str, Any]], List[str]]:
+    hospital_order_date = batch.order.order_date
     """
     Invoice 产品行只来自当前 ShipmentBatchItem。
 
@@ -261,16 +261,23 @@ def build_batch_invoice_items(batch: ShipmentBatch) -> Tuple[List[Dict[str, Any]
 
             unit_price = Decimal(order_item.hospital_unit_price or 0)
         else:
-            description = ""
-            unit_price = Decimal("0.00")
-            warnings.append(
-                f"ShipmentBatchItem {batch_item.id}: product {product_code} "
+            raise ValueError(
+                f"ShipmentBatchItem {batch_item.id}: "
+                f"product {product_code} "
                 "does not exist in OrderItem."
             )
 
         if unit_price <= 0:
-            warnings.append(
-                f"Product {product_code}: hospital_unit_price is missing or zero."
+            raise ValueError(
+                f"Product {product_code}: "
+                "hospital_unit_price snapshot "
+                "is missing or zero."
+            )
+
+        if not order_item.price_policy_id:
+            raise ValueError(
+                f"Product {product_code}: "
+                "PricePolicy snapshot is missing."
             )
 
         amount = unit_price * Decimal(quantity)
@@ -282,6 +289,10 @@ def build_batch_invoice_items(batch: ShipmentBatch) -> Tuple[List[Dict[str, Any]
                 "quantity_raw": float(quantity),
                 "quantity": format_quantity(float(quantity)),
                 "unit_price_raw": float(unit_price),
+                "hospital_unit_price": str(unit_price),
+                "hospital_order_date": hospital_order_date.isoformat(),
+                "price_basis_type": "hospital_order_date",
+                "line_total": str(amount),
                 "unit_price": format_eur(float(unit_price)),
                 "amount_raw": float(amount),
                 "amount": format_eur(float(amount)),
@@ -376,428 +387,155 @@ def build_batch_hospital_invoice_data(
 
 
 def get_factory_for_batch(batch: ShipmentBatch):
-    if batch.factory_confirmation_id:
-        confirmation = batch.factory_confirmation
-        if getattr(confirmation, "factory_id", None):
-            return confirmation.factory
-
+    if batch.factory_confirmation_id and batch.factory_confirmation.factory_id:
+        return batch.factory_confirmation.factory
+    if batch.inventory_allocation_id and InventoryItem is not None:
+        factory_ids=set(InventoryItem.objects.filter(allocation=batch.inventory_allocation, batch__factory__isnull=False).values_list("batch__factory_id", flat=True))
+        if len(factory_ids)==1:
+            from factories.models import Factory
+            return Factory.objects.get(id=next(iter(factory_ids)))
+        if len(factory_ids)>1:
+            raise ValueError("Inventory serials belong to multiple factories.")
+        if batch.inventory_allocation.product_id and batch.inventory_allocation.product.factory_id:
+            return batch.inventory_allocation.product.factory
     if batch.order.factory_id:
         return batch.order.factory
+    raise ValueError(f"Order {batch.order.bon_de_commande}: factory is missing.")
 
-    raise ValueError(
-        f"Order {batch.order.bon_de_commande}: factory is missing. "
-        "Cannot generate Factory PO."
-    )
+def build_batch_factory_po_items(batch: ShipmentBatch, factory_info: Dict[str, Any], shipping_date, factory_shipping_date_source="", factory=None) -> Tuple[List[Dict[str, Any]], List[str]]:
+    from workflow.services.batch_price_snapshot_service import build_batch_price_snapshot
+    snapshot=build_batch_price_snapshot(batch, factory_shipping_date=shipping_date, factory=factory, factory_shipping_date_source=factory_shipping_date_source)
+    if snapshot["errors"]:
+        raise ValueError("Factory PO price validation failed: " + "; ".join(snapshot["errors"][:10]))
+    prepared_factory=prepare_factory_info(factory_info)
+    result=[]
+    for group in snapshot["po_groups"]:
+        qty=Decimal(group["quantity"]); base=Decimal(group["unit_price"]); discount=Decimal(group["discount_rate"]); net=Decimal(group["final_unit_price"]); amount=Decimal(group["amount"])
+        result.append({"product_code":group["product_code"],"description":group["description"] or prepared_factory.get("default_product_description", ""),"quantity_raw":float(qty),"batch_quantity":str(qty),"unit_price_raw":float(base),"factory_base_unit_price":str(base),"discount_rate":str(discount),"factory_net_unit_price":str(net),"discount_rate_raw":float(discount),"final_unit_price_raw":float(net),"amount_raw":float(amount),"line_total":str(amount),"quantity":format_po_quantity(float(qty)),"unit_price":format_po_unit_price(float(base)),"discount":format_po_discount(float(discount)),"amount":format_po_eur(float(amount)),"serial_numbers":group["serial_numbers"],"expiration_dates":group["expiration_dates"],"expiration_threshold_days":group["expiration_threshold_days"]})
+    if not result: raise ValueError("No Factory PO item was generated from the current ShipmentBatch.")
+    return result,list(snapshot["warnings"])
 
+def build_batch_factory_po_data(batch: ShipmentBatch, company_info: Dict[str, Any], factory_info: Dict[str, Any], numbers: Dict[str, Any], factory_shipping_date=None, factory_shipping_date_source="", factory=None) -> Dict[str, Any]:
+    order=batch.order
+    po_order_date,po_order_date_source,po_warnings=get_batch_po_order_date(batch)
+    shipping_date=factory_shipping_date or (get_batch_shipping_date(batch) if batch.factory_confirmation_id else None)
+    if not shipping_date: raise ValueError("Factory PO requires an actual factory shipping date.")
+    items,warnings=build_batch_factory_po_items(batch,factory_info,shipping_date,factory_shipping_date_source,factory)
+    return {"po":{"po_number":numbers["po_number"],"order_date":format_date_display(po_order_date),"expected_arrival":format_date_display(shipping_date+timedelta(days=EXPECTED_ARRIVAL_DAYS)),"order_date_iso":po_order_date.isoformat(),"shipping_date_iso":shipping_date.isoformat(),"expected_arrival_iso":(shipping_date+timedelta(days=EXPECTED_ARRIVAL_DAYS)).isoformat()},"company":prepare_company_info(company_info),"factory":prepare_factory_info(factory_info),"shipping_address":get_po_shipping_address_lines(order),"items":items,"totals":{"total_raw":sum(float(x["amount_raw"]) for x in items),"total":format_po_eur(sum(float(x["amount_raw"]) for x in items))},"debug":{"order_id":order.id,"bon_de_commande":order.bon_de_commande,"shipment_batch_id":batch.id,"document_sequence":numbers,"po_order_date_source":po_order_date_source,"discount_reference_date":shipping_date.isoformat(),"factory_shipping_date_source":factory_shipping_date_source},"warnings":warnings+po_warnings+numbers.get("batch_numbering_warnings",[])}
 
-def build_batch_factory_po_items(
-    batch: ShipmentBatch,
-    factory_info: Dict[str, Any],
-    shipping_date,
-) -> Tuple[List[Dict[str, Any]], List[str]]:
-    warnings: List[str] = []
-
-    prepared_factory = prepare_factory_info(factory_info)
-
-    default_description = prepared_factory.get(
-        "default_product_description",
-        "HT-Supreme™ Drug Eluting Stent",
-    )
-
-    order_items_by_code = {
-        item.product_code: item
-        for item in batch.order.items.all()
-    }
-
-    groups: Dict[Tuple[str, Decimal], Dict[str, Any]] = {}
-
-    for row in get_batch_serial_rows(batch):
-        code = row["product_code"]
-
-        if not code:
-            warnings.append(
-                f"Serial source {row['source']} #{row['source_id']}: missing product_code."
-            )
-            continue
-
-        order_item = order_items_by_code.get(code)
-
-        policy_discount_rate = Decimal("0.00")
-
-        if order_item and order_item.expiration_discount_rate is not None:
-            policy_discount_rate = Decimal(order_item.expiration_discount_rate)
-
-        discount_rate = (
-            policy_discount_rate
-            if should_apply_expiration_discount(
-                row["expiration_date"],
-                shipping_date,
-            )
-            else Decimal("0.00")
-        )
-
-        if order_item and order_item.factory_unit_price is not None:
-            unit_price = Decimal(order_item.factory_unit_price)
-
-        elif order_item and order_item.product:
-            unit_price = Decimal(order_item.product.factory_unit_price or 0)
-
-        else:
-            unit_price = DEFAULT_FACTORY_UNIT_PRICE
-
-        key = (code, discount_rate)
-
-        if key not in groups:
-            groups[key] = {
-                "product_code": code,
-                "description": default_description,
-                "quantity_raw": Decimal("0.00"),
-                "unit_price_raw": unit_price,
-                "discount_rate_raw": discount_rate,
-                "serial_numbers": [],
-                "expiration_dates": [],
-                "min_expiration_date": row["expiration_date"],
-            }
-
-        groups[key]["quantity_raw"] += Decimal(row["quantity"])
-
-        if row["serial_number"]:
-            groups[key]["serial_numbers"].append(row["serial_number"])
-
-        if row["expiration_date"]:
-            groups[key]["expiration_dates"].append(row["expiration_date"].isoformat())
-
-            current_min = groups[key].get("min_expiration_date")
-            if current_min is None or row["expiration_date"] < current_min:
-                groups[key]["min_expiration_date"] = row["expiration_date"]
-
-    order_sequence = [
-        item.product_code
-        for item in batch.order.items.all().order_by("id")
-    ]
-
-    order_index = {
-        code: index
-        for index, code in enumerate(order_sequence)
-    }
-
-    sorted_groups = sorted(
-        groups.values(),
-        key=lambda item: (
-            order_index.get(item["product_code"], 999999),
-            item["product_code"],
-            float(item["discount_rate_raw"]),
-        ),
-    )
-
-    po_items: List[Dict[str, Any]] = []
-
-    for group in sorted_groups:
-        quantity = Decimal(group["quantity_raw"])
-        unit_price = Decimal(group["unit_price_raw"])
-        discount_rate = Decimal(group["discount_rate_raw"])
-
-        amount = quantity * unit_price * (Decimal("1.00") - discount_rate)
-        min_expiration_date = group.get("min_expiration_date")
-
-        discount_note = ""
-
-        if discount_rate > 0:
-            discount_note = (
-                f"{float(discount_rate) * 100:.0f}% discount applied."
-            )
-
-            if min_expiration_date:
-                discount_note += (
-                    f" Earliest expiration: {min_expiration_date.isoformat()}"
-                )
-
-        po_items.append(
-            {
-                "product_code": group["product_code"],
-                "description": group["description"],
-                "quantity_raw": float(quantity),
-                "unit_price_raw": float(unit_price),
-                "discount_rate_raw": float(discount_rate),
-                "amount_raw": float(amount),
-                "quantity": format_po_quantity(float(quantity)),
-                "unit_price": format_po_unit_price(float(unit_price)),
-                "discount": format_po_discount(float(discount_rate)),
-                "amount": format_po_eur(float(amount)),
-                "discount_note": discount_note,
-                "serial_numbers": group["serial_numbers"],
-                "expiration_dates": group["expiration_dates"],
-                "min_expiration_date": (
-                    min_expiration_date.isoformat()
-                    if min_expiration_date
-                    else None
-                ),
-            }
-        )
-
-    if not po_items:
-        warnings.append("No PO item generated from current ShipmentBatch serials.")
-
-    return po_items, warnings
-
-
-def build_batch_factory_po_data(
-    batch: ShipmentBatch,
-    company_info: Dict[str, Any],
-    factory_info: Dict[str, Any],
-    numbers: Dict[str, Any],
-) -> Dict[str, Any]:
-    order = batch.order
-    po_order_date, po_order_date_source, po_date_warnings = get_batch_po_order_date(batch)
-    shipping_date = get_batch_shipping_date(batch)
-    expected_arrival = shipping_date + timedelta(days=EXPECTED_ARRIVAL_DAYS)
-
-    company = prepare_company_info(company_info)
-    factory = prepare_factory_info(factory_info)
-
-    items, warnings = build_batch_factory_po_items(
-        batch=batch,
-        factory_info=factory_info,
-        shipping_date=shipping_date,
-    )
-
-    total_raw = sum(float(item.get("amount_raw") or 0) for item in items)
-
-    po_data = {
-        "po": {
-            "po_number": numbers["po_number"],
-            "order_date": format_date_display(po_order_date),
-            "expected_arrival": format_date_display(expected_arrival),
-            "order_date_iso": po_order_date.isoformat(),
-            "shipping_date_iso": shipping_date.isoformat(),
-            "expected_arrival_iso": expected_arrival.isoformat(),
-        },
-        "company": company,
-        "factory": factory,
-        "shipping_address": get_po_shipping_address_lines(order),
-        "items": items,
-        "totals": {
-            "total_raw": total_raw,
-            "total": format_po_eur(total_raw),
-        },
-        "debug": {
-            "order_id": order.id,
-            "bon_de_commande": order.bon_de_commande,
-            "shipment_batch_id": batch.id,
-            "batch_number": batch.batch_number,
-            "source_type": batch.source_type,
-            "factory_confirmation_id": batch.factory_confirmation_id,
-            "inventory_allocation_id": batch.inventory_allocation_id,
-            "document_sequence": numbers,
-            "po_order_date_source": po_order_date_source,
-            "discount_reference_date": shipping_date.isoformat(),
-            "expiration_discount_threshold_days": EXPIRATION_THRESHOLD_DAYS,
-        },
-        "warnings": warnings + po_date_warnings + numbers.get("batch_numbering_warnings", []),
-    }
-
-    return po_data
-
-
-def save_generated_document_record_for_batch(
-    batch: ShipmentBatch,
-    document_type: str,
-    document_number: str,
-    pdf_path: Path,
-    html_path: Path,
-    source_data: Dict[str, Any],
-    generated_by,
-) -> GeneratedDocument:
-    obj, created = GeneratedDocument.objects.update_or_create(
-        document_type=document_type,
-        document_number=document_number,
-        defaults={
-            "order": batch.order,
-            "shipment_batch": batch,
-            "pdf_file": media_relative_path(pdf_path),
-            "html_file": media_relative_path(html_path),
-            "source_data": json_safe(source_data),
-            "generated_by": generated_by,
-        },
-    )
-
+@transaction.atomic
+def save_generated_document_record_for_batch(batch: ShipmentBatch, document_type: str, document_number: str, pdf_path: Path, html_path: Path, source_data: Dict[str, Any], generated_by, overwrite_existing=False) -> GeneratedDocument:
+    existing=GeneratedDocument.objects.filter(shipment_batch=batch, document_type=document_type).order_by("id").first()
+    if existing and overwrite_existing:
+        existing.document_number=document_number; existing.pdf_file=media_relative_path(pdf_path); existing.html_file=media_relative_path(html_path); existing.source_data=json_safe(source_data); existing.generated_by=generated_by; existing.save(update_fields=["document_number","pdf_file","html_file","source_data","generated_by"]); obj=existing
+    else:
+        obj,_=GeneratedDocument.objects.update_or_create(document_type=document_type,document_number=document_number,defaults={"order":batch.order,"shipment_batch":batch,"pdf_file":media_relative_path(pdf_path),"html_file":media_relative_path(html_path),"source_data":json_safe(source_data),"generated_by":generated_by})
+    from settlements.services.settlement_auto_service import ensure_settlement_account_for_document
+    ensure_settlement_account_for_document(obj)
     return obj
 
 
-def generate_hospital_invoice_for_workflow_item(
-    item: DocumentWorkflowItem,
-    generated_by,
-) -> Dict[str, Any]:
-    batch = item.shipment_batch
-    order = item.order
+def get_existing_batch_document(batch, document_type, document_number=None):
+    query=GeneratedDocument.objects.filter(shipment_batch=batch, document_type=document_type)
+    if document_number: query=query.filter(document_number=document_number)
+    return query.order_by("id").first()
 
-    numbers = get_batch_document_numbers(batch)
-
-    company_info = load_json_config(
-        Path(settings.BASE_DIR) / "config" / "company_info.json"
-    )
-
-    invoice_data = build_batch_hospital_invoice_data(
-        batch=batch,
-        company_info=company_info,
-        numbers=numbers,
-    )
-
-    workspace = (
-        get_order_document_workspace(order)
-        / "workflow_batches"
-        / f"batch_{batch.id}"
-        / "invoices"
-    )
-
-    filename_base = sanitize_filename(numbers["invoice_number"])
-
-    html_path = workspace / f"{filename_base}.html"
-    pdf_path = workspace / f"{filename_base}.pdf"
-    data_path = workspace / f"{filename_base}_data.json"
-
-    html_content = render_invoice_html(
-        invoice_data=invoice_data,
-        template_dir=Path(settings.BASE_DIR) / "templates",
-        template_name="hospital_invoice.html",
-    )
-
-    write_invoice_html_and_pdf(
-        html_content=html_content,
-        html_path=html_path,
-        pdf_path=pdf_path,
-        project_root=Path(settings.BASE_DIR),
-    )
-
-    source_data = {
-        "workflow_item_id": item.id,
-        "shipment_batch_id": batch.id,
-        "numbers": numbers,
-        "invoice_data": invoice_data,
-    }
-
-    save_json_file(source_data, data_path)
-
-    generated_document = save_generated_document_record_for_batch(
-        batch=batch,
-        document_type=GeneratedDocument.DocumentType.HOSPITAL_INVOICE,
-        document_number=numbers["invoice_number"],
-        pdf_path=pdf_path,
-        html_path=html_path,
-        source_data=source_data,
-        generated_by=generated_by,
-    )
-
-    return {
-        "generated_document": generated_document,
-        "generated_document_id": generated_document.id,
-        "document_type": GeneratedDocument.DocumentType.HOSPITAL_INVOICE,
-        "document_number": numbers["invoice_number"],
-        "pdf_path": str(pdf_path),
-        "html_path": str(html_path),
-        "data_path": str(data_path),
-        "warnings": invoice_data.get("warnings", []),
-    }
+def build_existing_document_result(document):
+    return {"generated_document": document, "generated_document_id": document.id,
+            "document_type": document.document_type, "document_number": document.document_number,
+            "pdf_path": str(document.pdf_file or ""), "html_path": str(document.html_file or ""),
+            "data_path": "", "warnings": [], "reused_existing": True,
+            "source_data": document.source_data}
 
 
-def generate_factory_po_for_workflow_item(
-    item: DocumentWorkflowItem,
-    generated_by,
-) -> Dict[str, Any]:
-    batch = item.shipment_batch
-    order = item.order
+def generate_hospital_invoice_for_workflow_item(item: DocumentWorkflowItem, generated_by, force_regenerate=False, existing_document_override=None) -> Dict[str, Any]:
+    batch=item.shipment_batch; order=item.order; expected=get_or_create_expected_invoice_numbers(order); numbers={"invoice_number": expected["invoice_number"], "base_invoice_number": expected["invoice_number"], "batch_number": batch.batch_number, "batch_numbering_warnings": []}
+    if int(batch.batch_number or 1) > 1: numbers["invoice_number"] += f"-B{batch.batch_number}"
+    existing=existing_document_override or get_existing_batch_document(batch,GeneratedDocument.DocumentType.HOSPITAL_INVOICE,numbers["invoice_number"])
+    if existing and not force_regenerate:
+        return build_existing_document_result(existing)
+    if existing: numbers["invoice_number"]=existing.document_number
+    company_info=load_json_config(Path(settings.BASE_DIR)/"config"/"company_info.json"); invoice_data=build_batch_hospital_invoice_data(batch,company_info,numbers)
+    workspace=get_order_document_workspace(order)/"workflow_batches"/f"batch_{batch.id}"/"invoices"; base=sanitize_filename(numbers["invoice_number"]); html_path=workspace/f"{base}.html"; pdf_path=workspace/f"{base}.pdf"; data_path=workspace/f"{base}_data.json"
+    html_content=render_invoice_html(invoice_data=invoice_data, template_dir=Path(settings.BASE_DIR)/"templates", template_name="hospital_invoice.html")
+    write_invoice_html_and_pdf(html_content=html_content, html_path=html_path, pdf_path=pdf_path, project_root=Path(settings.BASE_DIR))
+    source={"workflow_item_id":item.id,"shipment_batch_id":batch.id,"numbers":numbers,"pricing_basis":{"price_basis_type":"hospital_order_date","hospital_order_date":order.order_date.isoformat(),"rows":[{"product_code":row["product_code"],"hospital_unit_price":str(row["unit_price_raw"]),"hospital_order_date":order.order_date.isoformat(),"line_total":str(row["amount_raw"])} for row in invoice_data["items"]]},"invoice_data":invoice_data}; save_json_file(source,data_path)
+    doc=save_generated_document_record_for_batch(batch,GeneratedDocument.DocumentType.HOSPITAL_INVOICE,numbers["invoice_number"],pdf_path,html_path,source,generated_by,overwrite_existing=bool(existing))
+    return {"generated_document":doc,"generated_document_id":doc.id,"document_type":GeneratedDocument.DocumentType.HOSPITAL_INVOICE,"document_number":numbers["invoice_number"],"pdf_path":str(pdf_path),"html_path":str(html_path),"data_path":str(data_path),"warnings":invoice_data.get("warnings",[])}
 
-    numbers = get_batch_document_numbers(batch)
+def generate_factory_po_for_workflow_item(item: DocumentWorkflowItem, generated_by, force_regenerate=False, factory_shipping_date=None, factory_shipping_date_source="", factory=None, existing_document_override=None) -> Dict[str, Any]:
+    batch=item.shipment_batch; order=item.order; numbers=get_batch_document_numbers(batch)
+    if batch.inventory_allocation_id and not force_regenerate and not factory_shipping_date:
+        return {"generated_document": None, "generated_document_id": None, "document_type": GeneratedDocument.DocumentType.FACTORY_PO, "document_number": "", "pdf_path": "", "html_path": "", "data_path": "", "warnings": ["Inventory Factory PO requires an explicit actual shipping date."], "skipped": True}
+    existing=existing_document_override or get_existing_batch_document(batch,GeneratedDocument.DocumentType.FACTORY_PO,numbers["po_number"])
+    if existing and not force_regenerate: return build_existing_document_result(existing)
+    if existing: numbers["po_number"]=existing.document_number
+    effective_factory=factory or get_factory_for_batch(batch)
+    if batch.factory_confirmation_id:
+        shipping_date=batch.factory_confirmation.shipping_date; source=factory_shipping_date_source or "factory_confirmation.shipping_date"
+    else:
+        shipping_date=factory_shipping_date; source=factory_shipping_date_source
+    if not shipping_date: raise ValueError("Factory PO requires an actual factory shipping date.")
+    company_info=load_json_config(Path(settings.BASE_DIR)/"config"/"company_info.json"); factory_info=build_factory_info_from_model(effective_factory); po_data=build_batch_factory_po_data(batch,company_info,factory_info,numbers,shipping_date,source,effective_factory)
+    workspace=get_order_document_workspace(order)/"workflow_batches"/f"batch_{batch.id}"/"purchase_orders"; base=sanitize_filename(f"Purchase_Order_{numbers['po_number']}"); html_path=workspace/f"{base}.html"; pdf_path=workspace/f"{base}.pdf"; data_path=workspace/f"{base}_data.json"
+    html_content=render_po_html(po_data=po_data, template_path=Path(settings.BASE_DIR)/"templates"/"factory_purchase_order.html")
+    write_po_html_and_pdf(html_content=html_content, html_path=html_path, pdf_path=pdf_path, project_root=Path(settings.BASE_DIR))
+    source_data={"workflow_item_id":item.id,"shipment_batch_id":batch.id,"numbers":numbers,"pricing_basis":{"price_basis_type":"factory_shipping_date","factory_shipping_date":shipping_date.isoformat(),"factory_shipping_date_source":source,"rows":[{"product_code":row["product_code"],"factory_base_unit_price":row["factory_base_unit_price"],"discount_rate":row["discount_rate"],"factory_net_unit_price":row["factory_net_unit_price"],"line_total":row["line_total"]} for row in po_data["items"]]},"po_data":po_data}; save_json_file(source_data,data_path)
+    doc=save_generated_document_record_for_batch(batch,GeneratedDocument.DocumentType.FACTORY_PO,numbers["po_number"],pdf_path,html_path,source_data,generated_by,overwrite_existing=bool(existing))
+    return {"generated_document":doc,"generated_document_id":doc.id,"document_type":GeneratedDocument.DocumentType.FACTORY_PO,"document_number":numbers["po_number"],"pdf_path":str(pdf_path),"html_path":str(html_path),"data_path":str(data_path),"warnings":po_data.get("warnings",[])}
 
-    company_info = load_json_config(
-        Path(settings.BASE_DIR) / "config" / "company_info.json"
-    )
-
-    factory = get_factory_for_batch(batch)
-
-    factory_info = build_factory_info_from_model(factory)
-
-    po_data = build_batch_factory_po_data(
-        batch=batch,
-        company_info=company_info,
-        factory_info=factory_info,
-        numbers=numbers,
-    )
-
-    workspace = (
-        get_order_document_workspace(order)
-        / "workflow_batches"
-        / f"batch_{batch.id}"
-        / "purchase_orders"
-    )
-
-    filename_base = sanitize_filename(f"Purchase_Order_{numbers['po_number']}")
-
-    html_path = workspace / f"{filename_base}.html"
-    pdf_path = workspace / f"{filename_base}.pdf"
-    data_path = workspace / f"{filename_base}_data.json"
-
-    html_content = render_po_html(
-        po_data=po_data,
-        template_path=Path(settings.BASE_DIR)
-        / "templates"
-        / "factory_purchase_order.html",
-    )
-
-    write_po_html_and_pdf(
-        html_content=html_content,
-        html_path=html_path,
-        pdf_path=pdf_path,
-        project_root=Path(settings.BASE_DIR),
-    )
-
-    source_data = {
-        "workflow_item_id": item.id,
-        "shipment_batch_id": batch.id,
-        "numbers": numbers,
-        "po_data": po_data,
-    }
-
-    save_json_file(source_data, data_path)
-
-    generated_document = save_generated_document_record_for_batch(
-        batch=batch,
-        document_type=GeneratedDocument.DocumentType.FACTORY_PO,
-        document_number=numbers["po_number"],
-        pdf_path=pdf_path,
-        html_path=html_path,
-        source_data=source_data,
-        generated_by=generated_by,
-    )
-
-    return {
-        "generated_document": generated_document,
-        "generated_document_id": generated_document.id,
-        "document_type": GeneratedDocument.DocumentType.FACTORY_PO,
-        "document_number": numbers["po_number"],
-        "pdf_path": str(pdf_path),
-        "html_path": str(html_path),
-        "data_path": str(data_path),
-        "warnings": po_data.get("warnings", []),
-    }
-
-
-@transaction.atomic
 def generate_documents_for_workflow_item(
     item: DocumentWorkflowItem,
     generated_by,
 ) -> Dict[str, Any]:
     item = (
         DocumentWorkflowItem.objects
-        .select_for_update()
         .select_related("order", "shipment_batch")
         .get(id=item.id)
     )
 
-    if item.validation_status != DocumentWorkflowItem.ValidationStatus.READY:
+    from workflow.services.workflow_validation_service import (
+        validate_document_workflow_item,
+    )
+
+    validation_result = (
+        validate_document_workflow_item(
+            item=item,
+            save=True,
+        )
+    )
+
+    item.refresh_from_db()
+
+    if not validation_result.get(
+        "can_generate_documents"
+    ):
+        validation_errors = (
+            validation_result.get("errors")
+            or []
+        )
+
+        error_text = "; ".join(
+            str(error)
+            for error in validation_errors[:10]
+        )
+
+        raise ValueError(
+            f"Workflow item {item.id} "
+            "failed final validation. "
+            f"{error_text}"
+        )
+
+    if (
+        item.validation_status
+        != DocumentWorkflowItem
+        .ValidationStatus
+        .READY
+    ):
         raise ValueError(
             f"Workflow item {item.id} is not ready. "
-            f"Current validation_status={item.validation_status}."
+            f"Current validation_status="
+            f"{item.validation_status}."
         )
 
     if (
@@ -813,16 +551,26 @@ def generate_documents_for_workflow_item(
         generated_by=generated_by,
     )
 
-    po_result = generate_factory_po_for_workflow_item(
-        item=item,
-        generated_by=generated_by,
-    )
+    if item.shipment_batch.inventory_allocation_id:
+        po_result = generate_factory_po_for_workflow_item(
+            item=item,
+            generated_by=generated_by,
+        )
+        po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+        po_document = None
+    else:
+        po_result = generate_factory_po_for_workflow_item(
+            item=item,
+            generated_by=generated_by,
+        )
+        po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+        po_document = po_result["generated_document"]
 
     item.invoice_status = DocumentWorkflowItem.DocumentStatus.GENERATED
-    item.po_status = DocumentWorkflowItem.DocumentStatus.GENERATED
+    item.po_status = po_status
     item.workflow_status = DocumentWorkflowItem.WorkflowStatus.GENERATED
     item.invoice_document = invoice_result["generated_document"]
-    item.po_document = po_result["generated_document"]
+    item.po_document = po_document
 
     item.save(
         update_fields=[

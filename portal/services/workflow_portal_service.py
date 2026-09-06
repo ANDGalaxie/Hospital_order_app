@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.urls import reverse
 
 from portal.services.common import (
@@ -192,9 +194,21 @@ def build_workflow_list_context(request):
                 "admin_url": f"/admin/workflow/documentworkflowitem/{item.id}/change/",
                 "detail_url": reverse("portal:workflow_detail", args=[item.id]),
                 "action_url": reverse("portal:workflow_item_action", args=[item.id]),
-                "can_generate": not (
-                    item.invoice_status == "generated"
-                    and item.po_status == "generated"
+                "documents_generated": (
+                    item.invoice_status
+                    == "generated"
+                    and item.po_status
+                    == "generated"
+                ),
+                "can_generate": (
+                    item.validation_status
+                    == "ready"
+                    and not (
+                        item.invoice_status
+                        == "generated"
+                        and item.po_status
+                        == "generated"
+                    )
                 ),
                 "updated_at": item.updated_at,
                 "row_status": row_status,
@@ -227,6 +241,102 @@ def build_workflow_list_context(request):
             "docs": sum(1 for row in unfiltered_rows if row["row_status"] == "docs"),
             "done": sum(1 for row in unfiltered_rows if row["row_status"] == "done"),
         },
+    }
+
+
+def build_workflow_price_snapshot(
+    item,
+    batch_quantities,
+):
+    """
+    使用统一的 Serial 级价格计算服务，
+    构建 Workflow 价格展示。
+
+    batch_quantities 参数暂时保留，
+    兼容现有调用接口。
+    """
+    from workflow.services.batch_price_snapshot_service import (
+        build_batch_price_snapshot,
+    )
+
+    snapshot = build_batch_price_snapshot(
+        item.shipment_batch
+    )
+
+    rows = []
+
+    for row in snapshot["product_rows"]:
+        if row["price_policy_id"]:
+            price_source_text = (
+                row["price_policy_name"]
+                or (
+                    "PricePolicy "
+                    f"#{row['price_policy_id']}"
+                )
+            )
+            price_source_class = "success"
+        else:
+            price_source_text = (
+                "没有 PricePolicy"
+            )
+            price_source_class = "danger"
+
+        rows.append(
+            {
+                **row,
+                "price_source_text": (
+                    price_source_text
+                ),
+                "price_source_class": (
+                    price_source_class
+                ),
+                "discount_percent": (
+                    row[
+                        "expiration_discount_rate"
+                    ]
+                    * Decimal("100")
+                ),
+            }
+        )
+
+    issues = (
+        list(snapshot["errors"])
+        + list(snapshot["warnings"])
+    )
+
+    return {
+        "rows": rows,
+        "item_count": len(rows),
+        "matched_count": sum(
+            1
+            for row in rows
+            if row["price_policy_id"]
+        ),
+        "estimated_hospital_total": (
+            snapshot[
+                "base_hospital_total"
+            ]
+        ),
+        "base_factory_total": (
+            snapshot[
+                "base_factory_total"
+            ]
+        ),
+        "estimated_factory_total": (
+            snapshot[
+                "actual_factory_total"
+            ]
+        ),
+        "factory_discount_savings": (
+            snapshot[
+                "factory_discount_savings"
+            ]
+        ),
+        "pricing_reference_date": (
+            snapshot["reference_date"]
+        ),
+        "issues": issues,
+        "is_valid": snapshot["is_valid"],
     }
 
 
@@ -287,6 +397,34 @@ def build_workflow_detail_context(request, item_id):
             }
         )
 
+    price_snapshot = (
+        build_workflow_price_snapshot(
+            item=item,
+            batch_quantities=batch_quantities,
+        )
+    )
+
+    documents_generated = (
+        item.invoice_status == "generated"
+        and item.po_status == "generated"
+    )
+
+    any_document_generated = bool(
+        item.invoice_document_id
+        or item.po_document_id
+        or item.invoice_status == "generated"
+        or item.po_status == "generated"
+    )
+
+    can_reapply_prices = (
+        not any_document_generated
+    )
+
+    can_generate_now = (
+        item.validation_status == "ready"
+        and not documents_generated
+    )
+
     return {
         "lang": lang,
         "user_display_name": get_user_display_name(request.user),
@@ -309,6 +447,50 @@ def build_workflow_detail_context(request, item_id):
         "next_action_class": next_action_class,
         "product_rows": product_rows,
         "batch_rows": batch_rows,
+        "price_rows": price_snapshot["rows"],
+        "price_item_count": (
+            price_snapshot["item_count"]
+        ),
+        "price_policy_matched_count": (
+            price_snapshot["matched_count"]
+        ),
+        "estimated_hospital_total": (
+            price_snapshot[
+                "estimated_hospital_total"
+            ]
+        ),
+        "estimated_factory_total": (
+            price_snapshot[
+                "estimated_factory_total"
+            ]
+        ),
+        "base_factory_total": (
+            price_snapshot[
+                "base_factory_total"
+            ]
+        ),
+        "factory_discount_savings": (
+            price_snapshot[
+                "factory_discount_savings"
+            ]
+        ),
+        "pricing_reference_date": (
+            price_snapshot[
+                "pricing_reference_date"
+            ]
+        ),
+        "price_issues": (
+            price_snapshot["issues"]
+        ),
+        "documents_generated": (
+            documents_generated
+        ),
+        "can_reapply_prices": (
+            can_reapply_prices
+        ),
+        "can_generate_now": (
+            can_generate_now
+        ),
         "errors": data.get("errors") or [],
         "warnings": data.get("warnings") or [],
         "can_generate_documents": data.get("can_generate_documents"),

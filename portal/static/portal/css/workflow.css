@@ -458,3 +458,113 @@
 .workflow-table td:nth-child(8) {
     text-align: left;
 }
+/* =========================================================
+   Workflow price snapshot
+   ========================================================= */
+
+.workflow-price-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.workflow-price-heading .portal-panel-title {
+    margin-bottom: 6px;
+}
+
+.workflow-price-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+.workflow-price-summary > span {
+    padding: 8px 11px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.workflow-price-summary strong {
+    color: #0f172a;
+}
+
+.portal-button.disabled {
+    pointer-events: none;
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+    .workflow-price-heading {
+        flex-direction: column;
+    }
+
+    .workflow-price-summary {
+        justify-content: flex-start;
+    }
+}
+
+/* =========================================================
+   Workflow price snapshot
+   ========================================================= */
+
+.workflow-price-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.workflow-price-heading .portal-panel-title {
+    margin-bottom: 6px;
+}
+
+.workflow-price-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+.workflow-price-summary > span {
+    padding: 8px 11px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.workflow-price-summary strong {
+    color: #0f172a;
+}
+
+.portal-button.disabled {
+    pointer-events: none;
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+    .workflow-price-heading {
+        flex-direction: column;
+    }
+
+    .workflow-price-summary {
+        justify-content: flex-start;
+    }
+}
+
+.price-discount-value {
+    color: #047857;
+}
+
+.workflow-price-summary span:last-child {
+    background: #ecfdf5;
+    color: #047857;
+}

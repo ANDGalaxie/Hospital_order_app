@@ -47,6 +47,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import fitz  # PyMuPDF
 
+from factory_confirmations.services.bon_de_commande_parser import (
+    extract_bon_de_commande_from_text,
+)
+
 
 # ============================================================
 # 1. 正则表达式定义
@@ -64,13 +68,6 @@ PRODUCT_RE = re.compile(
 # WH/OUT/00269
 WAREHOUSE_OUT_RE = re.compile(
     r"\bWH/OUT/\d+\b",
-    re.IGNORECASE,
-)
-
-# Bon de commande，例如：
-# BON DE COMMANDE N° 150222
-BON_RE = re.compile(
-    r"BON\s+DE\s+COMMANDE\s+N[°o]?\s*([0-9]+)",
     re.IGNORECASE,
 )
 
@@ -335,7 +332,7 @@ def extract_factory_header(full_text: str) -> Dict[str, Any]:
     - total_completed
     """
     warehouse_match = WAREHOUSE_OUT_RE.search(full_text)
-    bon_match = BON_RE.search(full_text)
+    bon_de_commande = extract_bon_de_commande_from_text(full_text)
     shipping_match = SHIPPING_DATE_RE.search(full_text)
     demand_match = TOTAL_DEMAND_RE.search(full_text)
     completed_match = TOTAL_COMPLETED_RE.search(full_text)
@@ -347,7 +344,7 @@ def extract_factory_header(full_text: str) -> Dict[str, Any]:
 
     return {
         "warehouse_out": warehouse_match.group(0) if warehouse_match else None,
-        "bon_de_commande": bon_match.group(1) if bon_match else None,
+        "bon_de_commande": bon_de_commande,
 
         "shipping_date_raw": shipping_date_raw,
         "shipping_date_iso": parse_factory_datetime_to_iso(shipping_date_raw),

@@ -13,6 +13,7 @@ class PricePolicyAdmin(admin.ModelAdmin):
         "end_date",
         "hospital_unit_price",
         "factory_unit_price",
+        "expiration_threshold_days",
         "expiration_discount_rate",
         "is_active",
     )
@@ -41,11 +42,30 @@ class PricePolicyAdmin(admin.ModelAdmin):
         "end_date",
         "hospital_unit_price",
         "factory_unit_price",
+        "expiration_threshold_days",
         "expiration_discount_rate",
         "is_active",
         "notes",
+        "created_at",
+        "updated_at",
     )
 
-    def save_model(self, request, obj, form, change):
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    def save_model(
+        self,
+        request,
+        obj,
+        form,
+        change,
+    ):
         obj.full_clean()
-        super().save_model(request, obj, form, change)
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )

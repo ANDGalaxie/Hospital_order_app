@@ -1,0 +1,206 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}
+价格匹配模拟器 | 价格规则
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/master_data_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="master-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">
+        资料库
+    </a>
+    <span>›</span>
+    <a href="{% url 'portal:library_prices' %}">
+        价格规则
+    </a>
+    <span>›</span>
+    <span>价格匹配模拟器</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>价格匹配模拟器</h1>
+        <p>
+            选择产品和医院订单日期，
+            查看系统会命中哪条价格规则。
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{% url 'portal:library_prices' %}">
+            返回价格规则
+        </a>
+    </div>
+</section>
+
+<section class="portal-panel price-simulator-form">
+    <form method="get">
+        <div class="master-form-grid">
+            <div class="master-form-field">
+                <label for="{{ form.product.id_for_label }}">
+                    {{ form.product.label }}
+                </label>
+                {{ form.product }}
+
+                <div class="master-form-errors">
+                    {{ form.product.errors }}
+                </div>
+            </div>
+
+            <div class="master-form-field">
+                <label for="{{ form.target_date.id_for_label }}">
+                    {{ form.target_date.label }}
+                </label>
+                {{ form.target_date }}
+
+                <div class="master-form-errors">
+                    {{ form.target_date.errors }}
+                </div>
+            </div>
+        </div>
+
+        <div class="master-form-actions">
+            <button
+                class="portal-button primary"
+                type="submit">
+                运行模拟
+            </button>
+        </div>
+    </form>
+</section>
+
+{% if simulation %}
+    <section class="price-simulation-result">
+        <article class="portal-panel">
+            <h2 class="portal-panel-title">
+                产品信息
+            </h2>
+
+            <div class="master-detail-list">
+                <div>
+                    <span>产品编号</span>
+                    <strong>
+                        {{ simulation.product.code }}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>工厂</span>
+                    <strong>
+                        {{ simulation.product.factory|default:"-" }}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>产品分类</span>
+                    <strong>
+                        {{ simulation.product.category|default:"-" }}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>医院订单日期</span>
+                    <strong>
+                        {{ simulation.target_date|date:"Y-m-d" }}
+                    </strong>
+                </div>
+            </div>
+        </article>
+
+        {% if simulation.policy %}
+            <article class="portal-panel price-simulation-success">
+                <div class="price-simulation-heading">
+                    <div>
+                        <span class="status-pill success">
+                            匹配成功
+                        </span>
+
+                        <h2>
+                            {{ simulation.policy.name|default:"未命名规则" }}
+                        </h2>
+                    </div>
+
+                    <a class="portal-button"
+                       href="{% url 'portal:library_price_policy_detail' simulation.policy.id %}">
+                        查看规则详情
+                    </a>
+                </div>
+
+                <div class="price-simulation-numbers">
+                    <div>
+                        <span>医院销售价</span>
+                        <strong>
+                            €{{ simulation.policy.hospital_unit_price|floatformat:2 }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>工厂采购价</span>
+                        <strong>
+                            €{{ simulation.policy.factory_unit_price|floatformat:2 }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>基础毛利</span>
+                        <strong>
+                            €{{ simulation.base_margin|floatformat:2 }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>临期规则</span>
+                        <strong>
+                            {{ simulation.policy.expiration_threshold_days }}
+                            天 /
+                            {{ simulation.discount_percent|floatformat:2 }}%
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="price-match-explanation">
+                    <strong>匹配范围：</strong>
+                    {{ simulation.scope|default:"-" }}
+                    <br>
+                    <strong>匹配说明：</strong>
+                    {{ simulation.message }}
+                </div>
+            </article>
+        {% else %}
+            <article class="portal-panel
+                            price-simulation-failed">
+                <span class="status-pill danger">
+                    未找到规则
+                </span>
+
+                <h2>该产品和日期没有匹配价格规则</h2>
+
+                <p>{{ simulation.message }}</p>
+            </article>
+        {% endif %}
+
+        {% if simulation.warnings %}
+            <article class="master-warning-panel">
+                <strong>警告：</strong>
+
+                <ul>
+                    {% for warning in simulation.warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+        {% endif %}
+    </section>
+{% endif %}
+{% endblock %}

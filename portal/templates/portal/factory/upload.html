@@ -4,7 +4,7 @@
 {% block title %}上传工厂采购{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/orders.css' %}">
 {% endblock %}
 
 {% block breadcrumb %}
@@ -16,61 +16,83 @@
 {% endblock %}
 
 {% block content %}
-<div class="portal-page-header upload-page-header">
+<section class="portal-page-header">
     <div>
-        <h1>上传工厂采购</h1>
-        <p>上传 factory confirmation PDF 后，系统会自动识别订单号、提取 Serial，并进入后续流程。</p>
+        <h1>上传工厂文件</h1>
+        <p>上传工厂确认 PDF 后，系统会自动提取发货信息，并进入后续处理流程。</p>
     </div>
-</div>
 
-<div class="upload-card">
-    <form method="post" enctype="multipart/form-data" class="clean-upload-form">
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:factory_list' %}">返回工厂文件列表</a>
+    </div>
+</section>
+
+<section class="portal-panel upload-panel">
+    <form method="post" enctype="multipart/form-data" class="upload-form">
         {% csrf_token %}
 
-        <div class="upload-drop-card">
-            <div class="upload-file-icon">
-                PDF
-            </div>
+        <div class="portal-panel detail-section">
+            <div class="detail-info-grid">
+                <div>
+                    <label class="detail-label" for="order_id">医院订单</label>
+                    {% if order_locked and selected_order %}
+                        <input type="hidden" name="order_id" value="{{ selected_order.id }}">
+                        <div class="portal-input" aria-readonly="true">
+                            {{ selected_order.bon_de_commande }}{% if selected_order.hospital_name %} / {{ selected_order.hospital_name }}{% endif %}
+                        </div>
+                    {% else %}
+                        <select id="order_id" name="order_id" class="portal-input">
+                            <option value="">自动匹配</option>
+                            {% for order in order_choices %}
+                                <option
+                                    value="{{ order.id }}"
+                                    {% if selected_order_id|stringformat:'s' == order.id|stringformat:'s' %}selected{% endif %}
+                                >
+                                    {{ order.bon_de_commande }}{% if order.hospital_name %} / {{ order.hospital_name }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
 
-            <div class="upload-file-content">
-                <h2>选择工厂采购 PDF</h2>
-                <p>
-                    上传后系统会自动识别 bon de commande，匹配医院订单，
-                    并提取产品号、serial number、expiry date 和 shipping date。
-                </p>
-
-                <div class="file-input-wrap">
-                    <input
-                        id="confirmation_pdf"
-                        name="confirmation_pdf"
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        required
-                    >
+                <div>
+                    <label class="detail-label" for="confirmation_type">发货类型</label>
+                    <select id="confirmation_type" name="confirmation_type" class="portal-input">
+                        {% for value, label in confirmation_type_choices %}
+                            <option value="{{ value }}" {% if value == default_confirmation_type %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
 
-        <input
-            type="hidden"
-            name="confirmation_type"
-            value="{{ default_confirmation_type }}"
-        >
+        <div class="upload-box">
+            <div class="upload-icon">PDF</div>
 
-        <input
-            type="hidden"
-            name="factory_id"
-            value=""
-        >
+            <div class="upload-text">
+                <h2>选择工厂文件 PDF</h2>
+                <p>上传后系统会自动识别 bon de commande、提取 serial number、有效期和发货日期，并继续同步后续流程。</p>
+            </div>
 
-        <div class="upload-hint">
+            <input
+                id="confirmation_pdf"
+                name="confirmation_pdf"
+                type="file"
+                accept="application/pdf,.pdf"
+                required
+            >
+        </div>
+
+        <div class="upload-warning">
             <strong>提示：</strong>
             自动提取可能需要一些时间。请不要在上传过程中关闭页面。
         </div>
 
         <div class="upload-actions">
             <button class="portal-button primary" type="submit">
-                上传、自动提取
+                上传并提取
             </button>
 
             <a class="portal-button" href="{% url 'portal:factory_list' %}">
@@ -78,5 +100,5 @@
             </a>
         </div>
     </form>
-</div>
+</section>
 {% endblock %}

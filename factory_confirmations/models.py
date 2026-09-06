@@ -162,7 +162,7 @@ class SerialItem(models.Model):
     工厂确认的具体 serial number。
 
     以后 PO 折扣规则会根据 expiration_date 判断：
-    如果 expiration_date < document_date + 365 days，则 discount = 30%。
+    如果 expiration_date < factory shipping_date + threshold days，则应用 PricePolicy 中的折扣率。
     """
 
     factory_confirmation = models.ForeignKey(

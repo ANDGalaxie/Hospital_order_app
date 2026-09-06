@@ -1,0 +1,310 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}价格规则 | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/master_data_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="master-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">
+        资料库
+    </a>
+    <span>›</span>
+    <span>价格规则</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>价格规则</h1>
+        <p>
+            根据工厂、产品分类和医院订单日期，
+            管理医院售价、工厂采购价及临期折扣。
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{% url 'portal:library_price_policy_simulator' %}">
+            测试价格匹配
+        </a>
+
+        {% if can_add_price_policy %}
+            <a class="portal-button primary"
+               href="{% url 'portal:library_price_policy_add' %}">
+                ＋ 新增价格规则
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="master-stat-grid">
+    <div class="master-stat-card">
+        <span>全部规则</span>
+        <strong>{{ total_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>当前生效</span>
+        <strong>{{ current_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>未来生效</span>
+        <strong>{{ future_count }}</strong>
+    </div>
+
+    <div class="master-stat-card">
+        <span>已过期 / 已停用</span>
+        <strong>
+            {{ expired_count }} / {{ inactive_count }}
+        </strong>
+    </div>
+</section>
+
+<section class="master-filter-panel">
+    <form method="get"
+          class="price-filter-form">
+
+        <div class="price-filter-search">
+            <label for="price-search">
+                搜索
+            </label>
+
+            <input
+                id="price-search"
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="规则名称、工厂、分类或备注"
+            >
+        </div>
+
+        <div class="price-filter-item">
+            <label for="factory-filter">
+                工厂
+            </label>
+
+            <select
+                id="factory-filter"
+                name="factory">
+
+                <option value="">
+                    全部工厂
+                </option>
+
+                {% for factory in factories %}
+                    <option
+                        value="{{ factory.id }}"
+                        {% if selected_factory_id == factory.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+                        {{ factory.short_name|default:factory.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="price-filter-item">
+            <label for="category-filter">
+                产品分类
+            </label>
+
+            <select
+                id="category-filter"
+                name="category">
+
+                <option value="">
+                    全部分类
+                </option>
+
+                {% for category in categories %}
+                    <option
+                        value="{{ category.id }}"
+                        {% if selected_category_id == category.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+                        {{ category.get_full_path }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="price-filter-item">
+            <label for="status-filter">
+                状态
+            </label>
+
+            <select
+                id="status-filter"
+                name="status">
+
+                <option value="all"
+                        {% if status_filter == "all" %}selected{% endif %}>
+                    全部状态
+                </option>
+
+                <option value="current"
+                        {% if status_filter == "current" %}selected{% endif %}>
+                    当前生效
+                </option>
+
+                <option value="future"
+                        {% if status_filter == "future" %}selected{% endif %}>
+                    未来生效
+                </option>
+
+                <option value="expired"
+                        {% if status_filter == "expired" %}selected{% endif %}>
+                    已过期
+                </option>
+
+                <option value="inactive"
+                        {% if status_filter == "inactive" %}selected{% endif %}>
+                    已停用
+                </option>
+            </select>
+        </div>
+
+        <div class="price-filter-item">
+            <label for="date-filter">
+                基准日期
+            </label>
+
+            <input
+                id="date-filter"
+                type="date"
+                name="on_date"
+                value="{{ reference_date_input }}"
+            >
+        </div>
+
+        <div class="price-filter-actions">
+            <button
+                class="portal-button primary"
+                type="submit">
+                查询
+            </button>
+
+            <a class="portal-button"
+               href="{% url 'portal:library_prices' %}">
+                重置
+            </a>
+        </div>
+    </form>
+</section>
+
+<div class="portal-table-wrap">
+    <table class="portal-table price-policy-table">
+        <thead>
+            <tr>
+                <th>规则名称</th>
+                <th>工厂</th>
+                <th>产品分类</th>
+                <th>有效期</th>
+                <th>医院价</th>
+                <th>工厂价</th>
+                <th>临期规则</th>
+                <th>产品数</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for policy in page_obj %}
+                <tr>
+                    <td>
+                        <a class="master-record-link"
+                           href="{% url 'portal:library_price_policy_detail' policy.id %}">
+                            {{ policy.name|default:"未命名规则" }}
+                        </a>
+
+                        <div class="price-policy-id">
+                            #{{ policy.id }}
+                        </div>
+                    </td>
+
+                    <td>
+                        {{ policy.portal_factory_label }}
+                    </td>
+
+                    <td class="price-category-cell">
+                        {{ policy.portal_category_label }}
+                    </td>
+
+                    <td>
+                        <div class="price-date-range">
+                            <span>
+                                {{ policy.start_date|date:"Y-m-d"|default:"无下限" }}
+                            </span>
+                            <span>→</span>
+                            <span>
+                                {{ policy.end_date|date:"Y-m-d"|default:"长期" }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="price-number">
+                        €{{ policy.hospital_unit_price|floatformat:2 }}
+                    </td>
+
+                    <td class="price-number">
+                        €{{ policy.factory_unit_price|floatformat:2 }}
+                    </td>
+
+                    <td>
+                        {{ policy.expiration_threshold_days }} 天
+                        /
+                        {{ policy.discount_percent_display|floatformat:2 }}%
+                    </td>
+
+                    <td>
+                        {{ policy.affected_product_count }}
+                    </td>
+
+                    <td>
+                        <span class="status-pill {{ policy.portal_status_class }}">
+                            {{ policy.portal_status_label }}
+                        </span>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9"
+                        class="portal-empty">
+                        没有找到符合条件的价格规则。
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="master-pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            上一页
+        </a>
+    {% endif %}
+
+    <span>
+        第 {{ page_obj.number }} 页，
+        共 {{ page_obj.paginator.num_pages }} 页
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
+            下一页
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

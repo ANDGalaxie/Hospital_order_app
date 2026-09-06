@@ -5,16 +5,38 @@ Portal views.
 业务逻辑尽量放在 portal/services/* 或各 app 的 services/* 里，避免 views.py 变得过重。
 """
 
+from urllib.parse import quote
+
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+
+from portal.forms.factory_library_forms import (
+    FactoryPortalForm,
+)
+from portal.forms.hospital_library_forms import (
+    HospitalPortalForm,
+)
+from portal.forms.price_policy_forms import (
+    PricePolicyPortalForm,
+)
+from portal.forms.product_library_forms import (
+    DepartmentCreateForm,
+    FactoryNodeCreateForm,
+    ProductCategoryCreateForm,
+    ProductCreateForm,
+)
 
 from portal.services.common import (
     get_safe_next_url,
     safe_redirect_after_action,
 )
 from portal.services.factory_portal_service import (
+    associate_order_and_finalize_factory_confirmation,
     build_factory_detail_context,
     build_factory_list_context,
     build_factory_upload_context,
@@ -34,6 +56,18 @@ from portal.services.order_portal_service import (
     save_order_manual_edit,
     validate_portal_order_after_extraction,
 )
+from portal.services.shipment_portal_service import (
+    build_shipment_detail_context,
+    build_shipment_list_context,
+)
+from portal.services.backorder_export_service import build_backorder_xlsx
+from portal.services.backorder_portal_service import (
+    build_backorder_detail_context,
+    build_backorder_list_context,
+    build_backorder_queryset,
+    create_inventory_shipment_for_allocation,
+    reserve_inventory_for_backorder,
+)
 from portal.services.workflow_portal_service import (
     build_workflow_detail_context,
     build_workflow_list_context,
@@ -41,6 +75,26 @@ from portal.services.workflow_portal_service import (
 )
 
 from portal.services.library_portal_service import build_library_home_context
+from portal.services.price_policy_portal_service import (
+    build_price_policy_detail_context,
+    build_price_policy_list_context,
+    build_price_policy_simulator_context,
+)
+from portal.services.factory_library_portal_service import (
+    build_factory_detail_context as build_factory_library_detail_context,
+    build_factory_list_context as build_factory_library_list_context,
+)
+from portal.services.hospital_library_portal_service import (
+    build_hospital_detail_context,
+    build_hospital_list_context,
+)
+from portal.services.product_library_portal_service import (
+    build_product_category_context,
+    build_product_department_context,
+    build_product_detail_context,
+    build_product_factory_context,
+    build_product_library_home_context,
+)
 
 # =============================================================================
 # 通用小工具
@@ -157,35 +211,1208 @@ def library_home(request):
 
 @staff_member_required
 def library_products(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "产品资料",
-        "description": "产品库列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/products/home.html",
+        build_product_library_home_context(request),
+    )
+
+
+@staff_member_required
+def library_product_department(request, department_id):
+    return render(
+        request,
+        "portal/library/products/department_detail.html",
+        build_product_department_context(
+            request,
+            department_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_factory(request, factory_node_id):
+    return render(
+        request,
+        "portal/library/products/factory_detail.html",
+        build_product_factory_context(
+            request,
+            factory_node_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_category(request, category_id):
+    return render(
+        request,
+        "portal/library/products/category_detail.html",
+        build_product_category_context(
+            request,
+            category_id,
+        ),
+    )
+
+
+@staff_member_required
+def library_product_detail(request, product_id):
+    return render(
+        request,
+        "portal/library/products/product_detail.html",
+        build_product_detail_context(
+            request,
+            product_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_department_add(request):
+    form = DepartmentCreateForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        department = form.save()
+
+        messages.success(
+            request,
+            f"科室“{department.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_department",
+            department_id=department.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增科室",
+            "form_description": (
+                "创建产品库的一级科室入口。"
+            ),
+            "submit_text": "创建科室",
+            "cancel_url": reverse(
+                "portal:library_products"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": "新增科室",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_factory_add(
+    request,
+    department_id,
+):
+    from products.models import ProductCategory
+
+    department = get_object_or_404(
+        ProductCategory,
+        id=department_id,
+        node_type=ProductCategory.NodeType.DEPARTMENT,
+        is_active=True,
+    )
+
+    form = FactoryNodeCreateForm(
+        request.POST or None,
+        department=department,
+        allow_create_factory=request.user.has_perm(
+            "factories.add_factory"
+        ),
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory_node = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory_node.name}”已添加到"
+            f"“{department.name}”。",
+        )
+
+        return redirect(
+            "portal:library_product_factory",
+            factory_node_id=factory_node.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增或关联工厂",
+            "form_description": (
+                f"将工厂添加到科室“{department.name}”。"
+            ),
+            "submit_text": "保存工厂",
+            "cancel_url": reverse(
+                "portal:library_product_department",
+                args=[department.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": department.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[department.id],
+                    ),
+                },
+                {
+                    "label": "新增工厂",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_productcategory",
+    raise_exception=True,
+)
+def library_product_category_add(
+    request,
+    factory_node_id,
+):
+    from products.models import ProductCategory
+
+    factory_node = get_object_or_404(
+        ProductCategory.objects.select_related(
+            "parent",
+            "factory",
+        ),
+        id=factory_node_id,
+        node_type=ProductCategory.NodeType.FACTORY,
+        is_active=True,
+    )
+
+    form = ProductCategoryCreateForm(
+        request.POST or None,
+        factory_node=factory_node,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        category = form.save()
+
+        messages.success(
+            request,
+            f"产品分类“{category.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_category",
+            category_id=category.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增产品分类",
+            "form_description": (
+                f"为工厂“{factory_node.name}”"
+                "创建一个产品分类。"
+            ),
+            "submit_text": "创建分类",
+            "cancel_url": reverse(
+                "portal:library_product_factory",
+                args=[factory_node.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": factory_node.parent.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[factory_node.parent.id],
+                    ),
+                },
+                {
+                    "label": factory_node.name,
+                    "url": reverse(
+                        "portal:library_product_factory",
+                        args=[factory_node.id],
+                    ),
+                },
+                {
+                    "label": "新增产品分类",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "products.add_product",
+    raise_exception=True,
+)
+def library_product_add(
+    request,
+    category_id,
+):
+    from products.models import ProductCategory
+
+    category = get_object_or_404(
+        ProductCategory.objects.select_related(
+            "parent",
+            "parent__parent",
+            "parent__factory",
+        ),
+        id=category_id,
+        node_type=ProductCategory.NodeType.CATEGORY,
+        is_active=True,
+    )
+
+    form = ProductCreateForm(
+        request.POST or None,
+        category=category,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        product = form.save()
+
+        messages.success(
+            request,
+            f"产品“{product.code}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_product_detail",
+            product_id=product.id,
+        )
+
+    return render(
+        request,
+        "portal/library/products/form.html",
+        {
+            "form": form,
+            "form_title": "新增产品",
+            "form_description": (
+                f"在分类“{category.name}”中新增产品。"
+            ),
+            "submit_text": "创建产品",
+            "cancel_url": reverse(
+                "portal:library_product_category",
+                args=[category.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "产品库",
+                    "url": reverse(
+                        "portal:library_products"
+                    ),
+                },
+                {
+                    "label": category.parent.parent.name,
+                    "url": reverse(
+                        "portal:library_product_department",
+                        args=[
+                            category.parent.parent.id
+                        ],
+                    ),
+                },
+                {
+                    "label": category.parent.name,
+                    "url": reverse(
+                        "portal:library_product_factory",
+                        args=[category.parent.id],
+                    ),
+                },
+                {
+                    "label": category.name,
+                    "url": reverse(
+                        "portal:library_product_category",
+                        args=[category.id],
+                    ),
+                },
+                {
+                    "label": "新增产品",
+                    "url": "",
+                },
+            ],
+        },
+    )
 
 
 @staff_member_required
 def library_hospitals(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "医院资料",
-        "description": "医院资料列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/hospitals/list.html",
+        build_hospital_list_context(request),
+    )
+
+
+@staff_member_required
+def library_hospital_detail(request, hospital_id):
+    return render(
+        request,
+        "portal/library/hospitals/detail.html",
+        build_hospital_detail_context(
+            request,
+            hospital_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.add_hospital",
+    raise_exception=True,
+)
+def library_hospital_add(request):
+    form = HospitalPortalForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        hospital = form.save()
+
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "新增医院",
+            "form_description": (
+                "创建新的医院主数据记录。"
+            ),
+            "submit_text": "创建医院",
+            "cancel_url": reverse(
+                "portal:library_hospitals"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "医院库",
+                    "url": reverse(
+                        "portal:library_hospitals"
+                    ),
+                },
+                {
+                    "label": "新增医院",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.change_hospital",
+    raise_exception=True,
+)
+def library_hospital_edit(request, hospital_id):
+    from hospitals.models import Hospital
+
+    hospital = get_object_or_404(
+        Hospital,
+        id=hospital_id,
+    )
+
+    form = HospitalPortalForm(
+        request.POST or None,
+        instance=hospital,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        hospital = form.save()
+
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "编辑医院",
+            "form_description": hospital.name,
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_hospital_detail",
+                args=[hospital.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "医院库",
+                    "url": reverse(
+                        "portal:library_hospitals"
+                    ),
+                },
+                {
+                    "label": hospital.name,
+                    "url": reverse(
+                        "portal:library_hospital_detail",
+                        args=[hospital.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "hospitals.change_hospital",
+    raise_exception=True,
+)
+def library_hospital_toggle_active(
+    request,
+    hospital_id,
+):
+    from hospitals.models import Hospital
+
+    hospital = get_object_or_404(
+        Hospital,
+        id=hospital_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_hospital_detail",
+            hospital_id=hospital.id,
+        )
+
+    hospital.is_active = not hospital.is_active
+    hospital.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if hospital.is_active:
+        messages.success(
+            request,
+            f"医院“{hospital.name}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"医院“{hospital.name}”已停用。"
+            "历史订单不会被删除。",
+        )
+
+    return redirect(
+        "portal:library_hospital_detail",
+        hospital_id=hospital.id,
+    )
 
 
 @staff_member_required
 def library_factories(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "工厂资料",
-        "description": "工厂资料列表页即将接入。",
-    })
+    return render(
+        request,
+        "portal/library/factories/list.html",
+        build_factory_library_list_context(request),
+    )
+
+
+@staff_member_required
+def library_factory_detail(request, factory_id):
+    return render(
+        request,
+        "portal/library/factories/detail.html",
+        build_factory_library_detail_context(
+            request,
+            factory_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.add_factory",
+    raise_exception=True,
+)
+def library_factory_add(request):
+    form = FactoryPortalForm(
+        request.POST or None,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "新增工厂",
+            "form_description": (
+                "创建新的工厂主数据记录。"
+            ),
+            "submit_text": "创建工厂",
+            "cancel_url": reverse(
+                "portal:library_factories"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "工厂库",
+                    "url": reverse(
+                        "portal:library_factories"
+                    ),
+                },
+                {
+                    "label": "新增工厂",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.change_factory",
+    raise_exception=True,
+)
+def library_factory_edit(request, factory_id):
+    from factories.models import Factory
+
+    factory = get_object_or_404(
+        Factory,
+        id=factory_id,
+    )
+
+    form = FactoryPortalForm(
+        request.POST or None,
+        instance=factory,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        factory = form.save()
+
+        messages.success(
+            request,
+            f"工厂“{factory}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    return render(
+        request,
+        "portal/library/master_data_form.html",
+        {
+            "form": form,
+            "form_title": "编辑工厂",
+            "form_description": str(factory),
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_factory_detail",
+                args=[factory.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse("portal:home"),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "工厂库",
+                    "url": reverse(
+                        "portal:library_factories"
+                    ),
+                },
+                {
+                    "label": str(factory),
+                    "url": reverse(
+                        "portal:library_factory_detail",
+                        args=[factory.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "factories.change_factory",
+    raise_exception=True,
+)
+def library_factory_toggle_active(
+    request,
+    factory_id,
+):
+    from factories.models import Factory
+
+    factory = get_object_or_404(
+        Factory,
+        id=factory_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_factory_detail",
+            factory_id=factory.id,
+        )
+
+    factory.is_active = not factory.is_active
+    factory.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if factory.is_active:
+        messages.success(
+            request,
+            f"工厂“{factory}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"工厂“{factory}”已停用。"
+            "已有产品和历史业务记录不会被删除。",
+        )
+
+    return redirect(
+        "portal:library_factory_detail",
+        factory_id=factory.id,
+    )
 
 
 @staff_member_required
 def library_prices(request):
-    return render(request, "portal/library/coming_soon.html", {
-        "title": "价格资料",
-        "description": "价格资料列表页即将接入。",
-    })
-    
+    return render(
+        request,
+        "portal/library/prices/list.html",
+        build_price_policy_list_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def library_price_policy_detail(
+    request,
+    policy_id,
+):
+    return render(
+        request,
+        "portal/library/prices/detail.html",
+        build_price_policy_detail_context(
+            request,
+            policy_id,
+        ),
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.add_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_add(request):
+    form = PricePolicyPortalForm(
+        request.POST or None,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        policy = form.save()
+
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已创建。",
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    return render(
+        request,
+        "portal/library/prices/form.html",
+        {
+            "form": form,
+            "form_title": "新增价格规则",
+            "form_description": (
+                "按工厂、产品分类和医院订单日期"
+                "定义价格。"
+            ),
+            "submit_text": "创建规则",
+            "cancel_url": reverse(
+                "portal:library_prices"
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse(
+                        "portal:home"
+                    ),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "价格规则",
+                    "url": reverse(
+                        "portal:library_prices"
+                    ),
+                },
+                {
+                    "label": "新增规则",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.change_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_edit(
+    request,
+    policy_id,
+):
+    from pricing.models import PricePolicy
+
+    policy = get_object_or_404(
+        PricePolicy,
+        id=policy_id,
+    )
+
+    form = PricePolicyPortalForm(
+        request.POST or None,
+        instance=policy,
+    )
+
+    if (
+        request.method == "POST"
+        and form.is_valid()
+    ):
+        policy = form.save()
+
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已更新。",
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    return render(
+        request,
+        "portal/library/prices/form.html",
+        {
+            "form": form,
+            "form_title": "编辑价格规则",
+            "form_description": (
+                policy.name or str(policy)
+            ),
+            "submit_text": "保存修改",
+            "cancel_url": reverse(
+                "portal:library_price_policy_detail",
+                args=[policy.id],
+            ),
+            "breadcrumbs": [
+                {
+                    "label": "首页",
+                    "url": reverse(
+                        "portal:home"
+                    ),
+                },
+                {
+                    "label": "资料库",
+                    "url": reverse(
+                        "portal:library_home"
+                    ),
+                },
+                {
+                    "label": "价格规则",
+                    "url": reverse(
+                        "portal:library_prices"
+                    ),
+                },
+                {
+                    "label": (
+                        policy.name
+                        or f"规则 #{policy.id}"
+                    ),
+                    "url": reverse(
+                        "portal:library_price_policy_detail",
+                        args=[policy.id],
+                    ),
+                },
+                {
+                    "label": "编辑",
+                    "url": "",
+                },
+            ],
+        },
+    )
+
+
+@staff_member_required
+@permission_required(
+    "pricing.change_pricepolicy",
+    raise_exception=True,
+)
+def library_price_policy_toggle_active(
+    request,
+    policy_id,
+):
+    from django.core.exceptions import ValidationError
+    from pricing.models import PricePolicy
+
+    policy = get_object_or_404(
+        PricePolicy,
+        id=policy_id,
+    )
+
+    if request.method != "POST":
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    old_state = policy.is_active
+    policy.is_active = not old_state
+
+    try:
+        policy.full_clean()
+
+    except ValidationError as exc:
+        policy.is_active = old_state
+
+        messages.error(
+            request,
+            "无法重新启用该规则："
+            + "；".join(exc.messages),
+        )
+
+        return redirect(
+            "portal:library_price_policy_detail",
+            policy_id=policy.id,
+        )
+
+    policy.save(
+        update_fields=[
+            "is_active",
+            "updated_at",
+        ]
+    )
+
+    if policy.is_active:
+        messages.success(
+            request,
+            f"价格规则“{policy.name or policy}”已重新启用。",
+        )
+    else:
+        messages.warning(
+            request,
+            f"价格规则“{policy.name or policy}”已停用。"
+            "历史订单价格快照不会改变。",
+        )
+
+    return redirect(
+        "portal:library_price_policy_detail",
+        policy_id=policy.id,
+    )
+
+
+@staff_member_required
+def library_price_policy_simulator(
+    request,
+):
+    return render(
+        request,
+        "portal/library/prices/simulator.html",
+        build_price_policy_simulator_context(
+            request
+        ),
+    )
+
+
+# =============================================================================
+# Document Center / 文档中心
+# =============================================================================
+
+
+@staff_member_required
+def document_center(request):
+    from portal.services.document_center_portal_service import (
+        build_document_center_home_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/home.html",
+        build_document_center_home_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def document_list(request):
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def document_invoices(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .HOSPITAL_INVOICE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def document_factory_pos(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_PO
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def document_factory_requests(request):
+    from documents.models import (
+        GeneratedDocument,
+    )
+    from portal.services.document_center_portal_service import (
+        build_document_list_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/list.html",
+        build_document_list_context(
+            request,
+            forced_document_type=(
+                GeneratedDocument
+                .DocumentType
+                .FACTORY_ORDER_REQUEST
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def document_detail(
+    request,
+    document_id,
+):
+    from portal.services.document_center_portal_service import (
+        build_document_detail_context,
+    )
+
+    return render(
+        request,
+        "portal/documents/detail.html",
+        build_document_detail_context(
+            request,
+            document_id,
+        ),
+    )
+
+
 # =============================================================================
 # Workflow / 出单流程
 # =============================================================================
@@ -219,6 +1446,9 @@ def workflow_item_action(request, item_id):
     from workflow.services.workflow_validation_service import (
         validate_document_workflow_items,
     )
+    from workflow.services.workflow_price_policy_service import (
+        reapply_prices_and_validate_workflow_item,
+    )
 
     item = get_object_or_404(
         DocumentWorkflowItem.objects.select_related("order", "shipment_batch"),
@@ -242,6 +1472,94 @@ def workflow_item_action(request, item_id):
         "batch_number",
         "-",
     )
+
+    if action == "reapply_prices":
+        try:
+            result = (
+                reapply_prices_and_validate_workflow_item(
+                    item
+                )
+            )
+
+            price_result = (
+                result.get("price_result")
+                or {}
+            )
+
+            validation_result = (
+                result.get("validation_result")
+                or {}
+            )
+
+            updated_count = price_result.get(
+                "updated_count",
+                0,
+            )
+
+            price_errors = (
+                price_result.get("errors")
+                or []
+            )
+
+            price_warnings = (
+                price_result.get("warnings")
+                or []
+            )
+
+            validation_errors = (
+                validation_result.get("errors")
+                or []
+            )
+
+            validation_warnings = (
+                validation_result.get("warnings")
+                or []
+            )
+
+            if price_errors:
+                messages.error(
+                    request,
+                    "价格规则重新应用失败："
+                    + "；".join(
+                        str(error)
+                        for error in price_errors
+                    ),
+                )
+
+            elif validation_errors:
+                messages.error(
+                    request,
+                    f"已更新 {updated_count} 个产品价格，"
+                    "但重新验证仍存在错误，"
+                    "请检查工作流详情。",
+                )
+
+            elif (
+                price_warnings
+                or validation_warnings
+            ):
+                messages.warning(
+                    request,
+                    f"已更新 {updated_count} 个产品价格"
+                    "并完成重新验证，"
+                    "但仍有需要检查的提醒。",
+                )
+
+            else:
+                messages.success(
+                    request,
+                    f"已重新应用价格规则，"
+                    f"更新 {updated_count} 个产品价格，"
+                    "工作流验证已通过。",
+                )
+
+        except Exception as exc:
+            messages.error(
+                request,
+                f"重新应用价格规则失败：{exc}",
+            )
+
+        return redirect(next_url)
 
     if action == "validate":
         try:
@@ -334,6 +1652,95 @@ def workflow_item_action(request, item_id):
 
     messages.warning(request, "未知操作。")
     return redirect(next_url)
+
+
+@staff_member_required
+def shipment_list(request):
+    return render(
+        request,
+        "portal/shipments/list.html",
+        build_shipment_list_context(request),
+    )
+
+
+@staff_member_required
+def shipment_detail(request, batch_id):
+    return render(
+        request,
+        "portal/shipments/detail.html",
+        build_shipment_detail_context(request, batch_id),
+    )
+
+
+@staff_member_required
+def backorder_list(request):
+    return render(
+        request,
+        "portal/backorders/list.html",
+        build_backorder_list_context(request),
+    )
+
+
+@staff_member_required
+def backorder_export_xlsx(request):
+    content = build_backorder_xlsx(
+        build_backorder_queryset(request.GET)
+    )
+    export_date = timezone.localdate().isoformat()
+    filename = f"待补发库_{export_date}.xlsx"
+    fallback_filename = f"backorders_{export_date}.xlsx"
+
+    response = HttpResponse(
+        content,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="{fallback_filename}"; '
+        f"filename*=UTF-8''{quote(filename, safe='')}"
+    )
+    return response
+
+
+@staff_member_required
+def backorder_detail(request, backorder_id):
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "reserve_inventory":
+            try:
+                reserve_inventory_for_backorder(
+                    backorder_id=backorder_id,
+                    quantity_requested=request.POST.get("quantity_requested"),
+                    user=request.user,
+                )
+                messages.success(request, "库存已预留。")
+            except Exception as exc:
+                messages.error(request, f"库存预留失败：{exc}")
+
+            return redirect("portal:backorder_detail", backorder_id=backorder_id)
+
+        if action == "create_inventory_shipment":
+            try:
+                create_inventory_shipment_for_allocation(
+                    allocation_id=request.POST.get("allocation_id"),
+                )
+                messages.success(
+                    request,
+                    "库存补发 ShipmentBatch 已创建，并已进入 Workflow。",
+                )
+            except Exception as exc:
+                messages.error(request, f"创建库存补发批次失败：{exc}")
+
+            return redirect("portal:backorder_detail", backorder_id=backorder_id)
+
+    return render(
+        request,
+        "portal/backorders/detail.html",
+        build_backorder_detail_context(request, backorder_id),
+    )
 
 
 # =============================================================================
@@ -581,22 +1988,38 @@ def factory_upload(request):
     if request.method == "POST":
         uploaded_file = request.FILES.get("confirmation_pdf")
         confirmation_type = request.POST.get("confirmation_type")
-        factory_id = request.POST.get("factory_id")
+        order_id = request.POST.get("order_id")
 
         if not uploaded_file:
             messages.error(request, "请先选择工厂采购 PDF。")
             return render(
                 request,
                 "portal/factory/upload.html",
-                build_factory_upload_context(request),
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
             )
 
-        confirmation, success, message_text = create_and_extract_factory_confirmation(
-            uploaded_file=uploaded_file,
-            confirmation_type=confirmation_type,
-            factory_id=factory_id,
-            user=request.user,
-        )
+        try:
+            confirmation, success, message_text = create_and_extract_factory_confirmation(
+                uploaded_file=uploaded_file,
+                confirmation_type=confirmation_type,
+                order_id=order_id,
+                user=request.user,
+            )
+        except Exception as exc:
+            messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
+            )
 
         confirmation.refresh_from_db()
 
@@ -610,7 +2033,71 @@ def factory_upload(request):
     return render(
         request,
         "portal/factory/upload.html",
-        build_factory_upload_context(request),
+        build_factory_upload_context(
+            request,
+            selected_order_id=request.GET.get("order_id"),
+            default_confirmation_type=request.GET.get("type"),
+        ),
+    )
+
+
+@staff_member_required
+def order_factory_upload(request, order_id):
+    if request.method == "POST":
+        uploaded_file = request.FILES.get("confirmation_pdf")
+        confirmation_type = request.POST.get("confirmation_type")
+
+        if not uploaded_file:
+            messages.error(request, "请先选择工厂采购 PDF。")
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+
+        try:
+            confirmation, success, message_text = create_and_extract_factory_confirmation(
+                uploaded_file=uploaded_file,
+                confirmation_type=confirmation_type,
+                order_id=order_id,
+                user=request.user,
+            )
+        except Exception as exc:
+            messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+
+        confirmation.refresh_from_db()
+
+        return _redirect_after_factory_processing(
+            request=request,
+            confirmation=confirmation,
+            success=success,
+            message_text=message_text,
+        )
+
+    return render(
+        request,
+        "portal/factory/upload.html",
+        build_factory_upload_context(
+            request,
+            selected_order_id=order_id,
+            default_confirmation_type=request.GET.get("type"),
+            order_locked=True,
+        ),
     )
 
 
@@ -674,6 +2161,25 @@ def factory_action(request, confirmation_id):
             )
 
         return redirect("portal:factory_detail", confirmation_id=confirmation_id)
+
+    if action == "associate_order":
+        try:
+            associate_order_and_finalize_factory_confirmation(
+                confirmation_id=confirmation_id,
+                order_id=request.POST.get("order_id"),
+                user=request.user,
+            )
+            messages.success(
+                request,
+                "订单已关联，并已继续完成 ShipmentBatch / Workflow 同步。",
+            )
+        except Exception as exc:
+            messages.error(
+                request,
+                f"关联订单并继续处理失败：{exc}",
+            )
+
+        return redirect("portal:factory_detail", confirmation_id=confirmation_id)
         
     if action == "delete":
         try:
@@ -698,3 +2204,83 @@ def factory_action(request, confirmation_id):
 
     messages.warning(request, "未知操作。")
     return redirect("portal:factory_detail", confirmation_id=confirmation_id)
+
+# =============================================================================
+# Settlements / 发票与结算
+# =============================================================================
+
+
+@staff_member_required
+def settlement_home(request):
+    from portal.services.settlement_portal_service import (
+        build_settlement_home_context,
+    )
+
+    return render(
+        request,
+        "portal/settlements/home.html",
+        build_settlement_home_context(
+            request
+        ),
+    )
+
+
+@staff_member_required
+def settlement_receivables(request):
+    from portal.services.settlement_portal_service import (
+        build_account_list_context,
+    )
+    from settlements.models import (
+        SettlementAccount,
+    )
+
+    return render(
+        request,
+        "portal/settlements/account_list.html",
+        build_account_list_context(
+            request,
+            direction=(
+                SettlementAccount
+                .Direction
+                .RECEIVABLE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def settlement_payables(request):
+    from portal.services.settlement_portal_service import (
+        build_account_list_context,
+    )
+    from settlements.models import (
+        SettlementAccount,
+    )
+
+    return render(
+        request,
+        "portal/settlements/account_list.html",
+        build_account_list_context(
+            request,
+            direction=(
+                SettlementAccount
+                .Direction
+                .PAYABLE
+            ),
+        ),
+    )
+
+
+@staff_member_required
+def settlement_transactions(request):
+    from portal.services.settlement_portal_service import (
+        build_transaction_list_context,
+    )
+
+    return render(
+        request,
+        "portal/settlements/transactions.html",
+        build_transaction_list_context(
+            request
+        ),
+    )

@@ -1,0 +1,41 @@
+services:
+  web:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: acoeur_web
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      ACOEUR_OCR_SERVICE_URL: "http://host.docker.internal:8765/ocr"
+      ACOEUR_OCR_SERVICE_TIMEOUT: "1800"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./media:/app/media
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+
+  db:
+    image: postgres:16
+    container_name: acoeur_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hospital_orders
+      POSTGRES_USER: hospital_user
+      POSTGRES_PASSWORD: hospital_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

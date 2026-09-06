@@ -1,0 +1,83 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ factory_node.name }} | 产品库{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="library-breadcrumb">
+    <a href="{% url 'portal:home' %}">首页</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_products' %}">产品库</a>
+    <span>›</span>
+    <a href="{% url 'portal:library_product_department' department.id %}">
+        {{ department.name }}
+    </a>
+    <span>›</span>
+    <span>{{ factory_node.name }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ factory_node.name }}</h1>
+        <p>
+            {% if factory_node.factory %}
+                {{ factory_node.factory.legal_name|default:factory_node.factory.name }}
+            {% else %}
+                该入口尚未关联真实工厂资料。
+            {% endif %}
+        </p>
+    </div>
+
+    {% if factory_node.factory %}
+        <div class="portal-header-actions">
+            <a class="portal-button"
+               href="{% url 'portal:library_factory_detail' factory_node.factory.id %}">
+                查看工厂资料
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+<section class="product-node-grid">
+    {% for category in category_cards %}
+        <a class="product-node-card" href="{{ category.url }}">
+            <div class="node-icon category-icon">▦</div>
+            <h3>{{ category.name }}</h3>
+
+            {% if category.notes %}
+                <p class="node-secondary-text">
+                    {{ category.notes|truncatechars:90 }}
+                </p>
+            {% endif %}
+
+            <div class="node-product-count">
+                {{ category.product_count }} 个产品
+            </div>
+
+            <div class="node-arrow">›</div>
+        </a>
+    {% empty %}
+        <div class="portal-panel">
+            该工厂暂时没有产品分类。
+        </div>
+    {% endfor %}
+
+    {% if can_add_category %}
+        <a class="product-node-card add-node-card"
+        href="{% url 'portal:library_product_category_add' factory_node.id %}">
+            <div class="node-icon add-icon">＋</div>
+            <h3>新增产品分类</h3>
+            <p>为当前工厂创建一个产品分类。</p>
+            <div class="node-arrow">›</div>
+        </a>
+    {% endif %}
+</section>
+{% endblock %}

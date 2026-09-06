@@ -1,0 +1,110 @@
+{% extends "portal/base.html" %}
+
+{% block title %}发货批次 {{ batch.batch_number }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<a href="{% url 'portal:shipment_list' %}">发货批次库</a>
+<span>/</span>
+<span>批次 {{ batch.batch_number }}</span>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>发货批次 {{ batch.batch_number }}</h1>
+        <p>{{ batch.order.bon_de_commande }} / {{ batch.order.hospital_name|default:"—" }}</p>
+    </div>
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:shipment_list' %}">返回批次列表</a>
+        <a class="portal-button" href="{{ order_url }}">查看订单</a>
+        {% if factory_confirmation_url %}
+            <a class="portal-button" href="{{ factory_confirmation_url }}">查看工厂文件</a>
+        {% endif %}
+        {% if workflow_url %}
+            <a class="portal-button" href="{{ workflow_url }}">查看工作流</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="portal-panel">
+    <div class="detail-info-grid">
+        <div><span class="detail-label">来源</span><strong>{{ source_type_text }}</strong></div>
+        <div><span class="detail-label">发货日期</span><strong>{{ batch.batch_date|date:"Y-m-d" }}</strong></div>
+        <div><span class="detail-label">校验状态</span><strong>{{ validation_status_text }}</strong></div>
+        <div><span class="detail-label">状态</span><strong>{{ status_text }}</strong></div>
+        <div><span class="detail-label">本批发货数量</span><strong>{{ batch.shipped_this_batch_quantity }}</strong></div>
+        <div><span class="detail-label">批次后待发数量</span><strong>{{ batch.remaining_after_batch_quantity }}</strong></div>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">本批发货明细</h2>
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead><tr><th>产品号</th><th>数量</th></tr></thead>
+            <tbody>
+                {% for item in shipped_items %}
+                    <tr><td>{{ item.product_code }}</td><td>{{ item.shipped_quantity }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="2" class="empty-cell">暂无产品。</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">待补发快照</h2>
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead><tr><th>产品号</th><th>订单数量</th><th>本批前已发</th><th>本批发货</th><th>累计已发</th><th>剩余待发</th></tr></thead>
+            <tbody>
+                {% for item in backorder_items %}
+                    <tr>
+                        <td>{{ item.product_code }}</td>
+                        <td>{{ item.requested_quantity }}</td>
+                        <td>{{ item.shipped_before_batch_quantity }}</td>
+                        <td>{{ item.shipped_this_batch_quantity }}</td>
+                        <td>{{ item.total_shipped_after_batch_quantity }}</td>
+                        <td>{{ item.remaining_quantity }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="empty-cell">暂无待发快照。</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">校验数据</h2>
+    <pre class="error-box">{{ batch.validation_data }}</pre>
+</section>
+
+{% if workflow_item %}
+<section class="portal-panel">
+    <h2 class="portal-panel-title">工作流</h2>
+    <p>{{ workflow_item.workflow_status }} / {{ workflow_item.validation_status }}</p>
+</section>
+{% endif %}
+
+{% if generated_documents %}
+<section class="portal-panel">
+    <h2 class="portal-panel-title">已生成文件</h2>
+    <ul class="warning-list">
+        {% for document in generated_documents %}
+            <li>
+                {{ document.document_type }} / {{ document.document_number }}
+                {% if document.pdf_file %}
+                    <a href="{{ document.pdf_file.url }}" target="_blank">查看 PDF</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

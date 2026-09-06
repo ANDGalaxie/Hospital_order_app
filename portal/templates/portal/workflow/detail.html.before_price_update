@@ -1,0 +1,224 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}工作流详情 {{ order_number }} | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>工作流详情</h1>
+        <p>订单 {{ order_number }} 的验证结果、文件生成状态与批次明细。</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:workflow_list' %}">返回工作流</a>
+        <a class="portal-button" href="{{ admin_url }}">Admin</a>
+    </div>
+</section>
+
+<section class="workflow-detail-grid">
+    <div class="portal-panel detail-main-card">
+        <h2 class="portal-panel-title">订单信息</h2>
+
+        <div class="detail-info-grid">
+            <div>
+                <span class="detail-label">订单号</span>
+                <strong>{{ order_number }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">医院</span>
+                <strong>{{ hospital_name }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">来源</span>
+                <strong>{{ source_label }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">批次</span>
+                <strong>
+                    {% if batch_number %}
+                        Batch {{ batch_number }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span class="detail-label">流程状态</span>
+                <span class="status-pill {{ workflow_class }}">{{ workflow_text }}</span>
+            </div>
+
+            <div>
+                <span class="detail-label">下一步</span>
+                <span class="next-action {{ next_action_class }}">{{ next_action_text }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-panel detail-actions-card">
+        <h2 class="portal-panel-title">快捷操作</h2>
+
+        <div class="detail-actions">
+            <form method="post" action="{{ action_url }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="validate">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="portal-button primary" type="submit">比对验证</button>
+            </form>
+
+            <form method="post" action="{{ action_url }}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="generate">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button class="portal-button" type="submit">生成文件</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<section class="workflow-doc-grid">
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">验证状态</h2>
+        <span class="status-pill {{ validation_class }}">{{ validation_text }}</span>
+
+        {% if can_generate_documents is not None %}
+            <p class="detail-muted">
+                可生成文件：
+                {% if can_generate_documents %}
+                    是
+                {% else %}
+                    否
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">Invoice</h2>
+        <span class="status-pill {{ invoice_class }}">{{ invoice_text }}</span>
+
+        {% if invoice_url %}
+            <div class="detail-link-row">
+                <a class="portal-button" href="{{ invoice_url }}" target="_blank">打开 PDF</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">Purchase Order</h2>
+        <span class="status-pill {{ po_class }}">{{ po_text }}</span>
+
+        {% if po_url %}
+            <div class="detail-link-row">
+                <a class="portal-button" href="{{ po_url }}" target="_blank">打开 PDF</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">验证问题</h2>
+
+    {% if errors or warnings %}
+        <div class="issue-grid">
+            <div>
+                <h3>Errors</h3>
+                {% if errors %}
+                    <ul class="issue-list danger">
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="detail-muted">没有 errors。</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <h3>Warnings</h3>
+                {% if warnings %}
+                    <ul class="issue-list warning">
+                        {% for warning in warnings %}
+                            <li>{{ warning }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="detail-muted">没有 warnings。</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p class="detail-muted">当前没有验证问题。</p>
+    {% endif %}
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">当前批次数量</h2>
+
+    {% if batch_rows %}
+        <div class="portal-table-wrap simple-table-wrap">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>产品号</th>
+                        <th>本批次数量</th>
+                        <th>Serial 数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in batch_rows %}
+                        <tr>
+                            <td><strong>{{ row.product_code }}</strong></td>
+                            <td>{{ row.batch_quantity }}</td>
+                            <td>{{ row.serial_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">没有当前批次数量数据。</p>
+    {% endif %}
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">订单累计明细</h2>
+
+    {% if product_rows %}
+        <div class="portal-table-wrap simple-table-wrap">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>产品号</th>
+                        <th>订单数量</th>
+                        <th>已确认</th>
+                        <th>累计发货</th>
+                        <th>待补发</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in product_rows %}
+                        <tr>
+                            <td><strong>{{ row.product_code }}</strong></td>
+                            <td>{{ row.requested_quantity }}</td>
+                            <td>{{ row.confirmed_quantity }}</td>
+                            <td>{{ row.shipped_quantity }}</td>
+                            <td>{{ row.backordered_quantity }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">没有订单累计明细。</p>
+    {% endif %}
+</section>
+{% endblock %}

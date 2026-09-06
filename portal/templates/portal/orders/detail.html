@@ -50,6 +50,51 @@
                 下载 Factory Request
             </a>
         {% endif %}
+
+        {% if show_initial_factory_upload %}
+            <a class="portal-button primary" href="{{ upload_initial_factory_url }}">
+                上传首批工厂文件
+            </a>
+        {% endif %}
+
+        {% if show_replenishment_factory_upload %}
+            <a class="portal-button primary" href="{{ upload_replenishment_factory_url }}">
+                上传补发工厂文件
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">批次摘要</h2>
+
+    <div class="quantity-summary">
+        <div>
+            <span>Requested</span>
+            <strong>{{ total_requested }}</strong>
+        </div>
+        <div>
+            <span>Shipped</span>
+            <strong>{{ total_shipped }}</strong>
+        </div>
+        <div>
+            <span>Remaining</span>
+            <strong>{{ total_remaining }}</strong>
+        </div>
+        <div>
+            <span>Backorder</span>
+            <strong>{{ backorder_total }}</strong>
+        </div>
+        <div>
+            <span>最近批次</span>
+            <strong>
+                {% if latest_batch %}
+                    Batch {{ latest_batch.batch_number }} / {{ latest_batch.batch_date|date:"Y-m-d" }}
+                {% else %}
+                    —
+                {% endif %}
+            </strong>
+        </div>
     </div>
 </section>
 

@@ -1,0 +1,558 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}
+财务数据 · Acoeur
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'finance/css/settlement_dashboard.css' %}"
+>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="finance-breadcrumb">
+    <a href="/portal/">首页</a>
+    <span>›</span>
+    <span>财务数据</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="finance-header">
+    <div>
+        <p class="finance-eyebrow">
+            FINANCIAL ACTUALS
+        </p>
+
+        <h1>财务实绩</h1>
+
+        <p class="finance-subtitle">
+            基于正式 Invoice、Factory PO
+            和有效收付款流水计算。
+        </p>
+    </div>
+
+    <div class="finance-header-actions">
+        <span class="currency-badge">
+            记账币种：{{ reporting_currency }}
+        </span>
+
+        <a
+            class="secondary-button"
+            href="/portal/settlements/"
+        >
+            发票与结算
+        </a>
+
+        <a
+            class="secondary-button finance-export-button"
+            href="{{ export_url }}"
+        >
+            导出 XLSX
+        </a>
+    </div>
+</section>
+
+<section class="finance-filter-panel">
+    <form
+        method="get"
+        class="finance-filter-form"
+    >
+        <div class="filter-field">
+            <label for="date_from">
+                开立日期从
+            </label>
+
+            <input
+                id="date_from"
+                type="date"
+                name="date_from"
+                value="{{ filter_values.date_from }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="date_to">
+                开立日期至
+            </label>
+
+            <input
+                id="date_to"
+                type="date"
+                name="date_to"
+                value="{{ filter_values.date_to }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="hospital">
+                医院
+            </label>
+
+            <input
+                id="hospital"
+                type="text"
+                name="hospital"
+                value="{{ filter_values.hospital }}"
+                placeholder="医院名称"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="factory">
+                工厂
+            </label>
+
+            <input
+                id="factory"
+                type="text"
+                name="factory"
+                value="{{ filter_values.factory }}"
+                placeholder="工厂名称"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="order">
+                订单号
+            </label>
+
+            <input
+                id="order"
+                type="text"
+                name="order"
+                value="{{ filter_values.order }}"
+                placeholder="Bon de commande"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="status">
+                结算状态
+            </label>
+
+            <select
+                id="status"
+                name="status"
+            >
+                <option value="">
+                    全部状态
+                </option>
+
+                {% for value, label in status_choices %}
+                    <option
+                        value="{{ value }}"
+                        {% if filter_values.status == value %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button
+                type="submit"
+                class="finance-filter-submit"
+            >
+                筛选
+            </button>
+
+            {% if has_active_filters %}
+                <a
+                    href="/portal/finance/"
+                    class="finance-filter-reset"
+                >
+                    清除
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if filter_errors %}
+        <div class="finance-filter-errors">
+            {% for error in filter_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+
+<section class="kpi-grid">
+    {% for card in kpi_cards %}
+        <article
+            class="kpi-card kpi-{{ card.key }}"
+            title="{{ card.help }}"
+        >
+            <div class="kpi-label">
+                {{ card.label }}
+            </div>
+
+            <div class="kpi-value">
+                {{ card.value }}
+            </div>
+
+            <div class="kpi-help">
+                {{ card.help }}
+            </div>
+        </article>
+    {% empty %}
+        <div class="empty-state">
+            暂无财务数据。
+        </div>
+    {% endfor %}
+</section>
+
+<section class="finance-grid-two">
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    ACCRUAL
+                </p>
+                <h2>权责发生趋势</h2>
+            </div>
+
+            <span class="panel-note">
+                按 Invoice / PO 开立月份
+            </span>
+        </div>
+
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="accrual-finance-chart"
+                class="finance-chart"
+                aria-label="权责发生趋势图"
+            ></canvas>
+        </div>
+<div class="table-scroll">
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th>月份</th>
+                        <th>销售额</th>
+                        <th>采购额</th>
+                        <th>预计毛利润</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in accrual_rows %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ row.month }}
+                                </strong>
+                            </td>
+                            <td>{{ row.sales }}</td>
+                            <td>{{ row.purchases }}</td>
+                            <td>{{ row.gross_profit }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="4"
+                                class="empty-cell"
+                            >
+                                尚无正式 Invoice 或 PO。
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    CASH FLOW
+                </p>
+                <h2>实际现金流</h2>
+            </div>
+
+            <span class="panel-note">
+                按实际收付款日期
+            </span>
+        </div>
+
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="cash-finance-chart"
+                class="finance-chart"
+                aria-label="实际现金流趋势图"
+            ></canvas>
+        </div>
+<div class="table-scroll">
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th>月份</th>
+                        <th>医院收款</th>
+                        <th>工厂付款</th>
+                        <th>现金净流入</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in cash_rows %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ row.month }}
+                                </strong>
+                            </td>
+                            <td>{{ row.receipts }}</td>
+                            <td>{{ row.payments }}</td>
+                            <td>{{ row.net_inflow }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="4"
+                                class="empty-cell"
+                            >
+                                尚未登记有效收付款流水。
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="finance-grid-two">
+    <article class="finance-panel risk-panel overdue-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    OVERDUE
+                </p>
+                <h2>逾期应收</h2>
+            </div>
+
+            <span class="risk-count">
+                {{ overdue_receivables|length }}
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="finance-table compact-table">
+                <thead>
+                    <tr>
+                        <th>订单</th>
+                        <th>Invoice</th>
+                        <th>医院</th>
+                        <th>截止日期</th>
+                        <th>待收</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in overdue_receivables %}
+                        <tr>
+                            <td>{{ row.order_number }}</td>
+                            <td>
+                                {{ row.document_number }}
+                            </td>
+                            <td>
+                                {{ row.counterparty_name }}
+                            </td>
+                            <td>
+                                {{ row.due_date|date:"Y-m-d" }}
+                            </td>
+                            <td class="risk-money">
+                                {{ row.remaining_display }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="empty-cell success-empty"
+                            >
+                                当前没有逾期应收。
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    DUE SOON
+                </p>
+                <h2>30 天内到期</h2>
+            </div>
+
+            <span class="risk-count neutral">
+                {{ due_soon_receivables|length }}
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="finance-table compact-table">
+                <thead>
+                    <tr>
+                        <th>订单</th>
+                        <th>Invoice</th>
+                        <th>医院</th>
+                        <th>截止日期</th>
+                        <th>待收</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in due_soon_receivables %}
+                        <tr>
+                            <td>{{ row.order_number }}</td>
+                            <td>
+                                {{ row.document_number }}
+                            </td>
+                            <td>
+                                {{ row.counterparty_name }}
+                            </td>
+                            <td>
+                                {{ row.due_date|date:"Y-m-d" }}
+                            </td>
+                            <td>
+                                {{ row.remaining_display }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="empty-cell"
+                            >
+                                30 天内没有即将到期应收。
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="finance-panel order-panel">
+    <div class="panel-heading">
+        <div>
+            <p class="panel-eyebrow">
+                ORDER PROFITABILITY
+            </p>
+            <h2>订单财务明细</h2>
+        </div>
+
+        <span class="panel-note">
+            {{ order_rows|length }} 个订单
+        </span>
+    </div>
+
+    <div class="table-scroll">
+        <table class="finance-table order-table">
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>医院</th>
+                    <th>工厂</th>
+                    <th>Invoice</th>
+                    <th>PO</th>
+                    <th>销售额</th>
+                    <th>采购额</th>
+                    <th>预计毛利</th>
+                    <th>已收</th>
+                    <th>已付</th>
+                    <th>待收</th>
+                    <th>待付</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in order_rows %}
+                    <tr>
+                        <td>
+                            <a
+                                href="/portal/orders/{{ row.order_id }}/"
+                            >
+                                {{ row.order_number }}
+                            </a>
+                        </td>
+
+                        <td>{{ row.hospital_name }}</td>
+                        <td>{{ row.factory_name }}</td>
+
+                        <td>
+                            {{ row.invoice_number_display }}
+                        </td>
+
+                        <td>
+                            {{ row.po_number_display }}
+                        </td>
+
+                        <td>{{ row.sales_display }}</td>
+                        <td>{{ row.purchases_display }}</td>
+
+                        <td class="profit-cell">
+                            {{ row.gross_profit_display }}
+                        </td>
+
+                        <td>{{ row.received_display }}</td>
+                        <td>{{ row.paid_display }}</td>
+
+                        <td>
+                            {{ row.receivable_remaining_display }}
+                        </td>
+
+                        <td>
+                            {{ row.payable_remaining_display }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td
+                            colspan="12"
+                            class="empty-cell"
+                        >
+                            尚无正式财务订单数据。
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<footer class="finance-footer">
+    数据生成时间：
+    {{ generated_at|date:"Y-m-d H:i:s" }}
+
+    · 有效结算账户：
+    {{ summary.account_count }}
+
+    · 有效流水：
+    {{ summary.transaction_count }}
+</footer>
+
+{{ chart_data|json_script:"finance-chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{% static 'finance/js/settlement_dashboard.js' %}"
+    defer
+></script>
+{% endblock %}

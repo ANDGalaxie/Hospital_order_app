@@ -1,0 +1,100 @@
+{% extends "portal/base.html" %}
+
+{% block title %}待补发详情 {{ line.order.bon_de_commande }} / {{ line.product_code }}{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">首页</a>
+<span>/</span>
+<a href="{% url 'portal:library_home' %}">资料库</a>
+<span>/</span>
+<a href="{% url 'portal:backorder_list' %}">待补发库</a>
+<span>/</span>
+<span>{{ line.order.bon_de_commande }} / {{ line.product_code }}</span>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>待补发详情</h1>
+        <p>{{ line.order.bon_de_commande }} / {{ line.product_code }}</p>
+    </div>
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:backorder_list' %}">返回待补发库</a>
+        <a class="portal-button" href="{{ order_url }}">查看订单</a>
+        <a class="portal-button primary" href="{{ upload_replenishment_factory_url }}">上传工厂补发文件</a>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <div class="detail-info-grid">
+        <div><span class="detail-label">医院</span><strong>{{ line.order.hospital_name|default:"—" }}</strong></div>
+        <div><span class="detail-label">订单数量</span><strong>{{ line.requested_quantity }}</strong></div>
+        <div><span class="detail-label">已发数量</span><strong>{{ line.shipped_quantity }}</strong></div>
+        <div><span class="detail-label">待补发</span><strong>{{ line.remaining_quantity }}</strong></div>
+        <div><span class="detail-label">预计发货</span><strong>{{ line.expected_shipping_date|date:"Y-m-d"|default:"—" }}</strong></div>
+        <div><span class="detail-label">可用库存</span><strong>{{ available_inventory_count }}</strong></div>
+        <div><span class="detail-label">状态</span><strong>{{ line_status_text }}</strong></div>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">从库存分配</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reserve_inventory">
+        <label class="detail-label" for="quantity_requested">数量</label>
+        <input id="quantity_requested" class="portal-input" type="number" min="1" name="quantity_requested" value="1">
+        <div class="upload-actions">
+            <button class="portal-button primary" type="submit">预留库存</button>
+        </div>
+    </form>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">相关库存预留</h2>
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead><tr><th>ID</th><th>申请数量</th><th>预留数量</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {% for allocation in related_allocations %}
+                    <tr>
+                        <td>{{ allocation.id }}</td>
+                        <td>{{ allocation.quantity_requested }}</td>
+                        <td>{{ allocation.allocated_count }}</td>
+                        <td>{{ allocation.status }}</td>
+                        <td>
+                            {% if allocation.status == "reserved" %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="create_inventory_shipment">
+                                    <input type="hidden" name="allocation_id" value="{{ allocation.id }}">
+                                    <button class="mini-button ghost" type="submit">创建发货批次</button>
+                                </form>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="empty-cell">暂无库存预留记录。</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="portal-panel">
+    <h2 class="portal-panel-title">相关发货批次</h2>
+    <ul class="warning-list">
+        {% for batch in related_batches %}
+            <li>
+                <a href="{% url 'portal:shipment_detail' batch.id %}">
+                    批次 {{ batch.batch_number }} / {{ batch.batch_date|date:"Y-m-d" }}
+                </a>
+            </li>
+        {% empty %}
+            <li>暂无关联发货批次。</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "pricing",
     "backorders",
     "finance.apps.FinanceConfig",
+    "settlements.apps.SettlementsConfig",
 ]
 
 MIDDLEWARE = [
@@ -152,7 +153,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-LOGIN_URL = "login"
+LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "order_list"
 LOGOUT_REDIRECT_URL = "login"
+
+# Admin-only destructive cleanup for test orders.
+ALLOW_ADMIN_TEST_ORDER_PURGE = DEBUG

@@ -60,6 +60,15 @@ class Order(models.Model):
         help_text="医院订单号，例如 150222",
     )
 
+    order_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=(
+            "医院原始订单的下单日期。"
+            "仅来自医院订单 OCR 或人工确认，不允许日期回退。"
+        ),
+    )
+
     hospital_name = models.CharField(
         max_length=255,
         blank=True,
@@ -304,6 +313,16 @@ class OrderItem(models.Model):
         blank=True,
         verbose_name="Expiration discount rate snapshot",
         help_text="Example: 0.30 means 30% discount, i.e. 70% final price.",
+    )
+
+    expiration_threshold_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Expiration threshold days snapshot",
+        help_text=(
+            "临期折扣门槛天数快照。"
+            "正式 PO 不应重新读取当前 PricePolicy。"
+        ),
     )
 
     price_policy = models.ForeignKey(

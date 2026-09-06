@@ -1,0 +1,25 @@
+{
+  "logo_path": "data/logo.png",
+
+  "company_name": "Dela Global Trade Consulting Ltd",
+
+  "company_address": [
+    "R1009,10/F, Front Block, Ming Sang Industrial Building",
+    "19 Hing Yip Street Kwun Tong, KL",
+    "999077, HONG KONG"
+  ],
+
+  "registration_no": "71 99 26 22",
+
+  "vat_note": "No VAT is Applicable in Hong Kong",
+
+  "payment_terms_days": 30,
+
+  "bank": {
+    "beneficiary_name": "Dela Global Trade Consulting Limited",
+    "beneficiary_bank": "Hong Kong and Shanghai Banking Corporation Limited",
+    "bank_address": "1 Queen’s Road Central, Hong Kong",
+    "account_number": "801 769 241 838",
+    "swift_code": "HSBCHKHHHKH"
+  }
+}

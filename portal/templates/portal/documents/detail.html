@@ -1,0 +1,336 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}
+{{ document.document_number }} | 文档中心
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/document_center.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="document-breadcrumb">
+    <a href="{% url 'portal:home' %}">
+        首页
+    </a>
+    <span>›</span>
+    <a href="{% url 'portal:document_center' %}">
+        文档中心
+    </a>
+    <span>›</span>
+    <span>{{ document.document_number }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <div class="document-title-row">
+            <h1>{{ document.document_number }}</h1>
+
+            <span class="document-type-pill {{ document.portal_type_class }}">
+                {{ document.portal_type_label }}
+            </span>
+        </div>
+
+        <p>
+            生成于
+            {{ document.generated_at|date:"Y-m-d H:i" }}
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        {% if document.portal_pdf.exists %}
+            <a class="portal-button primary"
+               href="{{ document.portal_pdf.url }}"
+               target="_blank"
+               rel="noopener">
+                打开 PDF
+            </a>
+        {% endif %}
+
+        {% if document.portal_html.exists %}
+            <a class="portal-button"
+               href="{{ document.portal_html.url }}"
+               target="_blank"
+               rel="noopener">
+                打开 HTML
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="document-detail-stat-grid">
+    <div>
+        <span>文档金额</span>
+        <strong>
+            {% if document.portal_amount is not None %}
+                €{{ document.portal_amount|floatformat:2 }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+    </div>
+
+    <div>
+        <span>产品行数</span>
+        <strong>{{ document.portal_item_count }}</strong>
+    </div>
+
+    <div>
+        <span>总数量</span>
+        <strong>
+            {% if document.portal_total_quantity is not None %}
+                {{ document.portal_total_quantity|floatformat:0 }}
+            {% else %}
+                —
+            {% endif %}
+        </strong>
+    </div>
+
+    <div>
+        <span>付款截止日期</span>
+        <strong>
+            {{ document.portal_due_date|default:"—" }}
+        </strong>
+    </div>
+</section>
+
+<section class="document-detail-grid">
+    <article class="portal-panel">
+        <h2 class="portal-panel-title">
+            文档资料
+        </h2>
+
+        <div class="document-detail-list">
+            <div>
+                <span>文档类型</span>
+                <strong>
+                    {{ document.portal_type_label }}
+                </strong>
+            </div>
+
+            <div>
+                <span>文档编号</span>
+                <strong>
+                    {{ document.document_number }}
+                </strong>
+            </div>
+
+            <div>
+                <span>生成人</span>
+                <strong>
+                    {{ document.generated_by.get_full_name|default:document.generated_by.username }}
+                </strong>
+            </div>
+
+            <div>
+                <span>生成时间</span>
+                <strong>
+                    {{ document.generated_at|date:"Y-m-d H:i" }}
+                </strong>
+            </div>
+        </div>
+    </article>
+
+    <article class="portal-panel">
+        <h2 class="portal-panel-title">
+            业务来源
+        </h2>
+
+        <div class="document-detail-list">
+            <div>
+                <span>医院订单</span>
+                <strong>
+                    <a href="{{ order_url }}">
+                        {{ document.order.bon_de_commande }}
+                    </a>
+                </strong>
+            </div>
+
+            <div>
+                <span>医院</span>
+                <strong>
+                    {{ document.portal_hospital_label }}
+                </strong>
+            </div>
+
+            <div>
+                <span>工厂</span>
+                <strong>
+                    {{ document.portal_factory_label }}
+                </strong>
+            </div>
+
+            <div>
+                <span>发货批次</span>
+                <strong>
+                    {% if document.shipment_batch %}
+                        Batch
+                        {{ document.shipment_batch.batch_number }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+
+        <div class="document-related-actions">
+            {% if workflow_url %}
+                <a class="portal-button"
+                   href="{{ workflow_url }}">
+                    打开 Workflow
+                </a>
+            {% endif %}
+
+            {% if confirmation_url %}
+                <a class="portal-button"
+                   href="{{ confirmation_url }}">
+                    打开工厂确认
+                </a>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="portal-panel">
+        <h2 class="portal-panel-title">
+            PDF 文件
+        </h2>
+
+        {% if document.portal_pdf.name %}
+            <div class="document-file-card">
+                <strong>
+                    {{ document.portal_pdf.name }}
+                </strong>
+
+                <span>
+                    {{ document.portal_pdf.size_label|default:"大小未知" }}
+                </span>
+
+                {% if document.portal_pdf.exists %}
+                    <span class="document-file-ok">
+                        文件存在
+                    </span>
+                {% else %}
+                    <span class="document-file-missing">
+                        数据库有记录，但文件不存在
+                    </span>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="document-muted">
+                没有 PDF 文件记录。
+            </p>
+        {% endif %}
+    </article>
+
+    <article class="portal-panel">
+        <h2 class="portal-panel-title">
+            HTML 文件
+        </h2>
+
+        {% if document.portal_html.name %}
+            <div class="document-file-card">
+                <strong>
+                    {{ document.portal_html.name }}
+                </strong>
+
+                <span>
+                    {{ document.portal_html.size_label|default:"大小未知" }}
+                </span>
+
+                {% if document.portal_html.exists %}
+                    <span class="document-file-ok">
+                        文件存在
+                    </span>
+                {% else %}
+                    <span class="document-file-missing">
+                        数据库有记录，但文件不存在
+                    </span>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="document-muted">
+                没有 HTML 文件记录。
+            </p>
+        {% endif %}
+    </article>
+
+    {% if source_items %}
+        <article class="portal-panel document-full-width">
+            <h2 class="portal-panel-title">
+                产品明细快照
+            </h2>
+
+            <div class="portal-table-wrap">
+                <table class="portal-table">
+                    <thead>
+                        <tr>
+                            <th>产品号</th>
+                            <th>描述</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>折扣</th>
+                            <th>金额</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in source_items %}
+                            <tr>
+                                <td>
+                                    {{ row.product_code|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ row.description|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ row.quantity|default:row.quantity_raw|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ row.unit_price|default:row.unit_price_raw|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ row.discount|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ row.amount|default:row.amount_raw|default:"—" }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    {% endif %}
+
+    <article class="portal-panel document-full-width">
+        <details class="document-snapshot">
+            <summary>
+                查看完整生成快照
+            </summary>
+
+            <pre>{{ source_json }}</pre>
+        </details>
+    </article>
+
+    {% if document.notes %}
+        <article class="portal-panel document-full-width">
+            <h2 class="portal-panel-title">
+                备注
+            </h2>
+
+            <div class="document-notes">
+                {{ document.notes|linebreaksbr }}
+            </div>
+        </article>
+    {% endif %}
+</section>
+{% endblock %}

@@ -65,7 +65,7 @@
             - France
 
     6. Unit Price：
-        固定为 120.00
+        由调用方传入本次解析后的价格
 
     7. Discount 严谨计算：
         对每一个 serial number 单独判断 expiration_date。
@@ -94,7 +94,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
+
+
+def get_weasyprint_html():
+    try:
+        from weasyprint import HTML
+    except Exception as exc:
+        raise RuntimeError(
+            "WeasyPrint is not available. Factory PO PDF generation "
+            "requires WeasyPrint and its system libraries."
+        ) from exc
+
+    return HTML
 
 # 统一编号模块：保证同一个医院订单的 Invoice 和 PO 使用同一个流水号。
 # 需要确保 src/document_numbering.py 已经存在。
@@ -111,8 +122,7 @@ from legacy_services.document_numbering import (
 # ============================================================
 
 # 工厂采购单中所有产品统一使用的单价。
-# 当前规则：Unit Price 全部为 120。
-DEFAULT_FACTORY_UNIT_PRICE = 120.0
+# Unit Price 必须来自调用方的价格快照。
 
 # 有效期小于一年时的折扣。
 EXPIRATION_DISCOUNT_RATE = 0.30
@@ -310,7 +320,7 @@ def format_po_unit_price(value: float) -> str:
     PO 中单价不带欧元符号。
 
     例如：
-        120 -> 120.00
+        价格格式化为两位小数
     """
     return f"{float(value):.2f}"
 
@@ -741,7 +751,11 @@ def build_po_items(
         quantity = float(group["quantity_raw"])
         discount_rate = float(group["discount_rate"])
 
-        unit_price = DEFAULT_FACTORY_UNIT_PRICE
+        unit_price = group.get("unit_price")
+        if unit_price is None:
+            raise ValueError(
+                f"Missing resolved unit price for product {code}."
+            )
         amount = unit_price * (1.0 - discount_rate) * quantity
 
         discount_note = ""
@@ -916,8 +930,7 @@ def build_factory_po_data(
             },
             "expiration_discount_threshold_days": EXPIRATION_THRESHOLD_DAYS,
             "expiration_discount_rate": EXPIRATION_DISCOUNT_RATE,
-            "factory_unit_price": DEFAULT_FACTORY_UNIT_PRICE,
-            "document_date_iso": document_date.isoformat(),
+                        "document_date_iso": document_date.isoformat(),
         },
 
         "warnings": warnings,
@@ -1006,7 +1019,7 @@ def write_html_and_pdf(
 
     base_url = project_root.resolve().as_uri() + "/"
 
-    HTML(
+    get_weasyprint_html()(
         string=html_content,
         base_url=base_url,
     ).write_pdf(str(pdf_path))

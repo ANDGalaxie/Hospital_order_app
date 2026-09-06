@@ -1,5 +1,9 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
+from django.conf import settings
+from django.contrib.admin import helpers
+from django.core.exceptions import ValidationError
+from django.template.response import TemplateResponse
 from .models import Order, OrderItem
 from pricing.services.price_policy_service import apply_price_policy_to_order
 from documents.services.factory_order_request_service import generate_factory_order_request
@@ -91,6 +95,7 @@ class OrderAdmin(admin.ModelAdmin):
     actions = [
         "extract_selected_hospital_orders",
         "generate_factory_order_request",
+        "purge_selected_test_order",
     ]
 
     fieldsets = (
@@ -362,3 +367,197 @@ class OrderAdmin(admin.ModelAdmin):
                 f"{error_count} order(s) failed when applying price policy.",
                 level=messages.WARNING,
             )
+
+    def get_actions(self, request):
+        actions = super().get_actions(
+            request
+        )
+
+        # 禁用 Django 默认级联删除。
+        # 测试订单只能走专用清理操作。
+        actions.pop(
+            "delete_selected",
+            None,
+        )
+
+        purge_enabled = getattr(
+            settings,
+            "ALLOW_ADMIN_TEST_ORDER_PURGE",
+            False,
+        )
+
+        if (
+            not request.user.is_superuser
+            or not purge_enabled
+        ):
+            actions.pop(
+                "purge_selected_test_order",
+                None,
+            )
+
+        return actions
+
+    def has_delete_permission(
+        self,
+        request,
+        obj=None,
+    ):
+        # 隐藏订单详情页默认删除按钮。
+        # 不影响专用 Admin Action。
+        return False
+
+    @admin.action(
+        description=(
+            "Permanently purge one TEST order"
+        )
+    )
+    def purge_selected_test_order(
+        self,
+        request,
+        queryset,
+    ):
+        from orders.services.admin_test_order_purge_service import (
+            preview_test_order_purge,
+            purge_test_order,
+        )
+
+        purge_enabled = getattr(
+            settings,
+            "ALLOW_ADMIN_TEST_ORDER_PURGE",
+            False,
+        )
+
+        if (
+            not request.user.is_superuser
+            or not purge_enabled
+        ):
+            self.message_user(
+                request,
+                (
+                    "Test-order purge is disabled "
+                    "or you are not a superuser."
+                ),
+                level=messages.ERROR,
+            )
+            return None
+
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                (
+                    "Select exactly one test order "
+                    "at a time."
+                ),
+                level=messages.ERROR,
+            )
+            return None
+
+        order = queryset.first()
+
+        context = {
+            **self.admin_site.each_context(
+                request
+            ),
+            "title": (
+                "Permanently purge test order"
+            ),
+            "opts": self.model._meta,
+            "order": order,
+            "preview": (
+                preview_test_order_purge(
+                    order
+                )
+            ),
+            "action_name": (
+                "purge_selected_test_order"
+            ),
+            "action_checkbox_name": (
+                helpers.ACTION_CHECKBOX_NAME
+            ),
+            "media": self.media,
+            "confirmation_error": "",
+        }
+
+        if (
+            request.POST.get(
+                "confirm_purge"
+            )
+            == "yes"
+        ):
+            confirmation_text = str(
+                request.POST.get(
+                    "confirmation_text",
+                    "",
+                )
+            ).strip()
+
+            expected_text = str(
+                order.bon_de_commande
+            ).strip()
+
+            if (
+                confirmation_text
+                != expected_text
+            ):
+                context[
+                    "confirmation_error"
+                ] = (
+                    "The confirmation text "
+                    "does not match the order number."
+                )
+
+                return TemplateResponse(
+                    request,
+                    (
+                        "admin/orders/order/"
+                        "confirm_test_purge.html"
+                    ),
+                    context,
+                )
+
+            try:
+                result = purge_test_order(
+                    order_id=order.id,
+                    requested_by=request.user,
+                )
+
+            except ValidationError as exc:
+                context[
+                    "confirmation_error"
+                ] = "；".join(
+                    str(message)
+                    for message in exc.messages
+                )
+
+                return TemplateResponse(
+                    request,
+                    (
+                        "admin/orders/order/"
+                        "confirm_test_purge.html"
+                    ),
+                    context,
+                )
+
+            self.message_user(
+                request,
+                (
+                    "Test order "
+                    f"{result['order_number']} "
+                    "was permanently deleted. "
+                    "Deleted database objects: "
+                    f"{result['deleted_total']}."
+                ),
+                level=messages.SUCCESS,
+            )
+
+            return None
+
+        return TemplateResponse(
+            request,
+            (
+                "admin/orders/order/"
+                "confirm_test_purge.html"
+            ),
+            context,
+        )
+

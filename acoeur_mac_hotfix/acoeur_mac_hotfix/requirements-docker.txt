@@ -1,0 +1,33 @@
+# Core Django
+Django==5.2.15
+gunicorn>=22.0
+whitenoise>=6.8
+psycopg[binary]==3.3.4
+python-dotenv==1.2.2
+
+# Admin / templates / HTML rendering
+Jinja2==3.1.6
+premailer==3.10.0
+beautifulsoup4==4.14.3
+lxml==6.1.1
+
+# Data processing
+pandas==2.3.3
+openpyxl==3.1.5
+xlsxwriter==3.2.9
+RapidFuzz==3.14.5
+
+# Images / PDF parsing / PDF generation
+Pillow==12.2.0
+PyMuPDF==1.27.2.3
+pdfplumber==0.11.9
+WeasyPrint==69.0
+
+# OCR
+opencv-python-headless>=4.10
+paddleocr==3.6.0
+paddlex==3.6.1
+
+# PaddlePaddle CPU version
+--extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cpu/
+paddlepaddle==3.3.0

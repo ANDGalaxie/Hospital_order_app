@@ -1,0 +1,88 @@
+{% extends "portal/base.html" %}
+{% load static %}
+
+{% block title %}{{ form_title }} | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/master_data_library.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="master-breadcrumb">
+    {% for item in breadcrumbs %}
+        {% if not forloop.first %}
+            <span>›</span>
+        {% endif %}
+
+        {% if item.url %}
+            <a href="{{ item.url }}">
+                {{ item.label }}
+            </a>
+        {% else %}
+            <span>{{ item.label }}</span>
+        {% endif %}
+    {% endfor %}
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{{ form_title }}</h1>
+        <p>{{ form_description }}</p>
+    </div>
+</section>
+
+<section class="portal-panel master-form-panel">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="master-form-errors">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="master-form-grid">
+            {% for field in form %}
+                <div class="master-form-field
+                            {% if field.field.widget.input_type == 'checkbox' %}
+                                master-checkbox-field
+                            {% endif %}">
+
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="master-form-help">
+                            {{ field.help_text }}
+                        </div>
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="master-form-errors">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="master-form-actions">
+            <a class="portal-button"
+               href="{{ cancel_url }}">
+                取消
+            </a>
+
+            <button class="portal-button primary"
+                    type="submit">
+                {{ submit_text }}
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}

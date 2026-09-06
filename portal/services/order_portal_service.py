@@ -1,5 +1,5 @@
 import json
-
+from decimal import Decimal
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
@@ -206,8 +206,45 @@ def validate_portal_order_after_extraction(order):
         if not item.requested_quantity or item.requested_quantity <= 0:
             warnings.append(f"产品 {item.product_code or item.id} 的订单数量异常。")
 
-        if item.hospital_unit_price is None:
-            warnings.append(f"产品 {item.product_code or item.id} 缺少医院单价。")
+        item_label = item.product_code or item.id
+
+        if (
+            item.hospital_unit_price is None
+            or item.hospital_unit_price <= 0
+        ):
+            warnings.append(
+                f"产品 {item_label} 缺少有效医院单价。"
+            )
+
+        if (
+            item.factory_unit_price is None
+            or item.factory_unit_price <= 0
+        ):
+            warnings.append(
+                f"产品 {item_label} 缺少有效工厂采购价。"
+            )
+
+        if item.product_id and not item.price_policy_id:
+            warnings.append(
+                f"产品 {item_label} 没有命中价格规则，"
+                "当前可能仍在使用产品库默认价格。"
+            )
+
+        if (
+            item.price_policy_id
+            and item.expiration_discount_rate is None
+        ):
+            warnings.append(
+                f"产品 {item_label} 缺少临期折扣率快照。"
+            )
+
+        if (
+            item.price_policy_id
+            and item.expiration_threshold_days is None
+        ):
+            warnings.append(
+                f"产品 {item_label} 缺少临期门槛快照。"
+            )
 
     validation_status = "error" if errors else "validated"
 
@@ -393,6 +430,7 @@ def build_order_list_context(request):
 def build_order_detail_context(request, order_id):
     from django.shortcuts import get_object_or_404
     from orders.models import Order, OrderItem
+    from shipments.models import ShipmentBatch
     from workflow.models import DocumentWorkflowItem
     from portal.services.order_item_crop_service import get_order_item_row_crop_url
 
@@ -437,6 +475,10 @@ def build_order_detail_context(request, order_id):
     item_rows = []
     total_requested = 0
 
+    price_policy_matched_count = 0
+    estimated_hospital_total = Decimal("0.00")
+    estimated_factory_total = Decimal("0.00")
+
     for item in order_items:
         requested_quantity = item.requested_quantity or 0
         total_requested += requested_quantity
@@ -466,6 +508,53 @@ def build_order_detail_context(request, order_id):
             product_match_text = "—"
             product_match_class = "info"
 
+        hospital_price = (
+            item.hospital_unit_price
+            or Decimal("0.00")
+        )
+
+        factory_price = (
+            item.factory_unit_price
+            or Decimal("0.00")
+        )
+
+        estimated_hospital_total += (
+            hospital_price
+            * requested_quantity
+        )
+
+        estimated_factory_total += (
+            factory_price
+            * requested_quantity
+        )
+
+        discount_percent = (
+            (
+                item.expiration_discount_rate
+                or Decimal("0")
+            )
+            * Decimal("100")
+        )
+
+        if item.price_policy_id:
+            price_policy_matched_count += 1
+            price_source_text = (
+                item.price_policy.name
+                or f"PricePolicy #{item.price_policy_id}"
+            )
+            price_source_class = "success"
+
+        elif (
+            item.product_id
+            and hospital_price > 0
+        ):
+            price_source_text = "产品库默认价格"
+            price_source_class = "warning"
+
+        else:
+            price_source_text = "价格待处理"
+            price_source_class = "danger"
+
         item_rows.append(
             {
                 "id": item.id,
@@ -476,6 +565,21 @@ def build_order_detail_context(request, order_id):
                 "description": item.description or product_name or "",
                 "requested_quantity": requested_quantity,
                 "hospital_unit_price": item.hospital_unit_price,
+                "factory_unit_price": item.factory_unit_price,
+                "price_policy_id": item.price_policy_id,
+                "price_policy_name": (
+                    item.price_policy.name
+                    if item.price_policy
+                    else ""
+                ),
+                "price_policy_date": item.price_policy_date,
+                "price_policy_message": item.price_policy_message,
+                "price_source_text": price_source_text,
+                "price_source_class": price_source_class,
+                "discount_percent": discount_percent,
+                "expiration_threshold_days": (
+                    item.expiration_threshold_days
+                ),
                 "product_match_text": product_match_text,
                 "product_match_class": product_match_class,
                 "is_manually_confirmed": item.is_manually_confirmed,
@@ -523,6 +627,19 @@ def build_order_detail_context(request, order_id):
         factory_name = getattr(order.factory, "name", None) or str(order.factory)
 
     factory_request_document = get_latest_factory_request_document(order)
+    shipment_batches = list(
+        ShipmentBatch.objects.filter(order=order).order_by("-batch_number", "-id")
+    )
+    latest_batch = shipment_batches[0] if shipment_batches else None
+    total_shipped = sum(
+        int(item.confirmed_quantity or 0)
+        for item in order_items
+    )
+    total_remaining = sum(
+        int(item.backordered_quantity or 0)
+        for item in order_items
+    )
+    has_valid_batch = bool(shipment_batches)
 
     return {
         "lang": lang,
@@ -549,10 +666,35 @@ def build_order_detail_context(request, order_id):
         "item_count": len(item_rows),
         "workflow_rows": workflow_rows,
         "total_requested": total_requested,
+        "price_policy_matched_count": (
+            price_policy_matched_count
+        ),
+        "estimated_hospital_total": (
+            estimated_hospital_total
+        ),
+        "estimated_factory_total": (
+            estimated_factory_total
+        ),
         "admin_url": f"/admin/orders/order/{order.id}/change/",
         "edit_url": reverse("portal:order_edit", args=[order.id]),
         "action_url": reverse("portal:order_action", args=[order.id]),
         "factory_request_url": document_url(factory_request_document),
+        "total_shipped": total_shipped,
+        "total_remaining": total_remaining,
+        "latest_batch": latest_batch,
+        "backorder_total": total_remaining,
+        "upload_initial_factory_url": reverse(
+            "portal:order_factory_upload",
+            args=[order.id],
+        ) + "?type=initial",
+        "upload_replenishment_factory_url": reverse(
+            "portal:order_factory_upload",
+            args=[order.id],
+        ) + "?type=replenishment",
+        "show_initial_factory_upload": not has_valid_batch,
+        "show_replenishment_factory_upload": (
+            has_valid_batch and total_remaining > 0
+        ),
     }
 
 
@@ -602,19 +744,39 @@ def run_order_extraction(order, force_ocr=False):
 
 
 def save_order_manual_edit(order, post_data):
+    from decimal import Decimal
+
     from products.models import Product
 
     order.bon_de_commande = (
-        post_data.get("bon_de_commande") or ""
+        post_data.get("bon_de_commande")
+        or ""
     ).strip() or order.bon_de_commande
-    order.hospital_name = (post_data.get("hospital_name") or "").strip()
-    order.notes = (post_data.get("notes") or "").strip()
 
-    order.shipping_address_data = address_data_from_text(
-        post_data.get("shipping_address_text")
+    order.hospital_name = (
+        post_data.get("hospital_name")
+        or ""
+    ).strip()
+
+    order.notes = (
+        post_data.get("notes")
+        or ""
+    ).strip()
+
+    order.shipping_address_data = (
+        address_data_from_text(
+            post_data.get(
+                "shipping_address_text"
+            )
+        )
     )
-    order.billing_address_data = address_data_from_text(
-        post_data.get("billing_address_text")
+
+    order.billing_address_data = (
+        address_data_from_text(
+            post_data.get(
+                "billing_address_text"
+            )
+        )
     )
 
     order.save(
@@ -631,17 +793,41 @@ def save_order_manual_edit(order, post_data):
     for item in order.items.all():
         prefix = f"item_{item.id}_"
 
-        product_code = (post_data.get(prefix + "product_code") or "").strip()
-        description = (post_data.get(prefix + "description") or "").strip()
+        old_product_id = item.product_id
+        old_product_code = item.product_code or ""
+        old_hospital_price = (
+            item.hospital_unit_price
+        )
+
+        product_code = (
+            post_data.get(
+                prefix + "product_code"
+            )
+            or ""
+        ).strip()
+
+        description = (
+            post_data.get(
+                prefix + "description"
+            )
+            or ""
+        ).strip()
 
         requested_quantity = parse_int_value(
-            post_data.get(prefix + "requested_quantity"),
+            post_data.get(
+                prefix + "requested_quantity"
+            ),
             item.requested_quantity or 0,
         )
 
-        hospital_unit_price = parse_decimal_value(
-            post_data.get(prefix + "hospital_unit_price"),
-            item.hospital_unit_price,
+        posted_hospital_price = (
+            parse_decimal_value(
+                post_data.get(
+                    prefix
+                    + "hospital_unit_price"
+                ),
+                item.hospital_unit_price,
+            )
         )
 
         product = None
@@ -652,21 +838,87 @@ def save_order_manual_edit(order, post_data):
                 is_active=True,
             ).first()
 
+        new_product_id = (
+            product.id
+            if product
+            else None
+        )
+
+        product_changed = (
+            product_code != old_product_code
+            or new_product_id != old_product_id
+        )
+
+        manual_price_changed = (
+            posted_hospital_price
+            != old_hospital_price
+        )
+
         item.product_code = product_code
         item.description = description
-        item.requested_quantity = requested_quantity
-        item.hospital_unit_price = hospital_unit_price
+        item.requested_quantity = (
+            requested_quantity
+        )
 
         if product:
             item.product = product
             item.product_match_status = "ok"
-            item.product_match_message = "Matched manually from Portal."
+            item.product_match_message = (
+                "Matched manually from Portal."
+            )
         else:
             item.product = None
-            item.product_match_status = "needs_review"
-            item.product_match_message = (
-                "Product was edited manually but not found in Product database."
+            item.product_match_status = (
+                "needs_review"
             )
+            item.product_match_message = (
+                "Product was edited manually "
+                "but not found in Product database."
+            )
+
+        if product_changed:
+            # 产品改变后，旧价格规则快照不能继续保留。
+            if product:
+                item.hospital_unit_price = (
+                    product.hospital_unit_price
+                    if product.hospital_unit_price
+                    is not None
+                    else Decimal("0.00")
+                )
+                item.factory_unit_price = (
+                    product.factory_unit_price
+                )
+            else:
+                item.hospital_unit_price = (
+                    Decimal("0.00")
+                )
+                item.factory_unit_price = None
+
+            item.expiration_discount_rate = None
+            item.expiration_threshold_days = None
+            item.price_policy = None
+            item.price_policy_date = None
+            item.price_policy_message = (
+                "Product was changed manually. "
+                "Please reapply PricePolicy."
+            )
+
+        else:
+            item.hospital_unit_price = (
+                posted_hospital_price
+            )
+
+            if manual_price_changed:
+                # 医院价格已经人工覆盖，
+                # 不再声称它完整来自原价格规则。
+                item.price_policy = None
+                item.price_policy_date = None
+                item.price_policy_message = (
+                    "Hospital unit price was "
+                    "manually overridden in Portal. "
+                    "Factory price and discount "
+                    "snapshots were retained."
+                )
 
         item.save(
             update_fields=[
@@ -675,13 +927,21 @@ def save_order_manual_edit(order, post_data):
                 "description",
                 "requested_quantity",
                 "hospital_unit_price",
+                "factory_unit_price",
+                "expiration_discount_rate",
+                "expiration_threshold_days",
+                "price_policy",
+                "price_policy_date",
+                "price_policy_message",
                 "product_match_status",
                 "product_match_message",
                 "updated_at",
             ]
         )
 
-    return validate_portal_order_after_extraction(order)
+    return validate_portal_order_after_extraction(
+        order
+    )
 
 
 def generate_factory_request_for_order(order, user):
