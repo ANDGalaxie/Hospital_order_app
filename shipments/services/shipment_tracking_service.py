@@ -127,8 +127,45 @@ def get_or_create_order_shipment_folder(order):
     return month, order_folder
 
 
+def validate_explicit_batch_number(confirmation, batch_number):
+    """Protect batch identity and require a contiguous explicit sequence."""
+    own = ShipmentBatch.objects.filter(factory_confirmation=confirmation).first()
+    if own and own.order_id != confirmation.order_id:
+        raise ValueError("当前 FactoryConfirmation 已绑定其他医院订单的批次，需要人工检查。")
+    if batch_number is None:
+        return
+    if type(batch_number) is not int or batch_number < 1:
+        raise ValueError("batch_number 必须为 >= 1 的整数。")
+    if own and own.batch_number != batch_number:
+        raise ValueError(
+            f"当前 FactoryConfirmation 已经对应 Batch {own.batch_number}，"
+            f"但重新提取的文件标记为 Batch {batch_number}，需要人工检查。"
+        )
+    others = ShipmentBatch.objects.filter(order_id=confirmation.order_id).exclude(
+        factory_confirmation=confirmation,
+    )
+    if others.filter(batch_number=batch_number).exists():
+        raise ValueError(
+            f"Order {confirmation.order.bon_de_commande} 已经存在 Batch {batch_number}，"
+            "请检查是否重复上传。"
+        )
+    # Iterate existing rows, not a potentially enormous suffix range.
+    expected = 1
+    for number in others.filter(batch_number__lt=batch_number).order_by(
+        "batch_number"
+    ).values_list("batch_number", flat=True).distinct():
+        if number != expected:
+            break
+        expected += 1
+    if expected < batch_number:
+        raise ValueError(
+            f"工厂文件明确标记为 Batch {batch_number}，"
+            f"但 Order {confirmation.order.bon_de_commande} 尚不存在 Batch {expected}。"
+        )
+
+
 @transaction.atomic
-def sync_shipment_batch_from_factory_confirmation(confirmation):
+def sync_shipment_batch_from_factory_confirmation(confirmation, explicit_batch_number=None):
     """
     根据一个 FactoryConfirmation 创建或更新发货批次。
 
@@ -136,6 +173,13 @@ def sync_shipment_batch_from_factory_confirmation(confirmation):
     它会删除旧的 shipped/backorder 记录，再重新计算。
     """
     order = confirmation.order
+    # Serialize allocation for this order, including legacy auto-number allocation.
+    type(order).objects.select_for_update().get(pk=order.pk)
+    if explicit_batch_number is None:
+        metadata = (confirmation.extracted_confirmation_data or {}).get("django") or {}
+        if metadata.get("detected_batch_source") == "factory_order_reference_suffix":
+            explicit_batch_number = metadata.get("detected_batch_number")
+    validate_explicit_batch_number(confirmation, explicit_batch_number)
 
     batch_date = get_batch_date(confirmation)
     month_key = batch_date.strftime("%Y-%m")
@@ -146,7 +190,7 @@ def sync_shipment_batch_from_factory_confirmation(confirmation):
         defaults={
             "order": order,
             "order_folder": order_folder,
-            "batch_number": get_next_batch_number(order),
+            "batch_number": explicit_batch_number if explicit_batch_number is not None else get_next_batch_number(order),
             "batch_date": batch_date,
             "month_key": month_key,
         },

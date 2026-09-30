@@ -209,8 +209,17 @@ class FactoryUploadPortalFlowTests(TestCase):
             confirmation.confirmation_type,
             FactoryConfirmation.ConfirmationType.REPLENISHMENT,
         )
+        self.assertEqual(
+            SerialItem.objects.filter(factory_confirmation=confirmation).count(),
+            2,
+        )
         self.assertTrue(
             ShipmentBatch.objects.filter(factory_confirmation=confirmation).exists()
+        )
+        self.assertTrue(
+            DocumentWorkflowItem.objects.filter(
+                shipment_batch__factory_confirmation=confirmation,
+            ).exists()
         )
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
@@ -225,17 +234,8 @@ class FactoryUploadPortalFlowTests(TestCase):
 
         confirmation = FactoryConfirmation.objects.latest("id")
         self.assertEqual(confirmation.order_id, self.order.id)
-        self.assertEqual(
-            SerialItem.objects.filter(factory_confirmation=confirmation).count(),
-            2,
-        )
         self.assertTrue(
             ShipmentBatch.objects.filter(factory_confirmation=confirmation).exists()
-        )
-        self.assertTrue(
-            DocumentWorkflowItem.objects.filter(
-                shipment_batch__factory_confirmation=confirmation,
-            ).exists()
         )
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
@@ -373,50 +373,3 @@ class FactoryUploadPortalFlowTests(TestCase):
 
         response = self.client.get(reverse("portal:backorder_detail", args=[line.id]))
         self.assertEqual(response.status_code, 200)
-
-
-    def test_upload_defaults_to_auto_and_keeps_manual_choices(self):
-        response = self.client.get(reverse("portal:factory_upload"))
-        self.assertEqual(response.context["default_confirmation_type"], "auto")
-        self.assertContains(response, 'value="auto" selected')
-        self.assertContains(response, 'value="replenishment"')
-
-    @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
-    @patch("factory_confirmations.services.factory_confirmation_extraction_service.extract_factory_confirmation")
-    def test_explicit_b2_upload_automatically_overrides_type(self, extract_mock, _sync_mock):
-        self.order.bon_de_commande = "155141"
-        self.order.save(update_fields=["bon_de_commande"])
-        ShipmentBatch.objects.create(order=self.order, batch_number=1, month_key="2026-07", batch_date=date(2026, 7, 1))
-        extract_mock.return_value = self.extractor_result("155141-B2")
-        response = self.client.post(reverse("portal:factory_upload"),
-            self.confirmation_payload(order_id="", confirmation_type="auto"))
-        self.assertEqual(response.status_code, 302)
-        confirmation = FactoryConfirmation.objects.latest("id")
-        self.assertEqual(confirmation.order_id, self.order.pk)
-        self.assertEqual(confirmation.confirmation_type, "replenishment")
-        self.assertEqual(get_shipment_batch(confirmation).batch_number, 2)
-        detail = self.client.get(reverse("portal:factory_detail", args=[confirmation.pk]))
-        self.assertContains(detail, "155141-B2")
-        self.assertContains(detail, "Batch 2")
-
-    @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
-    @patch("factory_confirmations.services.factory_confirmation_extraction_service.extract_factory_confirmation")
-    def test_legacy_auto_requires_manual_selection_then_recovers_without_ocr(self, extract_mock, _sync_mock):
-        ShipmentBatch.objects.create(order=self.order, batch_number=1, month_key="2026-07", batch_date=date(2026, 7, 1))
-        extract_mock.return_value = self.extractor_result()
-        self.client.post(reverse("portal:factory_upload"), self.confirmation_payload(confirmation_type="auto"))
-        confirmation = FactoryConfirmation.objects.latest("id")
-        self.assertEqual(confirmation.extraction_status, "failed")
-        self.assertIsNone(get_shipment_batch(confirmation))
-        detail = self.client.get(reverse("portal:factory_detail", args=[confirmation.pk]))
-        self.assertContains(detail, 'id="manual_confirmation_type"')
-        extract_mock.reset_mock()
-        self.client.post(reverse("portal:factory_action", args=[confirmation.pk]), {
-            "action": "associate_order", "order_id": str(self.order.pk),
-            "confirmation_type": "replenishment",
-        })
-        confirmation.refresh_from_db()
-        self.assertEqual(confirmation.extraction_status, "success")
-        self.assertEqual(get_shipment_batch(confirmation).batch_number, 2)
-        self.assertEqual(confirmation.extracted_confirmation_data["django"]["batch_selected_by_user_id"], self.user.pk)
-        extract_mock.assert_not_called()

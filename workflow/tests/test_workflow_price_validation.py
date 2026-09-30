@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import (
     get_user_model,
@@ -266,5 +267,84 @@ class WorkflowPriceValidationTests(
 
         self.assertIn(
             "缺少有效工厂采购单价",
+            " ".join(result["errors"]),
+        )
+
+    def test_factory_mismatch_is_blocking(self):
+        other_factory = Factory.objects.create(
+            name="OTHER WORKFLOW FACTORY",
+            short_name="OWF",
+        )
+        self.confirmation.factory = other_factory
+        self.confirmation.save(
+            update_fields=["factory", "updated_at"]
+        )
+
+        result = validate_workflow_price_snapshots(
+            self.workflow_item
+        )
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn(
+            "产品所属工厂与本批 FactoryConfirmation 工厂不一致",
+            " ".join(result["errors"]),
+        )
+
+    def test_no_effective_factory_policy_is_blocking(self):
+        self.policy.is_active = False
+        self.policy.save(
+            update_fields=["is_active", "updated_at"]
+        )
+
+        result = validate_workflow_price_snapshots(
+            self.workflow_item
+        )
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn(
+            "本批发货日期没有唯一有效工厂价格",
+            " ".join(result["errors"]),
+        )
+
+    def test_invalid_expiration_parameters_are_blocking(self):
+        PricePolicy.objects.filter(
+            pk=self.policy.pk
+        ).update(
+            expiration_threshold_days=0
+        )
+
+        result = validate_workflow_price_snapshots(
+            self.workflow_item
+        )
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn(
+            "临期折扣参数不完整",
+            " ".join(result["errors"]),
+        )
+
+    @patch(
+        "workflow.services.workflow_price_validation_service."
+        "resolve_factory_unit_price"
+    )
+    def test_missing_expiration_discount_rate_is_blocking(
+        self,
+        resolve_factory_mock,
+    ):
+        resolve_factory_mock.return_value = {
+            "errors": [],
+            "policy": self.policy,
+            "unit_price": Decimal("120.00"),
+            "expiration_discount_rate": None,
+            "expiration_threshold_days": 365,
+        }
+
+        result = validate_workflow_price_snapshots(
+            self.workflow_item
+        )
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn(
+            "临期折扣率无法计算",
             " ".join(result["errors"]),
         )

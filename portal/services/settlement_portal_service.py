@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core.paginator import Paginator
@@ -6,6 +6,7 @@ from django.db.models import Prefetch, Q
 from django.urls import reverse
 from django.utils import timezone
 
+from documents.models import GeneratedDocument
 from settlements.models import (
     PaymentTransaction,
     SettlementAccount,
@@ -13,6 +14,14 @@ from settlements.models import (
 
 
 ZERO_MONEY = Decimal("0.00")
+
+PAYABLE_SORT_CHOICES = (
+    ("payment_priority", "待付款优先"),
+    ("arrival_asc", "预计到货：早 → 晚"),
+    ("generated_desc", "文件生成：新 → 旧"),
+    ("issue_desc", "开立日期：新 → 旧"),
+    ("remaining_desc", "待付金额：高 → 低"),
+)
 
 STATUS_LABELS = dict(
     SettlementAccount.Status.choices
@@ -40,6 +49,65 @@ def parse_iso_date(value):
         ).date()
     except ValueError:
         return None
+
+
+def get_payable_expected_arrival(document):
+    """Read the saved Factory PO arrival date without deriving or persisting it."""
+    if document.document_type != GeneratedDocument.DocumentType.FACTORY_PO:
+        return None
+
+    data = document.source_data
+    if not isinstance(data, dict):
+        return None
+
+    # As in the document center, older snapshots may store the payload directly.
+    payload = data.get("po_data")
+    if not isinstance(payload, dict):
+        payload = data
+
+    po = payload.get("po")
+    if not isinstance(po, dict):
+        return None
+
+    return parse_iso_date(po.get("expected_arrival_iso"))
+
+
+def sort_payable_accounts(accounts, sort):
+    """Sort decorated, filtered accounts before pagination."""
+    def arrival_key(account):
+        arrival = account.portal_expected_arrival
+        return (arrival is None, arrival or date.max)
+
+    # Stable sorts retain descending IDs when all business keys are equal.
+    accounts.sort(key=lambda account: account.id, reverse=True)
+
+    if sort == "issue_desc":
+        accounts.sort(key=lambda account: account.issue_date, reverse=True)
+    elif sort == "remaining_desc":
+        accounts.sort(
+            key=lambda account: (
+                -account.portal_remaining_amount,
+                *arrival_key(account),
+            )
+        )
+    else:
+        accounts.sort(
+            key=lambda account: account.portal_generated_at,
+            reverse=True,
+        )
+        if sort == "arrival_asc":
+            accounts.sort(key=arrival_key)
+        elif sort == "payment_priority":
+            accounts.sort(
+                key=lambda account: (
+                    not (
+                        account.portal_remaining_amount > ZERO_MONEY
+                        and account.portal_status
+                        != SettlementAccount.Status.CANCELLED
+                    ),
+                    *arrival_key(account),
+                )
+            )
 
 
 def get_account_queryset(direction=None):
@@ -202,6 +270,12 @@ def decorate_account(account):
     )
 
     document = account.document
+    account.portal_generated_at = document.generated_at
+    account.portal_expected_arrival = (
+        get_payable_expected_arrival(document)
+        if account.direction == SettlementAccount.Direction.PAYABLE
+        else None
+    )
     order = document.order
     batch = document.shipment_batch
 
@@ -571,6 +645,13 @@ def build_account_list_context(
             if account.due_date is None
         ]
 
+    sort = "issue_desc"
+    if direction == SettlementAccount.Direction.PAYABLE:
+        sort = str(request.GET.get("sort") or "payment_priority").strip()
+        if sort not in dict(PAYABLE_SORT_CHOICES):
+            sort = "payment_priority"
+        sort_payable_accounts(accounts, sort)
+
     summary = summarize_accounts(
         accounts
     )
@@ -602,6 +683,9 @@ def build_account_list_context(
         "query": query,
         "status_filter": status_filter,
         "due_scope": due_scope,
+        "is_receivable": is_receivable,
+        "sort": sort,
+        "sort_choices": PAYABLE_SORT_CHOICES,
         "issue_from": issue_from_text,
         "issue_to": issue_to_text,
         "status_choices": (

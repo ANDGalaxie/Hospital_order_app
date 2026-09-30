@@ -42,26 +42,10 @@
         <form method="post" action="{{ action_url }}">
             {% csrf_token %}
             <input type="hidden" name="action" value="generate_request">
-            <button class="portal-button primary" type="submit">生成 Factory Request</button>
+            <button class="portal-button primary" type="submit">
+                生成并下载 Factory Request
+            </button>
         </form>
-
-        {% if factory_request_url %}
-            <a class="portal-button" href="{{ factory_request_url }}" target="_blank">
-                下载 Factory Request
-            </a>
-        {% endif %}
-
-        {% if show_initial_factory_upload %}
-            <a class="portal-button primary" href="{{ upload_initial_factory_url }}">
-                上传首批工厂文件
-            </a>
-        {% endif %}
-
-        {% if show_replenishment_factory_upload %}
-            <a class="portal-button primary" href="{{ upload_replenishment_factory_url }}">
-                上传补发工厂文件
-            </a>
-        {% endif %}
     </div>
 </section>
 
@@ -276,17 +260,24 @@
         {% endif %}
     </section>
 
-    <section class="portal-panel detail-section">
-        <h2 class="portal-panel-title">备注</h2>
-        <textarea class="portal-textarea" name="notes" rows="4">{{ order.notes }}</textarea>
-    </section>
-
     <div class="save-bar">
-        <button class="portal-button primary" type="submit">
+        <button
+            class="portal-button"
+            type="submit"
+            name="action"
+            value="save"
+        >
             保存人工修改并基础验证
         </button>
+        <button
+            class="portal-button primary"
+            type="submit"
+            name="action"
+            value="generate_request"
+        >
+            生成并下载 Factory Request
+        </button>
     </div>
-</form>
 
 <section class="portal-panel detail-section">
     <h2 class="portal-panel-title">提取与验证问题</h2>
@@ -386,4 +377,10 @@
         <p class="detail-muted">这个订单暂时没有关联工作流。</p>
     {% endif %}
 </section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">备注</h2>
+    <textarea class="portal-textarea" name="notes" rows="4">{{ order.notes }}</textarea>
+</section>
+</form>
 {% endblock %}

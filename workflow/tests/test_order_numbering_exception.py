@@ -283,8 +283,11 @@ class OrderNumberingExceptionCommandTests(TransactionTestCase):
             ),
             item_snapshot,
         )
-        with self.assertRaisesRegex(ValueError, "historical rebuild"):
-            get_or_create_expected_invoice_numbers(self.order)
+        frozen = get_or_create_expected_invoice_numbers(self.order)
+        self.assertEqual(frozen["sequence"], 2)
+        self.assertEqual(frozen["invoice_number"], "Invoice 20260207")
+        self.assertEqual(frozen["po_number"], "DELAHK0207S")
+        self.assertFalse(frozen["created"])
 
     def test_sequence_collision_blocks_before_generation(self):
         collision_order = Order.objects.create(

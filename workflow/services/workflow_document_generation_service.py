@@ -9,7 +9,6 @@ from django.db import transaction
 
 from documents.models import GeneratedDocument
 from documents.services.document_numbering_service import (
-    get_or_create_document_numbers,
     parse_document_date,
     get_or_create_expected_invoice_numbers,
 )
@@ -123,14 +122,13 @@ def get_batch_document_numbers(batch: ShipmentBatch) -> Dict[str, Any]:
       Invoice 20260106-B3
       DELAHK0106S-B3
     """
-    po_order_date, date_source, warnings = get_batch_po_order_date(batch)
+    _, date_source, warnings = get_batch_po_order_date(batch)
 
-    numbers = get_or_create_document_numbers(
-        bon_de_commande=batch.order.bon_de_commande,
-        document_date=po_order_date,
-    )
+    numbers = get_or_create_expected_invoice_numbers(batch.order)
 
     numbers = dict(numbers)
+    # Ranking diagnostics contain dates and are not part of the document snapshot.
+    numbers.pop("sort_key", None)
     numbers["base_invoice_number"] = numbers["invoice_number"]
     numbers["base_po_number"] = numbers["po_number"]
     numbers["batch_number"] = batch.batch_number
@@ -449,8 +447,9 @@ def build_existing_document_result(document):
 
 
 def generate_hospital_invoice_for_workflow_item(item: DocumentWorkflowItem, generated_by, force_regenerate=False, existing_document_override=None) -> Dict[str, Any]:
-    batch=item.shipment_batch; order=item.order; expected=get_or_create_expected_invoice_numbers(order); numbers={"invoice_number": expected["invoice_number"], "base_invoice_number": expected["invoice_number"], "batch_number": batch.batch_number, "batch_numbering_warnings": []}
-    if int(batch.batch_number or 1) > 1: numbers["invoice_number"] += f"-B{batch.batch_number}"
+    batch = item.shipment_batch
+    order = item.order
+    numbers = get_batch_document_numbers(batch)
     existing=existing_document_override or get_existing_batch_document(batch,GeneratedDocument.DocumentType.HOSPITAL_INVOICE,numbers["invoice_number"])
     if existing and not force_regenerate:
         return build_existing_document_result(existing)

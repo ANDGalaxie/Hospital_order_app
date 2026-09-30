@@ -261,6 +261,7 @@ class Command(BaseCommand):
                 "sequence": sequence_value,
                 "sort_key": None,
                 "invoice_number": invoice_number,
+                "po_number": po_number,
                 "sequence_id": sequence_record.id,
                 "created": created,
             }

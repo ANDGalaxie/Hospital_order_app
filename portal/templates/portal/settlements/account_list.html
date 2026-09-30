@@ -108,6 +108,7 @@
             </select>
         </div>
 
+        {% if is_receivable %}
         <div>
             <label for="settlement-due">
                 到期情况
@@ -136,6 +137,20 @@
                 </option>
             </select>
         </div>
+
+        {% else %}
+        <div>
+            <label for="settlement-sort">排序方式</label>
+            <select id="settlement-sort" name="sort">
+                {% for value, label in sort_choices %}
+                    <option value="{{ value }}"
+                            {% if sort == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
 
         <div>
             <label for="issue-from">
@@ -199,7 +214,7 @@
                 <th>订单号</th>
                 <th>批次</th>
                 <th>开立日期</th>
-                <th>截止日期</th>
+                <th>{% if is_receivable %}截止日期{% else %}预计到货{% endif %}</th>
                 <th>原始金额</th>
                 <th>{{ posted_label }}</th>
                 <th>{{ remaining_label }}</th>
@@ -243,10 +258,10 @@
                     </td>
 
                     <td>
-                        {% if account.due_date %}
-                            {{ account.due_date|date:"Y-m-d" }}
+                        {% if is_receivable %}
+                            {{ account.due_date|date:"Y-m-d"|default:"—" }}
                         {% else %}
-                            —
+                            {{ account.portal_expected_arrival|date:"Y-m-d"|default:"—" }}
                         {% endif %}
                     </td>
 

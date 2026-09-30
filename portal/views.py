@@ -10,7 +10,7 @@ from urllib.parse import quote
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -1748,6 +1748,40 @@ def backorder_detail(request, backorder_id):
 # =============================================================================
 
 
+def _generate_and_download_factory_request(request, order):
+    """Validate, regenerate, and return the latest Factory Request PDF."""
+    document, errors, warnings = generate_factory_request_for_order(
+        order=order,
+        user=request.user,
+    )
+
+    if errors:
+        messages.error(
+            request,
+            "订单基础验证未通过，暂时不能生成 Factory Request。",
+        )
+        return None
+
+    if not document or not document.pdf_file:
+        raise ValueError("Factory Request PDF 未成功生成。")
+
+    if warnings:
+        messages.warning(
+            request,
+            "Factory Request 已生成，但订单基础验证仍有提醒。",
+        )
+
+    pdf_handle = document.pdf_file.open("rb")
+    filename = document.pdf_file.name.rsplit("/", 1)[-1]
+
+    return FileResponse(
+        pdf_handle,
+        as_attachment=True,
+        filename=filename,
+        content_type="application/pdf",
+    )
+
+
 @staff_member_required
 def order_list(request):
     return render(
@@ -1853,10 +1887,32 @@ def order_edit(request, order_id):
     if request.method != "POST":
         return redirect("portal:order_detail", order_id=order.id)
 
+    action = request.POST.get("action") or "save"
+
     errors, warnings = save_order_manual_edit(
         order=order,
         post_data=request.POST,
     )
+
+    if action == "generate_request":
+        if errors:
+            messages.error(
+                request,
+                "修改已保存，但订单基础验证仍存在问题，未生成 Factory Request。",
+            )
+            return redirect("portal:order_detail", order_id=order.id)
+
+        try:
+            response = _generate_and_download_factory_request(
+                request,
+                order,
+            )
+            if response is not None:
+                return response
+        except Exception as exc:
+            messages.error(request, f"Factory Request 生成失败：{exc}")
+
+        return redirect("portal:order_detail", order_id=order.id)
 
     if errors:
         messages.error(request, "修改已保存，但订单基础验证仍存在问题。")
@@ -1928,25 +1984,16 @@ def order_action(request, order_id):
 
     if action == "generate_request":
         try:
-            document, errors, warnings = generate_factory_request_for_order(
-                order=order,
-                user=request.user,
+            response = _generate_and_download_factory_request(
+                request,
+                order,
             )
-
-            if errors:
-                messages.error(
-                    request,
-                    "订单基础验证未通过，暂时不能生成 Factory Request。",
-                )
-                return redirect("portal:order_detail", order_id=order.id)
-
-            messages.success(request, f"Factory Request 已生成：{document}")
-
+            if response is not None:
+                return response
         except Exception as exc:
             messages.error(request, f"Factory Request 生成失败：{exc}")
 
-        fallback_url = reverse("portal:order_detail", args=[order.id])
-        return safe_redirect_after_action(request, fallback_url)
+        return redirect("portal:order_detail", order_id=order.id)
 
     messages.error(request, "未知操作。")
     return redirect("portal:order_detail", order_id=order.id)
@@ -2168,6 +2215,7 @@ def factory_action(request, confirmation_id):
                 confirmation_id=confirmation_id,
                 order_id=request.POST.get("order_id"),
                 user=request.user,
+                confirmation_type=request.POST.get("confirmation_type"),
             )
             messages.success(
                 request,

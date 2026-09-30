@@ -153,6 +153,14 @@
 
         <div class="debug-box">
             <div>
+                <span>识别批次</span>
+                <strong>{% if django_data.detected_batch_number %}Batch {{ django_data.detected_batch_number }}{% else %}待人工确认{% endif %}</strong>
+            </div>
+            <div>
+                <span>识别来源 / Order</span>
+                <strong>{{ django_data.detected_order_reference|default:"—" }} / {{ django_data.detected_batch_source|default:"人工选择" }}</strong>
+            </div>
+            <div>
                 <span>识别到的 bon de commande</span>
                 <strong>{{ django_data.detected_bon_de_commande|default:"—" }}</strong>
             </div>
@@ -208,6 +216,14 @@
     >
         {% csrf_token %}
         <input type="hidden" name="action" value="associate_order">
+        {% if django_data.requires_batch_selection %}
+        <label class="detail-label" for="manual_confirmation_type">旧格式文件：请人工确认发货类型</label>
+        <select id="manual_confirmation_type" name="confirmation_type" class="portal-input" required>
+            <option value="">请选择</option>
+            <option value="initial">首批发货</option>
+            <option value="replenishment">补发货</option>
+        </select>
+        {% endif %}
 
         <div class="detail-info-grid">
             <div>

@@ -324,11 +324,7 @@ def build_factory_detail_context(request, confirmation_id):
 
     data = confirmation.extracted_confirmation_data or {}
     django_data = data.get("django") or {}
-    warnings = filter_resolved_bon_warnings(
-        confirmation,
-        django_data,
-        data.get("warnings") or [],
-    )
+    warnings = data.get("warnings") or []
     detected_bon = django_data.get("detected_bon_de_commande")
     audit_messages = []
 
@@ -405,14 +401,14 @@ def build_factory_upload_context(
         )
 
     return {
-        "confirmation_type_choices": [("auto", "自动识别")] + list(FactoryConfirmation.ConfirmationType.choices),
+        "confirmation_type_choices": FactoryConfirmation.ConfirmationType.choices,
         "order_choices": Order.objects.order_by("bon_de_commande"),
         "selected_order": selected_order,
         "selected_order_id": selected_order.id if selected_order else "",
         "order_locked": order_locked,
         "default_confirmation_type": (
             default_confirmation_type
-            or "auto"
+            or FactoryConfirmation.ConfirmationType.INITIAL
         ),
     }
 
@@ -452,15 +448,8 @@ def create_and_extract_factory_confirmation(
 
     factory = order.factory if order and order.factory_id else None
 
-    selection_mode = confirmation_type or "auto"
-    if selection_mode not in {"auto", *FactoryConfirmation.ConfirmationType.values}:
-        raise ValueError("无效的发货类型。")
     confirmation = FactoryConfirmation.objects.create(
-        confirmation_type=(
-            FactoryConfirmation.ConfirmationType.INITIAL
-            if selection_mode == "auto" else selection_mode
-        ),
-        extracted_confirmation_data={"django": {"batch_selection_mode": selection_mode}},
+        confirmation_type=confirmation_type or FactoryConfirmation.ConfirmationType.INITIAL,
         factory=factory,
         order=order,
         confirmation_pdf=uploaded_file,
@@ -557,7 +546,6 @@ def associate_order_and_finalize_factory_confirmation(
     confirmation_id,
     order_id,
     user=None,
-    confirmation_type=None,
 ):
     confirmation = (
         FactoryConfirmation.objects
@@ -565,26 +553,16 @@ def associate_order_and_finalize_factory_confirmation(
         .get(id=confirmation_id)
     )
 
-    if confirmation_type:
-        if confirmation_type not in FactoryConfirmation.ConfirmationType.values:
-            raise ValueError("请选择有效的人工发货类型。")
-        data = confirmation.extracted_confirmation_data or {}
-        metadata = data.setdefault("django", {})
-        metadata["batch_selection_mode"] = confirmation_type
-        metadata["batch_selected_by_user_id"] = getattr(user, "pk", None)
-        confirmation.confirmation_type = confirmation_type
-        confirmation.extracted_confirmation_data = data
-        confirmation.save(update_fields=["confirmation_type", "extracted_confirmation_data", "updated_at"])
-
     existing_batch = get_shipment_batch(confirmation)
 
     if (
         existing_batch
+        and existing_batch.generated_documents.exists()
         and confirmation.order_id
         and str(confirmation.order_id) != str(order_id)
     ):
         raise ValueError(
-            "这份工厂文件已经对应发货批次，不能直接改绑到其他医院订单，需要人工检查。"
+            "这份工厂文件已经生成正式文件，不能直接改绑到其他医院订单。"
         )
 
     order = Order.objects.get(id=order_id)

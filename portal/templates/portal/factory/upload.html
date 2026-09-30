@@ -56,7 +56,7 @@
                 </div>
 
                 <div>
-                    <label class="detail-label" for="confirmation_type">发货类型</label>
+                    <label class="detail-label" for="confirmation_type">批次类型（旧格式可人工选择）</label>
                     <select id="confirmation_type" name="confirmation_type" class="portal-input">
                         {% for value, label in confirmation_type_choices %}
                             <option value="{{ value }}" {% if value == default_confirmation_type %}selected{% endif %}>

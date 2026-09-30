@@ -155,18 +155,6 @@ def get_or_create_document_numbers(
     )
 
     if existing:
-        if not existing.po_number:
-            existing.po_number = build_po_number(
-                document_date=doc_date,
-                sequence=existing.sequence,
-            )
-            existing.save(
-                update_fields=[
-                    "po_number",
-                    "updated_at",
-                ]
-            )
-
         return {
             "created": False,
             "sequence_id": existing.id,
@@ -257,136 +245,20 @@ def build_expected_invoice_number(order, orders=None):
     return {"year": order.order_date.year, "month": order.order_date.month, "sequence": sequence, "sort_key": invoice_order_sort_key(order), "invoice_number": f"Invoice {order.order_date:%Y}{sequence:02d}{order.order_date:%m}"}
 
 
-class DocumentSequenceConsistencyError(ValueError):
-    """Stored base numbers disagree with their frozen month/sequence."""
-
-
-def document_sequence_structure(sequence_record):
-    """Pure structural audit. A blank PO is reported, never filled here."""
-    month_key = sequence_record.month_key
-    sequence = sequence_record.sequence
-    try:
-        sequence_date = datetime.strptime(month_key, "%Y-%m").date()
-        valid = (
-            sequence_date.strftime("%Y-%m") == month_key
-            and type(sequence) is int
-            and sequence >= 1
-        )
-    except (TypeError, ValueError):
-        valid = False
-    expected_invoice = build_invoice_number(sequence_date, sequence) if valid else None
-    expected_po = build_po_number(sequence_date, sequence) if valid else None
-    return {
-        "document_sequence_id": sequence_record.pk,
-        "bon_de_commande": sequence_record.bon_de_commande,
-        "month_key": month_key,
-        "sequence": sequence,
-        "stored_invoice": sequence_record.invoice_number,
-        "expected_invoice": expected_invoice,
-        "stored_po": sequence_record.po_number,
-        "expected_po": expected_po,
-        "invoice_ok": valid and sequence_record.invoice_number == expected_invoice,
-        "po_ok": valid and sequence_record.po_number == expected_po,
-    }
-
-
-def audit_document_sequences():
-    """Yield inconsistent records without writing, including missing PO numbers."""
-    for record in DocumentSequence.objects.order_by("id").iterator():
-        result = document_sequence_structure(record)
-        if not result["invoice_ok"] or not result["po_ok"]:
-            yield result
-
-
-def validate_document_sequence_structure(order, sequence_record):
-    """Validate frozen numbers, allowing only a missing PO to be filled by caller."""
-    if not order.order_date:
-        raise ValueError(
-            f"Order {order.id} ({order.bon_de_commande}) is missing order_date; "
-            "Invoice numbering is blocked."
-        )
-    result = document_sequence_structure(sequence_record)
-    if (
-        sequence_record.month_key != order.order_date.strftime("%Y-%m")
-        or sequence_record.bon_de_commande != order.bon_de_commande
-        or not result["invoice_ok"]
-        or (sequence_record.po_number and not result["po_ok"])
-    ):
-        raise DocumentSequenceConsistencyError(
-            f"DocumentSequence consistency error: Order {order.id} "
-            f"({order.bon_de_commande}), document_sequence_id={sequence_record.pk}, "
-            f"month_key={sequence_record.month_key}, sequence={sequence_record.sequence}, "
-            f"invoice_number={sequence_record.invoice_number}, "
-            f"expected_invoice={result['expected_invoice']}, "
-            f"po_number={sequence_record.po_number}, expected_po={result['expected_po']}."
-        )
-    return result
-
-
-def _frozen_document_numbers(order, record, *, created):
-    return {
-        "year": order.order_date.year,
-        "month": order.order_date.month,
-        "sort_key": invoice_order_sort_key(order),
-        "sequence_id": record.pk,
-        "created": created,
-        "month_key": record.month_key,
-        "bon_de_commande": record.bon_de_commande,
-        "sequence": record.sequence,
-        "invoice_number": record.invoice_number,
-        "po_number": record.po_number,
-        "document_date": order.order_date.isoformat(),
-    }
-
-
 @transaction.atomic
 def get_or_create_expected_invoice_numbers(order):
-    from orders.models import Order
-
-    if not order.order_date:
-        raise ValueError(
-            f"Order {order.id} ({order.bon_de_commande}) is missing order_date; "
-            "Invoice numbering is blocked."
-        )
-    month_key = order.order_date.strftime("%Y-%m")
-    existing = (
-        DocumentSequence.objects.select_for_update()
-        .filter(month_key=month_key, bon_de_commande=order.bon_de_commande)
-        .first()
-    )
-    if existing:
-        structure = validate_document_sequence_structure(order, existing)
-        if not existing.po_number:
-            existing.po_number = structure["expected_po"]
-            existing.save(update_fields=["po_number", "updated_at"])
-        return _frozen_document_numbers(order, existing, created=False)
-
-    # New allocations retain the existing monthly ranking/drift protection.
-    expected = build_expected_invoice_number(order)
-    month_orders = list(Order.objects.filter(
-        order_date__year=order.order_date.year,
-        order_date__month=order.order_date.month,
-    ))
+    from documents.models import DocumentSequence
+    expected=build_expected_invoice_number(order)
+    month_key=order.order_date.strftime("%Y-%m")
+    month_orders=list(__import__("orders.models", fromlist=["Order"]).Order.objects.filter(order_date__year=order.order_date.year, order_date__month=order.order_date.month))
     for other in month_orders:
-        other_sequence = DocumentSequence.objects.filter(
-            month_key=month_key, bon_de_commande=other.bon_de_commande,
-        ).first()
-        if other_sequence:
-            other_expected = build_expected_invoice_number(other, month_orders)
-            if (
-                other_sequence.sequence != other_expected["sequence"]
-                or other_sequence.invoice_number != other_expected["invoice_number"]
-            ):
-                raise ValueError(
-                    f"Invoice numbering requires historical rebuild: Order {other.id} "
-                    f"({other.bon_de_commande}) current={other_sequence.invoice_number} "
-                    f"expected={other_expected['invoice_number']}."
-                )
-    obj = DocumentSequence.objects.create(
-        month_key=month_key,
-        bon_de_commande=order.bon_de_commande,
-        sequence=expected["sequence"],
-        invoice_number=expected["invoice_number"],
-        po_number=build_po_number(order.order_date, expected["sequence"]),
-    )
-    return _frozen_document_numbers(order, obj, created=True)
+        existing=DocumentSequence.objects.filter(month_key=month_key, bon_de_commande=other.bon_de_commande).first()
+        if existing:
+            other_expected=build_expected_invoice_number(other, month_orders)
+            if existing.sequence != other_expected["sequence"] or existing.invoice_number != other_expected["invoice_number"]:
+                raise ValueError(f"Invoice numbering requires historical rebuild: Order {other.id} ({other.bon_de_commande}) current={existing.invoice_number} expected={other_expected['invoice_number']}.")
+    existing=DocumentSequence.objects.select_for_update().filter(month_key=month_key, bon_de_commande=order.bon_de_commande).first()
+    if existing:
+        return {**expected, "sequence_id": existing.id, "created": False}
+    obj=DocumentSequence.objects.create(month_key=month_key, bon_de_commande=order.bon_de_commande, sequence=expected["sequence"], invoice_number=expected["invoice_number"], po_number="")
+    return {**expected, "sequence_id": obj.id, "created": True}

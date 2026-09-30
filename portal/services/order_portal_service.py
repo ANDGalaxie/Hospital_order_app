@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
-from django.db.models import Q
+from django.db.models import BigIntegerField, Case, IntegerField, Q, Value, When
+from django.db.models.functions import Cast
 from django.urls import reverse
 from django.utils import timezone
 
@@ -18,6 +19,63 @@ from portal.services.workflow_portal_service import (
     get_source_label,
     status_label,
 )
+
+
+PORTAL_ORDER_VALIDATION_SOURCE = "portal_order_basic_validation"
+
+
+def get_portal_order_validation_data(order):
+    """Return only Hospital Order-stage validation stored on the Order.
+
+    Order.document_validation_data is also used by the older formal document
+    generation validator. Its Factory Confirmation / Serial findings belong
+    to the workflow stage and must not be presented as Hospital Order issues.
+    """
+    validation_data = getattr(order, "document_validation_data", None) or {}
+
+    if validation_data.get("source") != PORTAL_ORDER_VALIDATION_SOURCE:
+        return {}
+
+    return validation_data
+
+
+def get_order_product_review_state(order):
+    """Describe whether extracted product rows still need human review."""
+    items = list(order.items.all())
+
+    if not items:
+        return "missing"
+
+    for item in items:
+        match_status = str(item.product_match_status or "").lower()
+
+        if (
+            not item.product_code
+            or not item.product_id
+            or match_status in [
+                "needs_review",
+                "review",
+                "failed",
+                "error",
+                "missing",
+            ]
+        ):
+            return "needs_review"
+
+    if all(
+        item.is_manually_confirmed
+        or str(item.product_match_status or "").lower() == "manually_confirmed"
+        for item in items
+    ):
+        return "confirmed"
+
+    return "needs_confirmation"
+
+
+def has_non_product_validation_errors(order):
+    validation_data = get_portal_order_validation_data(order)
+    errors = validation_data.get("errors") or []
+    return any(not str(error).startswith("产品") for error in errors)
 
 
 def order_extraction_status(order):
@@ -38,8 +96,15 @@ def order_extraction_status(order):
 
 def order_validation_status(order):
     raw_status = getattr(order, "document_validation_status", "") or ""
+    validation_data = get_portal_order_validation_data(order)
+
+    # A formal document/workflow validation may have written Serial findings
+    # to the shared Order fields. They are deliberately ignored by this
+    # Hospital Order-stage presentation.
+    if not validation_data:
+        return "待验证", "warning", "pending"
+
     validated_at = getattr(order, "validated_at", None)
-    validation_data = getattr(order, "document_validation_data", None) or {}
 
     errors = validation_data.get("errors") or []
     warnings = validation_data.get("warnings") or []
@@ -90,11 +155,13 @@ def get_order_next_action(order, workflow_count):
     if extraction_category == "error":
         return "检查提取错误", "danger"
 
-    if validation_category in ["pending", "warning"]:
-        return "检查验证结果", "warning"
-
-    if validation_category == "issue":
+    if validation_category == "issue" and has_non_product_validation_errors(order):
         return "处理异常", "danger"
+
+    product_review_state = get_order_product_review_state(order)
+
+    if product_review_state in ["missing", "needs_review", "needs_confirmation"]:
+        return "请核对产品编码", "warning"
 
     if workflow_count:
         return "查看工作流", "success"
@@ -179,6 +246,9 @@ def validate_portal_order_after_extraction(order):
     if not order.bon_de_commande or order.bon_de_commande.startswith("UPLOAD-"):
         errors.append("没有成功提取 bon de commande。")
 
+    if not order.order_date:
+        warnings.append("没有成功提取医院订单日期。")
+
     if not order.hospital_name or order.hospital_name == "待提取":
         warnings.append("没有成功提取医院名称。")
 
@@ -201,7 +271,17 @@ def validate_portal_order_after_extraction(order):
             errors.append(f"产品行 #{item.id} 没有产品号。")
 
         if not item.product_id:
-            errors.append(f"产品 {item.product_code or item.id} 没有匹配到产品库。")
+            errors.append(
+                f"产品 {item.product_code or item.id} 没有匹配到产品库，"
+                "请核对产品编码。"
+            )
+        elif str(item.product_match_status or "").lower() in [
+            "needs_review",
+            "review",
+        ]:
+            warnings.append(
+                f"产品 {item.product_code or item.id} 的产品编码待核对。"
+            )
 
         if not item.requested_quantity or item.requested_quantity <= 0:
             warnings.append(f"产品 {item.product_code or item.id} 的订单数量异常。")
@@ -216,41 +296,18 @@ def validate_portal_order_after_extraction(order):
                 f"产品 {item_label} 缺少有效医院单价。"
             )
 
-        if (
-            item.factory_unit_price is None
-            or item.factory_unit_price <= 0
-        ):
-            warnings.append(
-                f"产品 {item_label} 缺少有效工厂采购价。"
-            )
-
         if item.product_id and not item.price_policy_id:
             warnings.append(
-                f"产品 {item_label} 没有命中价格规则，"
-                "当前可能仍在使用产品库默认价格。"
+                f"产品 {item_label} 尚未应用医院价格规则，"
+                "请重新应用 PricePolicy。"
             )
 
-        if (
-            item.price_policy_id
-            and item.expiration_discount_rate is None
-        ):
-            warnings.append(
-                f"产品 {item_label} 缺少临期折扣率快照。"
-            )
-
-        if (
-            item.price_policy_id
-            and item.expiration_threshold_days is None
-        ):
-            warnings.append(
-                f"产品 {item_label} 缺少临期门槛快照。"
-            )
 
     validation_status = "error" if errors else "validated"
 
     order.document_validation_status = validation_status
     order.document_validation_data = {
-        "source": "portal_order_basic_validation",
+        "source": PORTAL_ORDER_VALIDATION_SOURCE,
         "checked_at": timezone.now().isoformat(),
         "errors": errors,
         "warnings": warnings,
@@ -266,25 +323,6 @@ def validate_portal_order_after_extraction(order):
     )
 
     return errors, warnings
-
-
-def get_latest_factory_request_document(order):
-    from documents.models import GeneratedDocument
-
-    qs = GeneratedDocument.objects.filter(document_type="factory_order_request")
-
-    field_names = {field.name for field in GeneratedDocument._meta.fields}
-
-    if "order" in field_names:
-        qs = qs.filter(order_id=order.id)
-    elif "source_order" in field_names:
-        qs = qs.filter(source_order_id=order.id)
-    elif "hospital_order" in field_names:
-        qs = qs.filter(hospital_order_id=order.id)
-    else:
-        return None
-
-    return qs.order_by("-generated_at", "-id").first()
 
 
 def get_order_item_ocr_source_text(item):
@@ -317,11 +355,32 @@ def build_order_list_context(request):
     query = (request.GET.get("q") or "").strip()
     status_filter = request.GET.get("status") or "all"
 
-    orders_qs = Order.objects.select_related(
-        "hospital",
-        "factory",
-        "created_by",
-    ).order_by("-updated_at", "-id")
+    numeric_bon_condition = Q(bon_de_commande__regex=r"^[0-9]+$")
+
+    orders_qs = (
+        Order.objects.select_related(
+            "hospital",
+            "factory",
+            "created_by",
+        )
+        .prefetch_related("items")
+        .annotate(
+            bon_is_numeric=Case(
+                When(numeric_bon_condition, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            bon_numeric=Case(
+                When(
+                    numeric_bon_condition,
+                    then=Cast("bon_de_commande", BigIntegerField()),
+                ),
+                default=Value(None),
+                output_field=BigIntegerField(),
+            ),
+        )
+        .order_by("-bon_is_numeric", "-bon_numeric", "-id")
+    )
 
     if query:
         orders_qs = orders_qs.filter(
@@ -468,7 +527,7 @@ def build_order_detail_context(request, order_id):
     validation_text, validation_class, validation_category = order_validation_status(order)
     order_status_text, order_status_class = get_order_status_label(order)
 
-    validation_data = order.document_validation_data or {}
+    validation_data = get_portal_order_validation_data(order)
     validation_errors = validation_data.get("errors") or []
     validation_warnings = validation_data.get("warnings") or []
 
@@ -626,7 +685,6 @@ def build_order_detail_context(request, order_id):
     if order.factory:
         factory_name = getattr(order.factory, "name", None) or str(order.factory)
 
-    factory_request_document = get_latest_factory_request_document(order)
     shipment_batches = list(
         ShipmentBatch.objects.filter(order=order).order_by("-batch_number", "-id")
     )
@@ -639,7 +697,6 @@ def build_order_detail_context(request, order_id):
         int(item.backordered_quantity or 0)
         for item in order_items
     )
-    has_valid_batch = bool(shipment_batches)
 
     return {
         "lang": lang,
@@ -678,23 +735,10 @@ def build_order_detail_context(request, order_id):
         "admin_url": f"/admin/orders/order/{order.id}/change/",
         "edit_url": reverse("portal:order_edit", args=[order.id]),
         "action_url": reverse("portal:order_action", args=[order.id]),
-        "factory_request_url": document_url(factory_request_document),
         "total_shipped": total_shipped,
         "total_remaining": total_remaining,
         "latest_batch": latest_batch,
         "backorder_total": total_remaining,
-        "upload_initial_factory_url": reverse(
-            "portal:order_factory_upload",
-            args=[order.id],
-        ) + "?type=initial",
-        "upload_replenishment_factory_url": reverse(
-            "portal:order_factory_upload",
-            args=[order.id],
-        ) + "?type=replenishment",
-        "show_initial_factory_upload": not has_valid_batch,
-        "show_replenishment_factory_upload": (
-            has_valid_batch and total_remaining > 0
-        ),
     }
 
 
@@ -746,7 +790,12 @@ def run_order_extraction(order, force_ocr=False):
 def save_order_manual_edit(order, post_data):
     from decimal import Decimal
 
+    from orders.services.order_price_policy_service import (
+        reapply_order_price_policy,
+    )
     from products.models import Product
+
+    product_changed_any = False
 
     order.bon_de_commande = (
         post_data.get("bon_de_commande")
@@ -862,10 +911,11 @@ def save_order_manual_edit(order, post_data):
 
         if product:
             item.product = product
-            item.product_match_status = "ok"
+            item.product_match_status = "manually_confirmed"
             item.product_match_message = (
                 "Matched manually from Portal."
             )
+            item.is_manually_confirmed = True
         else:
             item.product = None
             item.product_match_status = (
@@ -875,8 +925,11 @@ def save_order_manual_edit(order, post_data):
                 "Product was edited manually "
                 "but not found in Product database."
             )
+            item.is_manually_confirmed = False
 
         if product_changed:
+            product_changed_any = True
+
             # 产品改变后，旧价格规则快照不能继续保留。
             if product:
                 item.hospital_unit_price = (
@@ -935,13 +988,44 @@ def save_order_manual_edit(order, post_data):
                 "price_policy_message",
                 "product_match_status",
                 "product_match_message",
+                "is_manually_confirmed",
                 "updated_at",
             ]
         )
 
-    return validate_portal_order_after_extraction(
-        order
+    reapply_warning = ""
+
+    if product_changed_any:
+        try:
+            reapply_order_price_policy(order)
+        except ValueError as exc:
+            # 正式 Invoice / PO 等保护条件不应阻断
+            # 用户已完成的产品信息修正。
+            reapply_warning = (
+                "自动重新应用医院 PricePolicy 失败："
+                f"{exc}"
+            )
+
+    order.refresh_from_db()
+    errors, warnings = (
+        validate_portal_order_after_extraction(order)
     )
+
+    if reapply_warning:
+        warnings.append(reapply_warning)
+        validation_data = dict(
+            order.document_validation_data or {}
+        )
+        validation_data["warnings"] = warnings
+        order.document_validation_data = validation_data
+        order.save(
+            update_fields=[
+                "document_validation_data",
+                "updated_at",
+            ]
+        )
+
+    return errors, warnings
 
 
 def generate_factory_request_for_order(order, user):
@@ -975,14 +1059,21 @@ def order_combined_status(order):
     if extraction_category == "error":
         return "提取失败", "danger", "extraction_error"
 
+    if validation_category == "issue" and has_non_product_validation_errors(order):
+        return "有问题", "danger", "issue"
+
+    if get_order_product_review_state(order) in [
+        "missing",
+        "needs_review",
+        "needs_confirmation",
+    ]:
+        return "产品编码待核对", "warning", "product_review"
+
     if validation_category == "pending":
         return "待验证", "warning", "pending_validation"
 
     if validation_category == "warning":
         return "有提醒", "warning", "warning"
-
-    if validation_category == "issue":
-        return "有问题", "danger", "issue"
 
     if validation_category == "validated":
         return "已就绪", "success", "ready"

@@ -14,12 +14,14 @@ from django.utils import timezone
 from factory_confirmations.models import FactoryConfirmation, SerialItem
 from factory_confirmations.services.bon_de_commande_parser import (
     extract_bon_de_commande_from_text as parse_bon_de_commande_from_text,
+    parse_factory_order_reference,
 )
 from orders.models import Order, OrderItem
 from products.models import Product
 from shipments.models import ShipmentBatch, ShipmentBatchItem
 from shipments.services.shipment_tracking_service import (
     sync_shipment_batch_from_factory_confirmation,
+    validate_explicit_batch_number,
 )
 from shipments.services.shipment_history_service import (
     rebuild_order_shipment_history,
@@ -411,6 +413,51 @@ def extract_bon_de_commande_from_text(text: str) -> Optional[str]:
     return parse_bon_de_commande_from_text(text)
 
 
+def extract_factory_order_reference(factory_data, pdf_path=None):
+    header = factory_data.get("factory_document") or {}
+    stored = header.get("factory_order_reference") or {}
+    candidates = [stored.get("raw_reference")] if isinstance(stored, dict) else [stored]
+    for source in (header, factory_data.get("summary") or {}, factory_data):
+        for key in ("order_number", "customer_order_number", "customer_reference", "order", "bon_de_commande"):
+            value = source.get(key)
+            if isinstance(value, (str, int)):
+                candidates.append(str(value))
+    candidates.append(collect_text_from_any({
+        key: value for key, value in factory_data.items() if key != "django"
+    }))
+    fallback = None
+    for value in candidates:
+        reference = parse_factory_order_reference(value)
+        if reference and reference["has_explicit_batch"]:
+            return reference
+        fallback = fallback or reference
+    if pdf_path is not None:
+        try:
+            import fitz
+            with fitz.open(str(pdf_path)) as document:
+                text = "\n".join(page.get_text("text") for page in document)
+        except Exception:
+            text = ""
+        reference = parse_factory_order_reference(text)
+        if reference and reference["has_explicit_batch"]:
+            return reference
+        fallback = fallback or reference
+    return fallback
+
+
+def stamp_detected_reference(factory_data, reference):
+    metadata = factory_data.setdefault("django", {})
+    metadata.update({
+        "detected_order_reference": reference["raw_reference"] if reference else None,
+        "detected_bon_de_commande": reference["bon_de_commande"] if reference else None,
+        "detected_batch_number": reference["batch_number"] if reference else None,
+        "detected_batch_source": (
+            "factory_order_reference_suffix"
+            if reference and reference["has_explicit_batch"] else None
+        ),
+    })
+
+
 def extract_bon_de_commande_from_factory_data(
     factory_data: Dict[str, Any],
 ) -> Optional[str]:
@@ -519,7 +566,9 @@ def attach_order_from_factory_confirmation_data(
     warnings = factory_data.setdefault("warnings", [])
     django_data = factory_data.setdefault("django", {})
 
-    detected_bon = extract_bon_de_commande_from_factory_data(factory_data)
+    reference = extract_factory_order_reference(factory_data, pdf_path)
+    stamp_detected_reference(factory_data, reference)
+    detected_bon = reference["bon_de_commande"] if reference else None
 
     if not detected_bon:
         detected_bon = extract_bon_de_commande_from_pdf_text(pdf_path)
@@ -704,6 +753,7 @@ def validate_factory_data_before_finalize(
 
 def validate_confirmation_batch_sequence(
     confirmation: FactoryConfirmation,
+    explicit_batch_number=None,
 ) -> None:
     """
     保护 FactoryConfirmation 和 ShipmentBatch 的顺序关系。
@@ -717,6 +767,9 @@ def validate_confirmation_batch_sequence(
         raise ValueError("工厂采购文件还没有匹配医院订单，不能检查批次顺序。")
 
     order = confirmation.order
+    validate_explicit_batch_number(confirmation, explicit_batch_number)
+    if explicit_batch_number is not None:
+        return
 
     own_batch_exists = ShipmentBatch.objects.filter(
         factory_confirmation=confirmation,
@@ -912,7 +965,12 @@ def sync_confirmation_to_shipment_and_workflow(
 
     # 1. FactoryConfirmation -> ShipmentBatch。
     shipment_sync_result = sync_shipment_batch_from_factory_confirmation(
-        confirmation
+        confirmation,
+        explicit_batch_number=(
+            (factory_data.get("django") or {}).get("detected_batch_number")
+            if (factory_data.get("django") or {}).get("detected_batch_source")
+            == "factory_order_reference_suffix" else None
+        ),
     )
 
     shipment_batch = get_model_instance_from_sync_result(
@@ -994,9 +1052,46 @@ def finalize_factory_confirmation_after_order_match(
             )
 
         with transaction.atomic():
-            validate_confirmation_batch_sequence(
-                confirmation
+            Order.objects.select_for_update().get(pk=confirmation.order_id)
+            metadata = factory_data.setdefault("django", {})
+            reference = extract_factory_order_reference(factory_data)
+            if reference and metadata.get("detected_batch_source") != "factory_order_reference_suffix":
+                stamp_detected_reference(factory_data, reference)
+            batch_number = (
+                metadata.get("detected_batch_number")
+                if metadata.get("detected_batch_source") == "factory_order_reference_suffix"
+                else None
             )
+            own_batch = ShipmentBatch.objects.filter(factory_confirmation=confirmation).first()
+            if batch_number is None and own_batch:
+                batch_number = own_batch.batch_number
+                metadata["detected_batch_source"] = "existing_shipment_batch"
+            elif batch_number is None and not ShipmentBatch.objects.filter(order=confirmation.order).exists():
+                batch_number = 1
+                metadata["detected_batch_source"] = "first_batch_without_history"
+            elif batch_number is None and metadata.get("batch_selection_mode") == "auto":
+                metadata["requires_batch_selection"] = True
+                raise FactoryExtractionValidationError(
+                    "旧格式文件没有明确批次后缀，且订单已有发货批次，请人工选择首批发货或补发货后继续。"
+                )
+            metadata["detected_batch_number"] = batch_number
+            metadata["requires_batch_selection"] = False
+            try:
+                validate_confirmation_batch_sequence(
+                    confirmation,
+                    None if metadata.get("detected_batch_source") == "existing_shipment_batch"
+                    else batch_number,
+                )
+            except ValueError as exc:
+                raise FactoryExtractionValidationError(str(exc)) from exc
+            if batch_number is not None:
+                confirmation.confirmation_type = (
+                    FactoryConfirmation.ConfirmationType.INITIAL if batch_number == 1
+                    else FactoryConfirmation.ConfirmationType.REPLENISHMENT
+                )
+                confirmation.save(update_fields=["confirmation_type", "updated_at"])
+            # Use this extraction's metadata, never a stale previous suffix.
+            confirmation.extracted_confirmation_data = factory_data
 
             confirmation.shipping_date = (
                 shipping_date
@@ -1038,6 +1133,9 @@ def finalize_factory_confirmation_after_order_match(
                 None,
             )
             django_data["shipment_batch_id"] = shipment_batch.id
+            django_data["detected_batch_number"] = shipment_batch.batch_number
+            if not django_data.get("detected_batch_source"):
+                django_data["detected_batch_source"] = "manual_confirmation_type_fallback"
             django_data["workflow_item_id"] = (
                 workflow_item.id if workflow_item else None
             )
@@ -1064,10 +1162,9 @@ def finalize_factory_confirmation_after_order_match(
         return shipment_batch, workflow_item, workflow_validation_result
 
     except FactoryExtractionValidationError as exc:
-        mark_confirmation_extraction_failed(
-            confirmation,
-            str(exc),
-        )
+        confirmation.extracted_confirmation_data = json_safe(factory_data)
+        confirmation.save(update_fields=["extracted_confirmation_data", "updated_at"])
+        mark_confirmation_extraction_failed(confirmation, str(exc))
         raise
 
 
@@ -1106,7 +1203,11 @@ def extract_factory_confirmation_for_confirmation(
         factory_data = extract_factory_confirmation(pdf_path)
         validate_factory_data_before_finalize(factory_data)
         factory_data.setdefault("warnings", [])
-        factory_data.setdefault("django", {})
+        metadata = factory_data.setdefault("django", {})
+        previous_metadata = get_confirmation_extracted_data(confirmation).get("django") or {}
+        for key in ("batch_selection_mode", "batch_selected_by_user_id"):
+            if key in previous_metadata:
+                metadata[key] = previous_metadata[key]
 
         # --------------------------------------------------------
         # 1. 自动匹配医院订单

@@ -96,3 +96,39 @@ class FactoryConfirmationBonParserTests(SimpleTestCase):
 
         self.assertEqual(header["bon_de_commande"], "147465")
         self.assertEqual(header["shipping_date_only_iso"], "2026-07-27")
+
+
+class FactoryOrderReferenceTests(SimpleTestCase):
+    def test_suffix_formats_and_base_bon(self):
+        from factory_confirmations.services.bon_de_commande_parser import parse_factory_order_reference
+        for text, batch in [
+            ("Order:\nN°155141-B2", 2), ("155141-B3", 3),
+            ("155141-b2", 2), ("155141 - B2", 2),
+            ("155141-B 2", 2), ("N°155141-B2", 2),
+            ("Order: N°155141-B2", 2), ("155141-B1", 1),
+            ("155141-B1000000", 1000000),
+        ]:
+            with self.subTest(text=text):
+                result = parse_factory_order_reference(text)
+                self.assertEqual(result["bon_de_commande"], "155141")
+                self.assertEqual(result["batch_number"], batch)
+                self.assertTrue(result["has_explicit_batch"])
+                self.assertEqual(extract_bon_de_commande_from_text(text), "155141")
+                self.assertNotEqual(result["bon_de_commande"], "1551412")
+
+    def test_legacy_reference_does_not_claim_batch_one(self):
+        from factory_confirmations.services.bon_de_commande_parser import parse_factory_order_reference
+        result = parse_factory_order_reference("N°155141")
+        self.assertIsNone(result["batch_number"])
+        self.assertFalse(result["has_explicit_batch"])
+
+    def test_invalid_suffix_is_not_treated_as_legacy(self):
+        from factory_confirmations.services.bon_de_commande_parser import parse_factory_order_reference
+        for suffix in ("B0", "B-2", "B2abc", "B", "B2.5"):
+            with self.subTest(suffix=suffix), self.assertRaises(ValueError):
+                parse_factory_order_reference("Order: 155141-" + suffix)
+
+    def test_header_preserves_suffix_for_ocr_and_text_extraction(self):
+        header = extract_factory_header("Order:\nN°155141-B2\nShipping Date:\n09/22/2026 14:41:56")
+        self.assertEqual(header["factory_order_reference"]["batch_number"], 2)
+        self.assertEqual(header["bon_de_commande"], "155141")
