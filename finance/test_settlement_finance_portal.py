@@ -28,6 +28,7 @@ class SettlementFinancePortalTests(
                     "finance-portal-test"
                 ),
                 password="test-password",
+                is_staff=True,
             )
         )
 

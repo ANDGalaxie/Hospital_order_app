@@ -151,6 +151,8 @@ class HistoricalInvoiceNumberingApplyTests(
         self.assertEqual(before_files, self._production_fingerprints())
 
     def test_29_command_apply_runs_with_backup_and_post_apply_summary(self):
+        backup_root = Path(self.media_directory.name) / "command-apply-backup"
+
         def fake_backup_database(backup_root):
             path = Path(backup_root) / "database" / "historical_invoice_numbering.dump"
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -159,6 +161,10 @@ class HistoricalInvoiceNumberingApplyTests(
 
         output = StringIO()
         with patch(
+            "workflow.management.commands.rebuild_historical_invoice_numbering."
+            "timestamped_backup_root",
+            return_value=backup_root,
+        ), patch(
             "workflow.services.historical_invoice_numbering_apply_service._backup_database",
             side_effect=fake_backup_database,
         ), patch(

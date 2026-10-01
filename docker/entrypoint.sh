@@ -1,44 +1,9 @@
 #!/usr/bin/env bash
-set -e
+set -eu
 
-echo "[Acoeur] Waiting for database..."
-
-python - <<'PY'
-import os
-import time
-import psycopg
-
-host = os.getenv("POSTGRES_HOST", "db")
-port = int(os.getenv("POSTGRES_PORT", "5432"))
-dbname = os.getenv("POSTGRES_DB", "hospital_orders")
-user = os.getenv("POSTGRES_USER", "hospital_user")
-password = os.getenv("POSTGRES_PASSWORD", "hospital_password")
-
-for i in range(60):
-    try:
-        conn = psycopg.connect(
-            host=host,
-            port=port,
-            dbname=dbname,
-            user=user,
-            password=password,
-            connect_timeout=3,
-        )
-        conn.close()
-        print("[Acoeur] Database is ready.")
-        break
-    except Exception as exc:
-        print(f"[Acoeur] DB not ready yet ({i+1}/60): {exc}")
-        time.sleep(2)
-else:
-    raise SystemExit("[Acoeur] Database is not available.")
-PY
-
-echo "[Acoeur] Running migrations..."
-python manage.py migrate --noinput
-
-echo "[Acoeur] Collecting static files..."
-python manage.py collectstatic --noinput
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
 
 echo "[Acoeur] Starting Django..."
 exec gunicorn config.wsgi:application \

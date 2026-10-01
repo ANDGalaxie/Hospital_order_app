@@ -1,11 +1,12 @@
 from portal import settlement_views
 from django.urls import include, path
 
-from . import views
+from . import media_views, views
 
 app_name = "portal"
 
 urlpatterns = [
+    path("files/<path:path>", media_views.protected_media, name="protected_media"),
     path("finance/", include("finance.urls")),
     path("", views.home, name="home"),
 

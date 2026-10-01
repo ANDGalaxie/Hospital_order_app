@@ -1,6 +1,20 @@
 from django.contrib import admin, messages
+from django import forms
 from django.utils import timezone
+from config.upload_validation import validate_pdf_upload
 from .models import FactoryConfirmation, SerialItem
+
+
+class FactoryConfirmationAdminForm(forms.ModelForm):
+    class Meta:
+        model = FactoryConfirmation
+        fields = "__all__"
+
+    def clean_confirmation_pdf(self):
+        uploaded_file = self.cleaned_data.get("confirmation_pdf")
+        if "confirmation_pdf" in self.changed_data:
+            validate_pdf_upload(uploaded_file)
+        return uploaded_file
 
 
 class SerialItemInline(admin.TabularInline):
@@ -13,6 +27,7 @@ class SerialItemInline(admin.TabularInline):
 
 @admin.register(FactoryConfirmation)
 class FactoryConfirmationAdmin(admin.ModelAdmin):
+    form = FactoryConfirmationAdminForm
     list_display = (
         "order",
         "confirmation_type",

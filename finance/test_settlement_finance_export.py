@@ -31,6 +31,7 @@ class SettlementFinanceExportTests(
                     "finance-export-test"
                 ),
                 password="test-password",
+                is_staff=True,
             )
         )
 

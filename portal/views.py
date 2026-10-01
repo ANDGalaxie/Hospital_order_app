@@ -5,15 +5,22 @@ Portal views.
 业务逻辑尽量放在 portal/services/* 或各 app 的 services/* 里，避免 views.py 变得过重。
 """
 
+import logging
 from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ValidationError
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+
+from config.upload_validation import validate_pdf_upload
+
+
+logger = logging.getLogger(__name__)
 
 from portal.forms.factory_library_forms import (
     FactoryPortalForm,
@@ -1810,10 +1817,10 @@ def order_upload(request):
             messages.error(request, "请选择一个医院订单 PDF 文件。")
             return redirect("portal:order_upload")
 
-        filename = uploaded_file.name or ""
-
-        if not filename.lower().endswith(".pdf"):
-            messages.error(request, "目前医院订单只支持 PDF 文件。")
+        try:
+            validate_pdf_upload(uploaded_file)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
             return redirect("portal:order_upload")
 
         order = create_order_for_upload(
@@ -1826,11 +1833,12 @@ def order_upload(request):
                 order,
                 force_ocr=False,
             )
-        except Exception as exc:
+        except Exception:
+            logger.exception("Hospital order extraction failed after upload")
             order.refresh_from_db()
             messages.error(
                 request,
-                f"医院订单已上传，但自动提取失败：{exc}",
+                "医院订单已上传，但自动提取失败。请联系管理员并检查服务日志。",
             )
             return redirect("portal:order_detail", order_id=order.id)
 
@@ -2050,14 +2058,43 @@ def factory_upload(request):
             )
 
         try:
+            validate_pdf_upload(uploaded_file)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
+            )
+
+        try:
             confirmation, success, message_text = create_and_extract_factory_confirmation(
                 uploaded_file=uploaded_file,
                 confirmation_type=confirmation_type,
                 order_id=order_id,
                 user=request.user,
             )
-        except Exception as exc:
+        except ValueError as exc:
             messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                ),
+            )
+        except Exception:
+            logger.exception("Factory confirmation processing failed after upload")
+            messages.error(
+                request,
+                "工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。",
+            )
             return render(
                 request,
                 "portal/factory/upload.html",
@@ -2108,14 +2145,45 @@ def order_factory_upload(request, order_id):
             )
 
         try:
+            validate_pdf_upload(uploaded_file)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+
+        try:
             confirmation, success, message_text = create_and_extract_factory_confirmation(
                 uploaded_file=uploaded_file,
                 confirmation_type=confirmation_type,
                 order_id=order_id,
                 user=request.user,
             )
-        except Exception as exc:
+        except ValueError as exc:
             messages.error(request, str(exc))
+            return render(
+                request,
+                "portal/factory/upload.html",
+                build_factory_upload_context(
+                    request,
+                    selected_order_id=order_id,
+                    default_confirmation_type=confirmation_type,
+                    order_locked=True,
+                ),
+            )
+        except Exception:
+            logger.exception("Factory confirmation processing failed after order upload")
+            messages.error(
+                request,
+                "工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。",
+            )
             return render(
                 request,
                 "portal/factory/upload.html",

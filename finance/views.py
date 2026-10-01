@@ -1,6 +1,4 @@
-from django.contrib.auth.decorators import (
-    login_required,
-)
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.dateparse import parse_date
@@ -207,7 +205,7 @@ def parse_finance_filters(request):
     }
 
 
-@login_required
+@staff_member_required
 def settlement_dashboard(request):
     filter_state = (
         parse_finance_filters(
@@ -292,7 +290,7 @@ def settlement_dashboard(request):
     )
 
 
-@login_required
+@staff_member_required
 def settlement_dashboard_export(
     request,
 ):

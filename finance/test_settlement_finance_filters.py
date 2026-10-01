@@ -28,6 +28,7 @@ class SettlementFinanceFilterTests(
             .objects.create_user(
                 username="finance-filter-test",
                 password="test-password",
+                is_staff=True,
             )
         )
 

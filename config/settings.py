@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -153,6 +152,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+MAX_PDF_UPLOAD_SIZE = int(
+    os.getenv("MAX_PDF_UPLOAD_SIZE", str(25 * 1024 * 1024))
+)
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "order_list"
 LOGOUT_REDIRECT_URL = "login"

@@ -1,5 +1,7 @@
 from django import forms
 
+from config.upload_validation import validate_pdf_upload
+
 from .models import Order
 
 
@@ -45,3 +47,8 @@ class OrderCreateForm(forms.ModelForm):
                 }
             ),
         }
+
+    def clean_hospital_order_pdf(self):
+        uploaded_file = self.cleaned_data.get("hospital_order_pdf")
+        validate_pdf_upload(uploaded_file)
+        return uploaded_file

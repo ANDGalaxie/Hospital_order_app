@@ -1,12 +1,26 @@
 from django.contrib import admin, messages
+from django import forms
 from django.utils.html import format_html
 from django.conf import settings
 from django.contrib.admin import helpers
 from django.core.exceptions import ValidationError
 from django.template.response import TemplateResponse
 from .models import Order, OrderItem
+from config.upload_validation import validate_pdf_upload
 from pricing.services.price_policy_service import apply_price_policy_to_order
 from documents.services.factory_order_request_service import generate_factory_order_request
+
+class OrderAdminForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+    def clean_hospital_order_pdf(self):
+        uploaded_file = self.cleaned_data.get("hospital_order_pdf")
+        if "hospital_order_pdf" in self.changed_data:
+            validate_pdf_upload(uploaded_file)
+        return uploaded_file
+
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -54,6 +68,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    form = OrderAdminForm
     list_display = (
         "bon_de_commande",
         "hospital_name",
@@ -560,4 +575,3 @@ class OrderAdmin(admin.ModelAdmin):
             ),
             context,
         )
-

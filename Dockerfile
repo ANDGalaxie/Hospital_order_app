@@ -40,7 +40,10 @@ RUN pip install --upgrade pip setuptools wheel \
 
 COPY . /app
 
-RUN chmod +x /app/docker/entrypoint.sh
+RUN DJANGO_SECRET_KEY=build-only-secret-key-not-used-at-runtime \
+    DJANGO_DEBUG=False \
+    python manage.py collectstatic --noinput \
+    && chmod +x /app/docker/entrypoint.sh /app/docker/release.sh
 
 EXPOSE 8000
 

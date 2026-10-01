@@ -1,8 +1,11 @@
+from django import forms
 from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
 from urllib.parse import urlencode
+
+from config.upload_validation import validate_pdf_upload
 
 from backorders.models import (
     BackorderRootFolder,
@@ -32,6 +35,18 @@ from backorders.services.inventory_service import (
 from backorders.services.inventory_shipment_service import (
     create_shipment_batch_from_inventory_allocation,
 )
+
+
+class InventoryBatchAdminForm(forms.ModelForm):
+    class Meta:
+        model = InventoryBatch
+        fields = "__all__"
+
+    def clean_source_pdf(self):
+        uploaded_file = self.cleaned_data.get("source_pdf")
+        if "source_pdf" in self.changed_data and uploaded_file:
+            validate_pdf_upload(uploaded_file)
+        return uploaded_file
 
 
 @admin.register(BackorderRootFolder)
@@ -353,6 +368,7 @@ class InventoryItemInline(admin.TabularInline):
 
 @admin.register(InventoryBatch)
 class InventoryBatchAdmin(admin.ModelAdmin):
+    form = InventoryBatchAdminForm
     list_display = (
         "id",
         "batch_name",

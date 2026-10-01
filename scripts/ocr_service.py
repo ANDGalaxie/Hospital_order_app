@@ -28,23 +28,27 @@ def get_ocr():
     global _ocr
     if _ocr is None:
         print(f"[OCR SERVICE] Loading PaddleOCR lang={OCR_LANG} ...", flush=True)
-        _ocr = PaddleOCR(lang=OCR_LANG)
+        _ocr = PaddleOCR(lang=OCR_LANG, enable_mkldnn=False)
         print("[OCR SERVICE] PaddleOCR loaded.", flush=True)
     return _ocr
 
 
 def map_container_path(path_text: str) -> Path:
-    path_text = str(path_text)
+    container_root = Path(CONTAINER_MEDIA_ROOT)
+    host_root = Path(HOST_MEDIA_ROOT).resolve()
+    requested = Path(str(path_text))
 
-    if path_text == CONTAINER_MEDIA_ROOT:
-        return Path(HOST_MEDIA_ROOT)
+    try:
+        relative = requested.relative_to(container_root)
+    except ValueError as exc:
+        raise ValueError("Requested path is outside the shared media root.") from exc
 
-    prefix = CONTAINER_MEDIA_ROOT.rstrip("/") + "/"
-    if path_text.startswith(prefix):
-        relative = path_text[len(prefix):]
-        return Path(HOST_MEDIA_ROOT) / relative
-
-    return Path(path_text)
+    mapped = (host_root / relative).resolve()
+    try:
+        mapped.relative_to(host_root)
+    except ValueError as exc:
+        raise ValueError("Requested path is outside the shared media root.") from exc
+    return mapped
 
 
 def pdf_to_images(pdf_path: Path, ocr_dir: Path):
@@ -86,7 +90,6 @@ def run_ocr(pdf_path_text: str, ocr_dir_text: str, force_ocr: bool = False):
             "ok": True,
             "skipped": True,
             "message": "Existing OCR JSON found, skipped.",
-            "ocr_dir": str(ocr_dir),
             "json_count": len(existing_jsons),
         }
 
@@ -116,7 +119,6 @@ def run_ocr(pdf_path_text: str, ocr_dir_text: str, force_ocr: bool = False):
         "ok": True,
         "skipped": False,
         "message": "OCR finished.",
-        "ocr_dir": str(ocr_dir),
         "json_count": json_count,
         "image_count": image_count,
     }
@@ -156,7 +158,7 @@ class Handler(BaseHTTPRequestHandler):
 
             self._send_json(200, result)
 
-        except Exception as exc:
+        except Exception:
             print("[OCR SERVICE] ERROR:", flush=True)
             traceback.print_exc()
 
@@ -164,13 +166,14 @@ class Handler(BaseHTTPRequestHandler):
                 500,
                 {
                     "ok": False,
-                    "error": str(exc),
-                    "traceback": traceback.format_exc(),
+                    "error": "OCR processing failed. Consult service logs.",
                 },
             )
 
 
 def main():
+    # Fail before opening the health port if the model cannot initialize.
+    get_ocr()
     server = HTTPServer((HOST, PORT), Handler)
     print(f"[OCR SERVICE] Listening on http://{HOST}:{PORT}", flush=True)
     print(f"[OCR SERVICE] HOST_MEDIA_ROOT={HOST_MEDIA_ROOT}", flush=True)

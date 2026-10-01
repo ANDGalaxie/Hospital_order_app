@@ -1,0 +1,97 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${ACOEUR_IMAGE:-acoeurs-orders:staging}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings_production
+      MEDIA_ROOT: /app/media
+      ACOEUR_OCR_SERVICE_URL: http://ocr:8765/ocr
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    volumes:
+      - ${MEDIA_ROOT_HOST:?MEDIA_ROOT_HOST must reference durable storage}:/app/media
+    depends_on:
+      ocr:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "-H", "X-Forwarded-Proto: https", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app
+
+  ocr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${ACOEUR_IMAGE:-acoeurs-orders:staging}
+    restart: unless-stopped
+    command: ["python", "scripts/ocr_service.py"]
+    environment:
+      ACOEUR_OCR_HOST: "0.0.0.0"
+      ACOEUR_OCR_PORT: "8765"
+      ACOEUR_CONTAINER_MEDIA_ROOT: "/app/media"
+      ACOEUR_HOST_MEDIA_ROOT: "/app/media"
+      PADDLE_PDX_CACHE_HOME: /models/paddlex
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+    volumes:
+      - ${MEDIA_ROOT_HOST:?MEDIA_ROOT_HOST must reference durable storage}:/app/media
+      - ocr_models:/models
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8765/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
+    networks:
+      - app
+
+  release:
+    image: ${ACOEUR_IMAGE:-acoeurs-orders:staging}
+    profiles: ["tools"]
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings_production
+      MEDIA_ROOT: /app/media
+    command: ["/app/docker/release.sh"]
+    volumes:
+      - ${MEDIA_ROOT_HOST:?MEDIA_ROOT_HOST must reference durable storage}:/app/media
+    networks:
+      - app
+
+  db:
+    image: postgres:16
+    profiles: ["local-db"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:?DATABASE_NAME is required}
+      POSTGRES_USER: ${DATABASE_USER:?DATABASE_USER is required}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app
+
+networks:
+  app:
+
+volumes:
+  postgres_data:
+  ocr_models:
