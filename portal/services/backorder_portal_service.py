@@ -1,3 +1,5 @@
+from portal.i18n import display_choice, display_choices
+from django.utils.translation import gettext as _
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -13,10 +15,10 @@ from shipments.models import ShipmentBatch
 
 def backorder_status_label(value):
     return {
-        BackorderLine.Status.OPEN: "待安排",
-        BackorderLine.Status.PLANNED: "已计划",
-        BackorderLine.Status.OVERDUE: "已逾期",
-        BackorderLine.Status.COMPLETED: "已完成",
+        BackorderLine.Status.OPEN: _("待安排"),
+        BackorderLine.Status.PLANNED: _("已计划"),
+        BackorderLine.Status.OVERDUE: _("已逾期"),
+        BackorderLine.Status.COMPLETED: _("已完成"),
     }.get(value, value or "—")
 
 
@@ -66,7 +68,7 @@ def build_backorder_list_context(request):
                 "remaining_quantity": line.remaining_quantity,
                 "expected_shipping_date": line.expected_shipping_date,
                 "status_text": backorder_status_label(line.status),
-                "is_active_text": "是" if line.is_active else "否",
+                "is_active_text": _("是") if line.is_active else _("否"),
             }
         )
 
@@ -80,7 +82,7 @@ def build_backorder_list_context(request):
         "query": query,
         "status_filter": status,
         "hospital_filter": hospital,
-        "status_choices": BackorderLine.Status.choices,
+        "status_choices": display_choices(BackorderLine.Status.choices),
         "export_query_string": export_params.urlencode(),
     }
 

@@ -1,5 +1,5 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}{{ form_title }} | Acoeurs France{% endblock %}
 
@@ -75,7 +75,7 @@
         <div class="master-form-actions">
             <a class="portal-button"
                href="{{ cancel_url }}">
-                取消
+                {% trans "取消" %}
             </a>
 
             <button class="portal-button primary"

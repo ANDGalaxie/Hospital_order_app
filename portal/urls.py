@@ -206,6 +206,11 @@ urlpatterns = [
         name="settlement_home",
     ),
     path(
+        "settlements/comparison/",
+        views.settlement_comparison,
+        name="settlement_comparison",
+    ),
+    path(
         "settlements/receivables/",
         views.settlement_receivables,
         name="settlement_receivables",

@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}工厂库 | Acoeurs France{% endblock %}
+{% block title %}{% trans "工厂库 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -10,26 +10,26 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <span>工厂库</span>
+    <span>{% trans "工厂库" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>工厂库</h1>
-        <p>查询和维护供应工厂、采购信息及产品关联。</p>
+        <h1>{% trans "工厂库" %}</h1>
+        <p>{% trans "查询和维护供应工厂、采购信息及产品关联。" %}</p>
     </div>
 
     {% if can_add_factory %}
         <div class="portal-header-actions">
             <a class="portal-button primary"
                href="{% url 'portal:library_factory_add' %}">
-                ＋ 新增工厂
+                {% trans "＋ 新增工厂" %}
             </a>
         </div>
     {% endif %}
@@ -37,22 +37,22 @@
 
 <section class="master-stat-grid">
     <div class="master-stat-card">
-        <span>全部工厂</span>
+        <span>{% trans "全部工厂" %}</span>
         <strong>{{ total_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>启用工厂</span>
+        <span>{% trans "启用工厂" %}</span>
         <strong>{{ active_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>已有产品</span>
+        <span>{% trans "已有产品" %}</span>
         <strong>{{ with_products_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>资料不完整</span>
+        <span>{% trans "资料不完整" %}</span>
         <strong>{{ incomplete_count }}</strong>
     </div>
 </section>
@@ -64,58 +64,58 @@
                 type="search"
                 name="q"
                 value="{{ query }}"
-                placeholder="搜索工厂名称、简称、地址、Buyer 或匹配关键词"
+                placeholder="{% trans "搜索工厂名称、简称、地址、Buyer 或匹配关键词" %}"
             >
         </div>
 
         <div class="master-filter-select">
-            <label for="status">状态</label>
+            <label for="status">{% trans "状态" %}</label>
             <select name="status" id="status">
                 <option value="all"
                         {% if status == "all" %}selected{% endif %}>
-                    全部
+                    {% trans "全部" %}
                 </option>
 
                 <option value="active"
                         {% if status == "active" %}selected{% endif %}>
-                    启用
+                    {% trans "启用" %}
                 </option>
 
                 <option value="inactive"
                         {% if status == "inactive" %}selected{% endif %}>
-                    停用
+                    {% trans "停用" %}
                 </option>
             </select>
         </div>
 
         <div class="master-filter-select">
-            <label for="completeness">资料</label>
+            <label for="completeness">{% trans "资料" %}</label>
             <select name="completeness" id="completeness">
                 <option value="all"
                         {% if completeness == "all" %}selected{% endif %}>
-                    全部
+                    {% trans "全部" %}
                 </option>
 
                 <option value="complete"
                         {% if completeness == "complete" %}selected{% endif %}>
-                    信息完整
+                    {% trans "信息完整" %}
                 </option>
 
                 <option value="incomplete"
                         {% if completeness == "incomplete" %}selected{% endif %}>
-                    资料缺失
+                    {% trans "资料缺失" %}
                 </option>
             </select>
         </div>
 
         <button class="portal-button primary"
                 type="submit">
-            查询
+            {% trans "查询" %}
         </button>
 
         <a class="portal-button"
            href="{% url 'portal:library_factories' %}">
-            重置
+            {% trans "重置" %}
         </a>
     </form>
 </section>
@@ -130,11 +130,11 @@
 
                 {% if factory.is_active %}
                     <span class="status-pill success">
-                        启用
+                        {% trans "启用" %}
                     </span>
                 {% else %}
                     <span class="status-pill">
-                        停用
+                        {% trans "停用" %}
                     </span>
                 {% endif %}
             </div>
@@ -150,21 +150,21 @@
             {% endif %}
 
             <p class="factory-card-address">
-                {{ factory.address|default:"尚未填写工厂地址"|truncatechars:100 }}
+                {{ factory.address|default:_("尚未填写工厂地址")|truncatechars:100 }}
             </p>
 
             <div class="factory-card-meta">
                 <span>
-                    {{ factory.active_product_count }} 个产品
+                    {% blocktrans trimmed with value1=factory.active_product_count %}{{ value1 }} 个产品{% endblocktrans %}
                 </span>
 
                 <span>
-                    {{ factory.product_node_count }} 个科室入口
+                    {% blocktrans trimmed with value1=factory.product_node_count %}{{ value1 }} 个科室入口{% endblocktrans %}
                 </span>
             </div>
 
             <div class="factory-card-buyer">
-                Buyer：
+                {% trans "采购联系人 / Buyer" %}：
                 {{ factory.buyer|default:"-" }}
             </div>
 
@@ -172,7 +172,7 @@
         </a>
     {% empty %}
         <div class="portal-panel master-full-width">
-            没有找到符合条件的工厂。
+            {% trans "没有找到符合条件的工厂。" %}
         </div>
     {% endfor %}
 </section>
@@ -181,18 +181,18 @@
 <nav class="master-pagination">
     {% if page_obj.has_previous %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
-            上一页
+            {% trans "上一页" %}
         </a>
     {% endif %}
 
     <span>
-        第 {{ page_obj.number }} 页，
-        共 {{ page_obj.paginator.num_pages }} 页
+        {% blocktrans trimmed with value1=page_obj.number value2=page_obj.paginator.num_pages %}第 {{ value1 }} 页，
+        共 {{ value2 }} 页{% endblocktrans %}
     </span>
 
     {% if page_obj.has_next %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
-            下一页
+            {% trans "下一页" %}
         </a>
     {% endif %}
 </nav>

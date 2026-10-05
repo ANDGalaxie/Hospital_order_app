@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
@@ -192,16 +193,16 @@ def build_factory_detail_context(
     missing_fields = []
 
     if not factory.address.strip():
-        missing_fields.append("工厂地址")
+        missing_fields.append(_("工厂地址"))
 
     if not factory.buyer.strip():
         missing_fields.append(
-            "采购联系人 / Buyer"
+            _("采购联系人 / Buyer")
         )
 
     if not factory.match_keywords.strip():
         missing_fields.append(
-            "自动匹配关键词"
+            _("自动匹配关键词")
         )
 
     return {

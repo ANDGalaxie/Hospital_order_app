@@ -397,7 +397,7 @@ class FactoryUploadPortalFlowTests(TestCase):
         self.assertEqual(get_shipment_batch(confirmation).batch_number, 2)
         detail = self.client.get(reverse("portal:factory_detail", args=[confirmation.pk]))
         self.assertContains(detail, "155141-B2")
-        self.assertContains(detail, "Batch 2")
+        self.assertContains(detail, "批次 2")
 
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.sync_backorders_for_order")
     @patch("factory_confirmations.services.factory_confirmation_extraction_service.extract_factory_confirmation")

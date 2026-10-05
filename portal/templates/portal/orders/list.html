@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}医院订单 | Acoeurs France{% endblock %}
+{% block title %}{% trans "医院订单 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/orders.css' %}">
@@ -10,37 +10,37 @@
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>医院订单</h1>
-        <p>查看医院订单、提取状态、验证结果和后续工作流进度。</p>
+        <h1>{% trans "医院订单" %}</h1>
+        <p>{% trans "查看医院订单、提取状态、验证结果和后续工作流进度。" %}</p>
     </div>
 
     <div class="portal-header-actions">
         <a class="portal-button primary" href="{% url 'portal:order_upload' %}">
-            上传医院订单
+            {% trans "上传医院订单" %}
         </a>
-        <a class="portal-button" href="{% url 'portal:home' %}">返回首页</a>
+        <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
         <a class="portal-button" href="/admin/orders/order/">Admin</a>
     </div>
 </section>
 
 <section class="order-stats">
     <a class="stat-card {% if status_filter == 'all' %}active{% endif %}" href="?status=all{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">全部订单</span>
+        <span class="stat-label">{% trans "全部订单" %}</span>
         <strong>{{ stats.all }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'pending_extraction' %}active{% endif %}" href="?status=pending_extraction{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">待提取</span>
+        <span class="stat-label">{% trans "待提取" %}</span>
         <strong>{{ stats.pending_extraction }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'pending_validation' %}active{% endif %}" href="?status=pending_validation{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">待验证</span>
+        <span class="stat-label">{% trans "待验证" %}</span>
         <strong>{{ stats.pending_validation }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'workflow' %}active{% endif %}" href="?status=workflow{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">已进入工作流</span>
+        <span class="stat-label">{% trans "已进入工作流" %}</span>
         <strong>{{ stats.workflow }}</strong>
     </a>
 </section>
@@ -50,20 +50,20 @@
         <input type="hidden" name="status" value="{{ status_filter }}">
 
         <div class="filter-search">
-            <label for="order-search">搜索</label>
+            <label for="order-search">{% trans "搜索" %}</label>
             <input
                 id="order-search"
                 type="text"
                 name="q"
                 value="{{ query }}"
-                placeholder="输入订单号或医院名称"
+                placeholder="{% trans "输入订单号或医院名称" %}"
             >
         </div>
 
-        <button class="portal-button primary" type="submit">搜索</button>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
 
         {% if query %}
-            <a class="portal-button" href="?status={{ status_filter }}">清除</a>
+            <a class="portal-button" href="?status={{ status_filter }}">{% trans "清除" %}</a>
         {% endif %}
     </form>
 </section>
@@ -83,14 +83,14 @@
 
         <thead>
             <tr>
-                <th>订单号</th>
-                <th>医院</th>
-                <th>产品</th>
-                <th>订单状态</th>
-                <th>后续流程</th>
-                <th>下一步</th>
-                <th>更新时间</th>
-                <th>操作</th>
+                <th>{% trans "订单号" %}</th>
+                <th>{% trans "医院" %}</th>
+                <th>{% trans "产品" %}</th>
+                <th>{% trans "订单状态" %}</th>
+                <th>{% trans "后续流程" %}</th>
+                <th>{% trans "下一步" %}</th>
+                <th>{% trans "更新时间" %}</th>
+                <th>{% trans "操作" %}</th>
             </tr>
         </thead>
 
@@ -133,13 +133,13 @@
 
                     <td class="action-cell">
                         <div class="row-actions">
-                            <a class="mini-button ghost" href="{{ row.detail_url }}">查看</a>
+                            <a class="mini-button ghost" href="{{ row.detail_url }}">{% trans "查看" %}</a>
 
                             <form method="post" action="{{ row.action_url }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="generate_request">
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button class="mini-button" type="submit">请求单</button>
+                                <button class="mini-button" type="submit">{% trans "请求单" %}</button>
                             </form>
                         </div>
                     </td>
@@ -148,7 +148,7 @@
                 <tr>
                     <td colspan="8">
                         <div class="portal-empty">
-                            没有找到符合条件的医院订单。
+                            {% trans "没有找到符合条件的医院订单。" %}
                         </div>
                     </td>
                 </tr>

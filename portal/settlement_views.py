@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.contrib.admin.views.decorators import (
     staff_member_required,
@@ -124,29 +125,29 @@ def build_account_detail_context(
         "due_date_form": due_date_form,
         "is_receivable": is_receivable,
         "payment_noun": (
-            "收款"
+            _("收款")
             if is_receivable
-            else "付款"
+            else _("付款")
         ),
         "payment_action_label": (
-            "登记收款"
+            _("登记收款")
             if is_receivable
-            else "登记付款"
+            else _("登记付款")
         ),
         "posted_label": (
-            "已收金额"
+            _("已收金额")
             if is_receivable
-            else "已付金额"
+            else _("已付金额")
         ),
         "remaining_label": (
-            "待收余额"
+            _("待收余额")
             if is_receivable
-            else "待付余额"
+            else _("待付余额")
         ),
         "counterparty_label": (
-            "医院"
+            _("医院")
             if is_receivable
-            else "工厂"
+            else _("工厂")
         ),
         "can_record_payment": (
             can_record_payment
@@ -255,20 +256,18 @@ def settlement_record_payment(
         )
 
     action_name = (
-        "收款"
+        _("收款")
         if account.direction
         == SettlementAccount
         .Direction
         .RECEIVABLE
-        else "付款"
+        else _("付款")
     )
 
     messages.success(
         request,
         (
-            f"{action_name}登记成功："
-            f"{payment.amount} "
-            f"{account.currency}"
+            _('%(value1)s登记成功：%(value2)s %(value3)s') % {'value1': action_name, 'value2': payment.amount, 'value3': account.currency}
         ),
     )
 
@@ -334,12 +333,11 @@ def settlement_update_due_date(
 
     if updated_account.due_date:
         message = (
-            "付款截止日期已更新为 "
-            f"{updated_account.due_date:%Y-%m-%d}。"
+            _('付款截止日期已更新为 %(value1)s。') % {'value1': f'{updated_account.due_date:%Y-%m-%d}'}
         )
     else:
         message = (
-            "付款截止日期已清除。"
+            _("付款截止日期已清除。")
         )
 
     messages.success(
@@ -376,7 +374,7 @@ def settlement_reverse_transaction(
     if not form.is_valid():
         messages.error(
             request,
-            "冲销时必须填写冲销原因。",
+            _("冲销时必须填写冲销原因。"),
         )
 
         return redirect(
@@ -406,7 +404,7 @@ def settlement_reverse_transaction(
     else:
         messages.success(
             request,
-            "收付款流水已冲销。",
+            _("收付款流水已冲销。"),
         )
 
     return redirect(

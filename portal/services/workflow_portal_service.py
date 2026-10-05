@@ -1,3 +1,5 @@
+from portal.i18n import display_validation_message
+from django.utils.translation import gettext as _
 from decimal import Decimal
 
 from django.urls import reverse
@@ -61,38 +63,40 @@ def status_label(value, kind):
 
     if kind == "validation":
         mapping = {
-            "ready": ("已验证", "success"),
-            "validated": ("已验证", "success"),
-            "success": ("已验证", "success"),
-            "ok": ("已验证", "success"),
-            "pending": ("待验证", "warning"),
-            "error": ("有问题", "danger"),
-            "failed": ("有问题", "danger"),
-            "blocked": ("有问题", "danger"),
+            "ready": (_("已验证"), "success"),
+            "validated": (_("已验证"), "success"),
+            "success": (_("已验证"), "success"),
+            "ok": (_("已验证"), "success"),
+            "pending": (_("待验证"), "warning"),
+            "not_validated": (_("待验证"), "warning"),
+            "needs_review": (_("需要人工检查"), "warning"),
+            "error": (_("有问题"), "danger"),
+            "failed": (_("有问题"), "danger"),
+            "blocked": (_("有问题"), "danger"),
         }
-        return mapping.get(value, (value or "未知", "info"))
+        return mapping.get(value, (value or _("未知"), "info"))
 
     if kind in ["invoice", "po"]:
         mapping = {
-            "generated": ("已生成", "success"),
-            "pending": ("待生成", "warning"),
-            "missing": ("未生成", "warning"),
-            "not_generated": ("未生成", "warning"),
-            "failed": ("生成失败", "danger"),
+            "generated": (_("已生成"), "success"),
+            "pending": (_("待生成"), "warning"),
+            "missing": (_("未生成"), "warning"),
+            "not_generated": (_("未生成"), "warning"),
+            "failed": (_("生成失败"), "danger"),
         }
-        return mapping.get(value, (value or "未生成", "warning"))
+        return mapping.get(value, (value or _("未生成"), "warning"))
 
     if kind == "workflow":
         mapping = {
-            "generated": ("文件已生成", "success"),
-            "ready": ("可生成文件", "info"),
-            "ready_to_generate": ("可生成文件", "info"),
-            "pending": ("处理中", "warning"),
-            "blocked": ("阻塞", "danger"),
-            "cancelled": ("已取消", "warning"),
-            "error": ("有问题", "danger"),
+            "generated": (_("文件已生成"), "success"),
+            "ready": (_("可生成文件"), "info"),
+            "ready_to_generate": (_("可生成文件"), "info"),
+            "pending": (_("处理中"), "warning"),
+            "blocked": (_("阻塞"), "danger"),
+            "cancelled": (_("已取消"), "warning"),
+            "error": (_("有问题"), "danger"),
         }
-        return mapping.get(value, (value or "未知", "info"))
+        return mapping.get(value, (value or _("未知"), "info"))
 
     return value, "info"
 
@@ -102,10 +106,10 @@ def get_source_label(item):
     source_type = data.get("source_type")
 
     if source_type == "factory_confirmation":
-        return "工厂确认"
+        return _("工厂确认")
 
     if source_type == "inventory_allocation":
-        return "库存分配"
+        return _("库存分配")
 
     if source_type:
         return source_type
@@ -119,18 +123,18 @@ def get_next_action(item):
     po_status = item.po_status or ""
 
     if validation_status != "ready":
-        return "检查验证结果", "warning"
+        return _("检查验证结果"), "warning"
 
     if invoice_status != "generated" and po_status != "generated":
-        return "生成发票和采购订单", "info"
+        return _("生成发票和采购订单"), "info"
 
     if invoice_status != "generated":
-        return "生成发票", "info"
+        return _("生成发票"), "info"
 
     if po_status != "generated":
-        return "生成采购订单", "info"
+        return _("生成采购订单"), "info"
 
-    return "已完成", "success"
+    return _("已完成"), "success"
 
 
 def build_workflow_list_context(request):
@@ -277,7 +281,7 @@ def build_workflow_price_snapshot(
             price_source_class = "success"
         else:
             price_source_text = (
-                "没有 PricePolicy"
+                _("没有 PricePolicy")
             )
             price_source_class = "danger"
 
@@ -335,7 +339,7 @@ def build_workflow_price_snapshot(
         "pricing_reference_date": (
             snapshot["reference_date"]
         ),
-        "issues": issues,
+        "issues": [display_validation_message(value) for value in issues],
         "is_valid": snapshot["is_valid"],
     }
 

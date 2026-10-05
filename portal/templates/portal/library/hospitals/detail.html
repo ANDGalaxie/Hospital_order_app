@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ hospital.name }} | 医院库{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=hospital.name %}{{ value1 }} | 医院库{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -10,11 +10,11 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_hospitals' %}">医院库</a>
+    <a href="{% url 'portal:library_hospitals' %}">{% trans "医院库" %}</a>
     <span>›</span>
     <span>{{ hospital.name }}</span>
 </nav>
@@ -27,15 +27,15 @@
             <h1>{{ hospital.name }}</h1>
 
             {% if hospital.is_active %}
-                <span class="status-pill success">启用</span>
+                <span class="status-pill success">{% trans "启用" %}</span>
             {% else %}
-                <span class="status-pill">停用</span>
+                <span class="status-pill">{% trans "停用" %}</span>
             {% endif %}
         </div>
 
         <p>
-            标准化名称：
-            {{ hospital.normalized_name|default:"-" }}
+            {% blocktrans trimmed with value1=hospital.normalized_name|default:"-" %}标准化名称：
+            {{ value1 }}{% endblocktrans %}
         </p>
     </div>
 
@@ -43,7 +43,7 @@
         <div class="portal-header-actions">
             <a class="portal-button"
                href="{% url 'portal:library_hospital_edit' hospital.id %}">
-                编辑医院
+                {% trans "编辑医院" %}
             </a>
 
             <form method="post"
@@ -53,12 +53,12 @@
                 {% if hospital.is_active %}
                     <button class="portal-button danger"
                             type="submit">
-                        停用医院
+                        {% trans "停用医院" %}
                     </button>
                 {% else %}
                     <button class="portal-button primary"
                             type="submit">
-                        重新启用
+                        {% trans "重新启用" %}
                     </button>
                 {% endif %}
             </form>
@@ -68,37 +68,37 @@
 
 {% if missing_fields %}
 <section class="master-warning-panel">
-    <strong>资料需要补充：</strong>
+    <strong>{% trans "资料需要补充：" %}</strong>
     {{ missing_fields|join:"、" }}
 </section>
 {% endif %}
 
 <section class="master-detail-grid">
     <article class="portal-panel">
-        <h2 class="portal-panel-title">基本资料</h2>
+        <h2 class="portal-panel-title">{% trans "基本资料" %}</h2>
 
         <div class="master-detail-list">
             <div>
-                <span>医院正式名称</span>
+                <span>{% trans "医院正式名称" %}</span>
                 <strong>{{ hospital.name }}</strong>
             </div>
 
             <div>
-                <span>标准化名称</span>
+                <span>{% trans "标准化名称" %}</span>
                 <strong>
                     {{ hospital.normalized_name|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>创建时间</span>
+                <span>{% trans "创建时间" %}</span>
                 <strong>
                     {{ hospital.created_at|date:"Y-m-d H:i" }}
                 </strong>
             </div>
 
             <div>
-                <span>更新时间</span>
+                <span>{% trans "更新时间" %}</span>
                 <strong>
                     {{ hospital.updated_at|date:"Y-m-d H:i" }}
                 </strong>
@@ -107,32 +107,32 @@
     </article>
 
     <article class="portal-panel">
-        <h2 class="portal-panel-title">联系方式</h2>
+        <h2 class="portal-panel-title">{% trans "联系方式" %}</h2>
 
         <div class="master-detail-list">
             <div>
-                <span>联系人</span>
+                <span>{% trans "联系人" %}</span>
                 <strong>
                     {{ hospital.contact_name|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>电话</span>
+                <span>{% trans "电话" %}</span>
                 <strong>
                     {{ hospital.phone|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>传真</span>
+                <span>{% trans "传真" %}</span>
                 <strong>
                     {{ hospital.fax|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>邮箱</span>
+                <span>{% trans "邮箱" %}</span>
                 <strong>
                     {{ hospital.email|default:"-" }}
                 </strong>
@@ -141,18 +141,18 @@
     </article>
 
     <article class="portal-panel master-full-width">
-        <h2 class="portal-panel-title">地址资料</h2>
+        <h2 class="portal-panel-title">{% trans "地址资料" %}</h2>
 
         <div class="master-address-grid">
             <div class="master-address-box">
-                <span>账单地址</span>
+                <span>{% trans "账单地址" %}</span>
                 <strong>
                     {{ hospital.billing_address|default:"-"|linebreaksbr }}
                 </strong>
             </div>
 
             <div class="master-address-box">
-                <span>默认收货地址</span>
+                <span>{% trans "默认收货地址" %}</span>
                 <strong>
                     {{ hospital.default_shipping_address|default:"-"|linebreaksbr }}
                 </strong>
@@ -161,7 +161,7 @@
     </article>
 
     <article class="portal-panel master-full-width">
-        <h2 class="portal-panel-title">备注</h2>
+        <h2 class="portal-panel-title">{% trans "备注" %}</h2>
 
         <div class="master-notes">
             {{ hospital.notes|default:"-"|linebreaksbr }}

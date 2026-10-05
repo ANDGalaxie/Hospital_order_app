@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}工作流详情 {{ order_number }} | Acoeurs France{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=order_number %}工作流详情 {{ value1 }} | Acoeurs France{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">
@@ -10,41 +10,41 @@
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>工作流详情</h1>
-        <p>订单 {{ order_number }} 的验证结果、文件生成状态与批次明细。</p>
+        <h1>{% trans "工作流详情" %}</h1>
+        <p>{% blocktrans trimmed with value1=order_number %}订单 {{ value1 }} 的验证结果、文件生成状态与批次明细。{% endblocktrans %}</p>
     </div>
 
     <div class="portal-header-actions">
-        <a class="portal-button" href="{% url 'portal:workflow_list' %}">返回工作流</a>
+        <a class="portal-button" href="{% url 'portal:workflow_list' %}">{% trans "返回工作流" %}</a>
         <a class="portal-button" href="{{ admin_url }}">Admin</a>
     </div>
 </section>
 
 <section class="workflow-detail-grid">
     <div class="portal-panel detail-main-card">
-        <h2 class="portal-panel-title">订单信息</h2>
+        <h2 class="portal-panel-title">{% trans "订单信息" %}</h2>
 
         <div class="detail-info-grid">
             <div>
-                <span class="detail-label">订单号</span>
+                <span class="detail-label">{% trans "订单号" %}</span>
                 <strong>{{ order_number }}</strong>
             </div>
 
             <div>
-                <span class="detail-label">医院</span>
+                <span class="detail-label">{% trans "医院" %}</span>
                 <strong>{{ hospital_name }}</strong>
             </div>
 
             <div>
-                <span class="detail-label">来源</span>
+                <span class="detail-label">{% trans "来源" %}</span>
                 <strong>{{ source_label }}</strong>
             </div>
 
             <div>
-                <span class="detail-label">批次</span>
+                <span class="detail-label">{% trans "批次" %}</span>
                 <strong>
                     {% if batch_number %}
-                        Batch {{ batch_number }}
+                        {% trans "批次" %} {{ batch_number }}
                     {% else %}
                         —
                     {% endif %}
@@ -52,19 +52,19 @@
             </div>
 
             <div>
-                <span class="detail-label">流程状态</span>
+                <span class="detail-label">{% trans "流程状态" %}</span>
                 <span class="status-pill {{ workflow_class }}">{{ workflow_text }}</span>
             </div>
 
             <div>
-                <span class="detail-label">下一步</span>
+                <span class="detail-label">{% trans "下一步" %}</span>
                 <span class="next-action {{ next_action_class }}">{{ next_action_text }}</span>
             </div>
         </div>
     </div>
 
     <div class="portal-panel detail-actions-card">
-        <h2 class="portal-panel-title">快捷操作</h2>
+        <h2 class="portal-panel-title">{% trans "快捷操作" %}</h2>
 
         <div class="detail-actions">
             {% if can_reapply_prices %}
@@ -87,13 +87,13 @@
                     <button
                         class="portal-button primary"
                         type="submit"
-                        onclick="return confirm('确定重新应用当前价格规则吗？系统会覆盖当前订单价格快照，并立即重新验证该工作流。');">
-                        重新应用价格规则并重新验证
+                        data-confirm="{% trans '确定重新应用当前价格规则吗？系统会覆盖当前订单价格快照，并立即重新验证该工作流。' %}" onclick="return confirm(this.dataset.confirm);">
+                        {% trans "重新应用价格规则并重新验证" %}
                     </button>
                 </form>
             {% else %}
                 <span class="portal-button disabled">
-                    正式文件已生成，禁止重新计价
+                    {% trans "正式文件已生成，禁止重新计价" %}
                 </span>
             {% endif %}
 
@@ -116,7 +116,7 @@
                 <button
                     class="portal-button"
                     type="submit">
-                    重新验证
+                    {% trans "重新验证" %}
                 </button>
             </form>
 
@@ -140,18 +140,18 @@
                     <button
                         class="portal-button"
                         type="submit">
-                        生成文件
+                        {% trans "生成文件" %}
                     </button>
                 </form>
 
             {% elif documents_generated %}
                 <span class="portal-button disabled">
-                    文件已生成
+                    {% trans "文件已生成" %}
                 </span>
 
             {% else %}
                 <span class="portal-button disabled">
-                    需先通过验证
+                    {% trans "需先通过验证" %}
                 </span>
             {% endif %}
         </div>
@@ -160,16 +160,16 @@
 
 <section class="workflow-doc-grid">
     <div class="portal-panel">
-        <h2 class="portal-panel-title">验证状态</h2>
+        <h2 class="portal-panel-title">{% trans "验证状态" %}</h2>
         <span class="status-pill {{ validation_class }}">{{ validation_text }}</span>
 
         {% if can_generate_documents is not None %}
             <p class="detail-muted">
-                可生成文件：
+                {% trans "可生成文件：" %}
                 {% if can_generate_documents %}
-                    是
+                    {% trans "是" %}
                 {% else %}
-                    否
+                    {% trans "否" %}
                 {% endif %}
             </p>
         {% endif %}
@@ -181,7 +181,7 @@
 
         {% if invoice_url %}
             <div class="detail-link-row">
-                <a class="portal-button" href="{{ invoice_url }}" target="_blank">打开 PDF</a>
+                <a class="portal-button" href="{{ invoice_url }}" target="_blank">{% trans "打开 PDF" %}</a>
             </div>
         {% endif %}
     </div>
@@ -192,19 +192,19 @@
 
         {% if po_url %}
             <div class="detail-link-row">
-                <a class="portal-button" href="{{ po_url }}" target="_blank">打开 PDF</a>
+                <a class="portal-button" href="{{ po_url }}" target="_blank">{% trans "打开 PDF" %}</a>
             </div>
         {% endif %}
     </div>
 </section>
 
 <section class="portal-panel detail-section">
-    <h2 class="portal-panel-title">验证问题</h2>
+    <h2 class="portal-panel-title">{% trans "验证问题" %}</h2>
 
     {% if errors or warnings %}
         <div class="issue-grid">
             <div>
-                <h3>Errors</h3>
+                <h3>{% trans "错误" %}</h3>
                 {% if errors %}
                     <ul class="issue-list danger">
                         {% for error in errors %}
@@ -212,12 +212,12 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="detail-muted">没有 errors。</p>
+                    <p class="detail-muted">{% trans "没有 errors。" %}</p>
                 {% endif %}
             </div>
 
             <div>
-                <h3>Warnings</h3>
+                <h3>{% trans "提醒" %}</h3>
                 {% if warnings %}
                     <ul class="issue-list warning">
                         {% for warning in warnings %}
@@ -225,12 +225,12 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="detail-muted">没有 warnings。</p>
+                    <p class="detail-muted">{% trans "没有 warnings。" %}</p>
                 {% endif %}
             </div>
         </div>
     {% else %}
-        <p class="detail-muted">当前没有验证问题。</p>
+        <p class="detail-muted">{% trans "当前没有验证问题。" %}</p>
     {% endif %}
 </section>
 
@@ -238,18 +238,18 @@
     <div class="workflow-price-heading">
         <div>
             <h2 class="portal-panel-title">
-                当前批次价格快照
+                {% trans "当前批次价格快照" %}
             </h2>
 
             <p class="detail-muted">
-                临期判断基准日期：
-                {{ pricing_reference_date|date:"Y-m-d"|default:"—" }}
+                {% blocktrans trimmed with value1=pricing_reference_date|date:"Y-m-d"|default:"—" %}临期判断基准日期：
+                {{ value1 }}{% endblocktrans %}
             </p>
         </div>
 
         <div class="workflow-price-summary">
             <span>
-                规则命中：
+                {% trans "规则命中：" %}
                 <strong>
                     {{ price_policy_matched_count }}
                     / {{ price_item_count }}
@@ -257,30 +257,30 @@
             </span>
 
             <span>
-                医院金额：
+                {% trans "医院金额：" %}
                 <strong>
-                    €{{ estimated_hospital_total|floatformat:2 }}
+                    €{{ estimated_hospital_total|floatformat:"2u" }}
                 </strong>
             </span>
 
             <span>
-                工厂基础金额：
+                {% trans "工厂基础金额：" %}
                 <strong>
-                    €{{ base_factory_total|floatformat:2 }}
+                    €{{ base_factory_total|floatformat:"2u" }}
                 </strong>
             </span>
 
             <span>
-                临期优惠：
+                {% trans "临期优惠：" %}
                 <strong>
-                    −€{{ factory_discount_savings|floatformat:2 }}
+                    −€{{ factory_discount_savings|floatformat:"2u" }}
                 </strong>
             </span>
 
             <span>
-                工厂实际金额：
+                {% trans "工厂实际金额：" %}
                 <strong>
-                    €{{ estimated_factory_total|floatformat:2 }}
+                    €{{ estimated_factory_total|floatformat:"2u" }}
                 </strong>
             </span>
         </div>
@@ -288,7 +288,7 @@
 
     {% if price_issues %}
         <div class="issue-box warning">
-            <strong>价格需要检查</strong>
+            <strong>{% trans "价格需要检查" %}</strong>
 
             <ul class="issue-list warning">
                 {% for issue in price_issues %}
@@ -303,15 +303,15 @@
             <table class="portal-table">
                 <thead>
                     <tr>
-                        <th>产品号</th>
-                        <th>本批数量</th>
-                        <th>医院单价</th>
-                        <th>基础工厂价</th>
-                        <th>正常数量</th>
-                        <th>临期数量</th>
-                        <th>临期折后价</th>
-                        <th>工厂实际金额</th>
-                        <th>价格来源</th>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "本批数量" %}</th>
+                        <th>{% trans "医院单价" %}</th>
+                        <th>{% trans "基础工厂价" %}</th>
+                        <th>{% trans "正常数量" %}</th>
+                        <th>{% trans "临期数量" %}</th>
+                        <th>{% trans "临期折后价" %}</th>
+                        <th>{% trans "工厂实际金额" %}</th>
+                        <th>{% trans "价格来源" %}</th>
                     </tr>
                 </thead>
 
@@ -325,25 +325,25 @@
                             </td>
 
                             <td>
-                                {{ row.quantity|floatformat:0 }}
+                                {{ row.quantity|floatformat:"0u" }}
                             </td>
 
                             <td>
-                                €{{ row.hospital_unit_price|floatformat:2 }}
+                                €{{ row.hospital_unit_price|floatformat:"2u" }}
                             </td>
 
                             <td>
-                                €{{ row.base_factory_unit_price|floatformat:2 }}
+                                €{{ row.base_factory_unit_price|floatformat:"2u" }}
                             </td>
 
                             <td>
-                                {{ row.normal_quantity|floatformat:0 }}
+                                {{ row.normal_quantity|floatformat:"0u" }}
                             </td>
 
                             <td>
                                 {% if row.discounted_quantity > 0 %}
                                     <strong class="price-discount-value">
-                                        {{ row.discounted_quantity|floatformat:0 }}
+                                        {{ row.discounted_quantity|floatformat:"0u" }}
                                     </strong>
                                 {% else %}
                                     0
@@ -352,11 +352,11 @@
 
                             <td>
                                 {% if row.discounted_quantity > 0 %}
-                                    €{{ row.discounted_factory_unit_price|floatformat:2 }}
+                                    €{{ row.discounted_factory_unit_price|floatformat:"2u" }}
                                     <div class="detail-muted">
-                                        −{{ row.discount_percent|floatformat:2 }}%
+                                        {% blocktrans trimmed with value1=row.discount_percent|floatformat:"2u" value2=row.expiration_threshold_days %}−{{ value1 }}%
                                         /
-                                        {{ row.expiration_threshold_days }}天
+                                        {{ value2 }}天{% endblocktrans %}
                                     </div>
                                 {% else %}
                                     —
@@ -365,13 +365,13 @@
 
                             <td>
                                 <strong>
-                                    €{{ row.actual_factory_amount|floatformat:2 }}
+                                    €{{ row.actual_factory_amount|floatformat:"2u" }}
                                 </strong>
 
                                 {% if row.discount_savings > 0 %}
                                     <div class="detail-muted">
-                                        节省
-                                        €{{ row.discount_savings|floatformat:2 }}
+                                        {% blocktrans trimmed with value1=row.discount_savings|floatformat:"2u" %}节省
+                                        €{{ value1 }}{% endblocktrans %}
                                     </div>
                                 {% endif %}
                             </td>
@@ -394,22 +394,22 @@
         </div>
     {% else %}
         <p class="detail-muted">
-            当前工作流没有可显示的价格明细。
+            {% trans "当前工作流没有可显示的价格明细。" %}
         </p>
     {% endif %}
 </section>
 
 <section class="portal-panel detail-section">
-    <h2 class="portal-panel-title">当前批次数量</h2>
+    <h2 class="portal-panel-title">{% trans "当前批次数量" %}</h2>
 
     {% if batch_rows %}
         <div class="portal-table-wrap simple-table-wrap">
             <table class="portal-table">
                 <thead>
                     <tr>
-                        <th>产品号</th>
-                        <th>本批次数量</th>
-                        <th>Serial 数量</th>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "本批次数量" %}</th>
+                        <th>{% trans "Serial 数量" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -424,23 +424,23 @@
             </table>
         </div>
     {% else %}
-        <p class="detail-muted">没有当前批次数量数据。</p>
+        <p class="detail-muted">{% trans "没有当前批次数量数据。" %}</p>
     {% endif %}
 </section>
 
 <section class="portal-panel detail-section">
-    <h2 class="portal-panel-title">订单累计明细</h2>
+    <h2 class="portal-panel-title">{% trans "订单累计明细" %}</h2>
 
     {% if product_rows %}
         <div class="portal-table-wrap simple-table-wrap">
             <table class="portal-table">
                 <thead>
                     <tr>
-                        <th>产品号</th>
-                        <th>订单数量</th>
-                        <th>已确认</th>
-                        <th>累计发货</th>
-                        <th>待补发</th>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "订单数量" %}</th>
+                        <th>{% trans "已确认" %}</th>
+                        <th>{% trans "累计发货" %}</th>
+                        <th>{% trans "待补发" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -457,7 +457,7 @@
             </table>
         </div>
     {% else %}
-        <p class="detail-muted">没有订单累计明细。</p>
+        <p class="detail-muted">{% trans "没有订单累计明细。" %}</p>
     {% endif %}
 </section>
 {% endblock %}

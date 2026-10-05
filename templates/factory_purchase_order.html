@@ -37,7 +37,7 @@
 
         3. 正文
            - Shipping address + Factory address
-           - Buyer / Order Date / Expected Arrival
+           - Buyer / Source / Order Date / Expected Arrival
            - 产品表
            - Total
 
@@ -321,9 +321,9 @@
 
     /*
       ============================================================
-      7. Buyer / Order Date / Expected Arrival
+      7. Buyer / Source / Order Date / Expected Arrival
       ------------------------------------------------------------
-      三列布局：
+      四列布局：
         左侧 Buyer
         中间 Order Date
         右侧 Expected Arrival
@@ -334,14 +334,15 @@
 
     .meta-section {
       display: grid;
-      grid-template-columns: 58% 21% 21%;
-      column-gap: 2%;
+      grid-template-columns: 36fr 30fr 17fr 17fr;
+      column-gap: 10px;
       width: 100%;
       margin-bottom: 18px;
       font-size: 11.4px;
     }
 
     .meta-block {
+      min-width: 0;
       line-height: 1.38;
     }
 
@@ -353,6 +354,14 @@
 
     .meta-value {
       color: var(--text-dark);
+    }
+
+    .meta-source {
+      overflow-wrap: anywhere;
+    }
+
+    .meta-date {
+      white-space: nowrap;
     }
 
 
@@ -480,9 +489,9 @@
 
     /*
       ============================================================
-      9. Total 区域
+      9. Total Units / Total 区域
       ------------------------------------------------------------
-      只保留 Total。
+      显示当前批次总数量和总金额。
       不显示 VAT / Untaxed Amount。
       总金额由 Python 计算。
       ============================================================
@@ -498,27 +507,31 @@
     }
 
     .total-box {
-    width: 35%;
-    border-top: none;
-    border-bottom: 1px solid var(--po-green);
-    padding-top: 0;
-    padding-bottom: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--po-green);
-    display: flex;
-    justify-content: space-between;
+      width: 35%;
+      color: var(--po-green);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+    }
+
+    .total-row.amount {
+      border-bottom: 1px solid var(--po-green);
+      padding-bottom: 6px;
     }
 
     .total-label {
-    text-align: left;
-    color: var(--po-green);
+      text-align: left;
     }
 
     .total-value {
-    text-align: right;
-    white-space: nowrap;
-    color: var(--po-green);
+      text-align: right;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -635,7 +648,7 @@
 
     <!--
       ============================================================
-      C2. Buyer / Order Date / Expected Arrival
+      C2. Buyer / Source / Order Date / Expected Arrival
       ------------------------------------------------------------
       buyer 来自 factory_info.json。
       order_date 和 expected_arrival 由 Python 生成。
@@ -650,13 +663,18 @@
       </div>
 
       <div class="meta-block">
-        <div class="meta-title">Order Date:</div>
-        <div class="meta-value">{{ po.order_date }}</div>
+        <div class="meta-title">Source</div>
+        <div class="meta-value meta-source">{{ po.source }}</div>
       </div>
 
       <div class="meta-block">
-        <div class="meta-title">Expected Arrival:</div>
-        <div class="meta-value">{{ po.expected_arrival }}</div>
+        <div class="meta-title">Order Date</div>
+        <div class="meta-value meta-date">{{ po.order_date }}</div>
+      </div>
+
+      <div class="meta-block">
+        <div class="meta-title">Expected Arrival</div>
+        <div class="meta-value meta-date">{{ po.expected_arrival }}</div>
       </div>
 
     </div>
@@ -716,16 +734,22 @@
 
     <!--
       ============================================================
-      C4. Total
+      C4. Total Units / Total
       ------------------------------------------------------------
-      只保留 Total 价格。
+      显示当前 ShipmentBatch 的总数量和 PO 总金额。
       ============================================================
     -->
 
     <div class="total-section">
       <div class="total-box">
-        <div class="total-label">Total</div>
-        <div class="total-value">{{ totals.total }}</div>
+        <div class="total-row units">
+          <div class="total-label">Total Units</div>
+          <div class="total-value">{{ totals.total_units }}</div>
+        </div>
+        <div class="total-row amount">
+          <div class="total-label">Total</div>
+          <div class="total-value">{{ totals.total }}</div>
+        </div>
       </div>
     </div>
 

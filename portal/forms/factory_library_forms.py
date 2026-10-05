@@ -1,3 +1,5 @@
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django import forms
 
 from factories.models import Factory
@@ -27,26 +29,26 @@ class FactoryPortalForm(forms.ModelForm):
         )
 
         labels = {
-            "name": "工厂正式名称",
-            "legal_name": "完整法律名称",
-            "short_name": "工厂简称",
-            "address": "工厂地址",
-            "buyer": "采购联系人 / Buyer",
-            "default_product_description": "默认产品描述",
-            "match_keywords": "自动匹配关键词",
-            "notes": "备注",
-            "is_active": "启用",
+            "name": _("工厂正式名称"),
+            "legal_name": _("完整法律名称"),
+            "short_name": _("工厂简称"),
+            "address": _("工厂地址"),
+            "buyer": _("采购联系人 / Buyer"),
+            "default_product_description": _("默认产品描述"),
+            "match_keywords": _("自动匹配关键词"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
 
         help_texts = {
             "short_name": (
-                "产品库卡片和日常页面优先显示此简称。"
+                _("产品库卡片和日常页面优先显示此简称。")
             ),
             "default_product_description": (
-                "生成 Factory Purchase Order 时使用的默认描述。"
+                _("生成 Factory Purchase Order 时使用的默认描述。")
             ),
             "match_keywords": (
-                "每行填写一个关键词，例如简称、英文名、地址关键词。"
+                _("每行填写一个关键词，例如简称、英文名、地址关键词。")
             ),
         }
 
@@ -66,6 +68,7 @@ class FactoryPortalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field in self.fields.values():
+            field.help_text = gettext(str(field.help_text))
             widget = field.widget
 
             if isinstance(widget, forms.CheckboxInput):
@@ -99,7 +102,7 @@ class FactoryPortalForm(forms.ModelForm):
 
         if duplicate_query.exists():
             raise forms.ValidationError(
-                "工厂库中已经存在相同正式名称的工厂。"
+                _("工厂库中已经存在相同正式名称的工厂。")
             )
 
         return name
@@ -124,7 +127,7 @@ class FactoryPortalForm(forms.ModelForm):
 
         if duplicate_query.exists():
             raise forms.ValidationError(
-                "工厂库中已经存在相同简称的工厂。"
+                _("工厂库中已经存在相同简称的工厂。")
             )
 
         return short_name

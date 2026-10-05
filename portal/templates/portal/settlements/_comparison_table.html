@@ -1,0 +1,85 @@
+{% load i18n %}
+<div class="portal-table-wrap">
+    <table class="portal-table settlement-comparison-table">
+        <thead>
+            <tr>
+                <th>{% trans "医院订单" %}</th>
+                <th>{% trans "医院订单总额" %}</th>
+                <th>{% trans "批次" %}</th>
+                <th>Hospital Invoice</th>
+                <th>Factory PO</th>
+                <th>{% trans "状态" %}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in rows %}
+                <tr{% if row.is_order_start %} class="settlement-order-start"{% endif %}>
+                    <td class="settlement-comparison-order">
+                        {{ row.order_number }}
+                    </td>
+
+                    <td class="settlement-comparison-money">
+                        {% if row.is_order_start %}
+                            €{{ row.order_total|floatformat:"2u" }}
+                        {% endif %}
+                    </td>
+
+                    <td>B{{ row.batch_number }}</td>
+
+                    <td>
+                        {% if row.invoice %}
+                            <a class="settlement-document-link"
+                               href="{{ row.invoice_url }}">
+                                {{ row.invoice.document_number }}
+                            </a>
+                            <span class="settlement-comparison-amount">
+                                {% if row.invoice_amount == None %}
+                                    —
+                                {% else %}
+                                    €{{ row.invoice_amount|floatformat:"2u" }}
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <span class="settlement-document-missing">
+                                {% trans "未生成" %}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if row.factory_po %}
+                            <a class="settlement-document-link"
+                               href="{{ row.factory_po_url }}">
+                                {{ row.factory_po.document_number }}
+                            </a>
+                            <span class="settlement-comparison-amount">
+                                {% if row.factory_po_amount == None %}
+                                    —
+                                {% else %}
+                                    €{{ row.factory_po_amount|floatformat:"2u" }}
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <span class="settlement-document-missing">
+                                {% trans "未生成" %}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="settlement-status {{ row.status_class }}">
+                            {{ row.status_text }}
+                        </span>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="settlement-comparison-empty">
+                        {% trans "暂无符合条件的发货批次。" %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

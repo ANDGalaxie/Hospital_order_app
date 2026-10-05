@@ -1,35 +1,35 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}工厂采购{% endblock %}
+{% block title %}{% trans "工厂采购" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
 {% endblock %}
 
 {% block breadcrumb %}
-<a href="{% url 'portal:home' %}">首页</a>
+<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
 <span>/</span>
-<span>工厂采购</span>
+<span>{% trans "工厂采购" %}</span>
 {% endblock %}
 
 {% block content %}
 <div class="portal-page-header">
     <div>
-        <h1>工厂采购</h1>
-        <p>管理工厂采购 PDF、serial number、发货批次与后续流程。</p>
+        <h1>{% trans "工厂采购" %}</h1>
+        <p>{% trans "管理工厂采购 PDF、serial number、发货批次与后续流程。" %}</p>
     </div>
 
     <div class="page-actions">
-        <a class="portal-button primary" href="{{ upload_url }}">上传工厂采购</a>
+        <a class="portal-button primary" href="{{ upload_url }}">{% trans "上传工厂采购" %}</a>
     </div>
 </div>
 
 <div class="portal-panel">
     <div class="panel-header">
         <div>
-            <h2>采购文件列表</h2>
-            <p>共 {{ total_count }} 份采购文件</p>
+            <h2>{% trans "采购文件列表" %}</h2>
+            <p>{% blocktrans trimmed with value1=total_count %}共 {{ value1 }} 份采购文件{% endblocktrans %}</p>
         </div>
     </div>
 
@@ -47,13 +47,13 @@
 
             <thead>
                 <tr>
-                    <th>订单号</th>
-                    <th>工厂</th>
-                    <th>发货日期</th>
-                    <th>产品 / Serial</th>
-                    <th>状态</th>
-                    <th>下一步</th>
-                    <th>操作</th>
+                    <th>{% trans "订单号" %}</th>
+                    <th>{% trans "工厂" %}</th>
+                    <th>{% trans "发货日期" %}</th>
+                    <th>{% trans "产品 / Serial" %}</th>
+                    <th>{% trans "状态" %}</th>
+                    <th>{% trans "下一步" %}</th>
+                    <th>{% trans "操作" %}</th>
                 </tr>
             </thead>
 
@@ -78,7 +78,7 @@
 
                         <td>
                             <div class="serial-summary">
-                                {{ row.product_count }} 产品 / {{ row.serial_count }} SN
+                                {% blocktrans trimmed with value1=row.product_count value2=row.serial_count %}{{ value1 }} 产品 / {{ value2 }} SN{% endblocktrans %}
                             </div>
                         </td>
 
@@ -96,14 +96,14 @@
 
                         <td>
                             <div class="row-actions">
-                                <a class="mini-button" href="{{ row.detail_url }}">查看</a>
+                                <a class="mini-button" href="{{ row.detail_url }}">{% trans "查看" %}</a>
                             </div>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
                         <td colspan="7" class="empty-cell">
-                            还没有工厂采购文件。
+                            {% trans "还没有工厂采购文件。" %}
                         </td>
                     </tr>
                 {% endfor %}

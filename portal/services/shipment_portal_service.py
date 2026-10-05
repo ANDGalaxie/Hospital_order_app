@@ -1,3 +1,5 @@
+from portal.i18n import display_choice, display_choices
+from django.utils.translation import gettext as _
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -10,27 +12,27 @@ from workflow.models import DocumentWorkflowItem
 
 def shipment_source_label(value):
     return {
-        ShipmentBatch.SourceType.FACTORY_CONFIRMATION: "工厂文件",
-        ShipmentBatch.SourceType.INVENTORY_ALLOCATION: "库存补发",
-        ShipmentBatch.SourceType.MANUAL: "人工记录",
+        ShipmentBatch.SourceType.FACTORY_CONFIRMATION: _("工厂文件"),
+        ShipmentBatch.SourceType.INVENTORY_ALLOCATION: _("库存补发"),
+        ShipmentBatch.SourceType.MANUAL: _("人工记录"),
     }.get(value, value or "—")
 
 
 def shipment_validation_label(value):
     return {
-        ShipmentBatch.ValidationStatus.READY: "可生成文件",
-        ShipmentBatch.ValidationStatus.NEEDS_REVIEW: "需要人工检查",
-        ShipmentBatch.ValidationStatus.BLOCKED: "禁止生成",
+        ShipmentBatch.ValidationStatus.READY: _("可生成文件"),
+        ShipmentBatch.ValidationStatus.NEEDS_REVIEW: _("需要人工检查"),
+        ShipmentBatch.ValidationStatus.BLOCKED: _("禁止生成"),
     }.get(value, value or "—")
 
 
 def shipment_status_label(value):
     return {
-        ShipmentBatch.Status.OPEN: "待处理",
-        ShipmentBatch.Status.PARTIAL: "部分完成",
-        ShipmentBatch.Status.COMPLETE: "已完成",
-        ShipmentBatch.Status.OVER_SHIPPED: "超发",
-        ShipmentBatch.Status.NEEDS_REVIEW: "需要人工检查",
+        ShipmentBatch.Status.OPEN: _("待处理"),
+        ShipmentBatch.Status.PARTIAL: _("部分完成"),
+        ShipmentBatch.Status.COMPLETE: _("已完成"),
+        ShipmentBatch.Status.OVER_SHIPPED: _("超发"),
+        ShipmentBatch.Status.NEEDS_REVIEW: _("需要人工检查"),
     }.get(value, value or "—")
 
 
@@ -86,9 +88,9 @@ def build_shipment_list_context(request):
                 "hospital_name": batch.order.hospital_name or "—",
                 "source_type": shipment_source_label(batch.source_type),
                 "confirmation_type": (
-                    batch.factory_confirmation.get_confirmation_type_display()
+                    display_choice(batch.factory_confirmation.get_confirmation_type_display())
                     if batch.factory_confirmation_id
-                    else "库存补发"
+                    else _("库存补发")
                 ),
                 "shipped_quantity": batch.shipped_this_batch_quantity,
                 "remaining_quantity": batch.remaining_after_batch_quantity,
@@ -108,9 +110,9 @@ def build_shipment_list_context(request):
         "source_type": source_type,
         "validation_status": validation_status,
         "status": status,
-        "source_type_choices": ShipmentBatch.SourceType.choices,
-        "validation_status_choices": ShipmentBatch.ValidationStatus.choices,
-        "status_choices": ShipmentBatch.Status.choices,
+        "source_type_choices": display_choices(ShipmentBatch.SourceType.choices),
+        "validation_status_choices": display_choices(ShipmentBatch.ValidationStatus.choices),
+        "status_choices": display_choices(ShipmentBatch.Status.choices),
     }
 
 

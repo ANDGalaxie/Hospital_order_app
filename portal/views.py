@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 """
 Portal views.
 
@@ -164,7 +165,7 @@ def _redirect_after_factory_processing(request, confirmation, success, message_t
     if success and workflow_item_id and not errors and not warnings:
         messages.success(
             request,
-            message_text or "工厂采购文件已上传、自动提取并进入工作流。",
+            message_text or _("工厂采购文件已上传、自动提取并进入工作流。"),
         )
         return redirect("portal:workflow_list")
 
@@ -172,8 +173,7 @@ def _redirect_after_factory_processing(request, confirmation, success, message_t
         messages.warning(
             request,
             (
-                "工厂采购文件已进入工作流，但验证发现需要检查的问题："
-                f"错误 {len(errors)} 个，提醒 {len(warnings)} 个。"
+                _('工厂采购文件已进入工作流，但验证发现需要检查的问题：错误 %(value1)s 个，提醒 %(value2)s 个。') % {'value1': len(errors), 'value2': len(warnings)}
             ),
         )
         return redirect("portal:factory_detail", confirmation_id=confirmation.id)
@@ -181,13 +181,13 @@ def _redirect_after_factory_processing(request, confirmation, success, message_t
     if success:
         messages.warning(
             request,
-            message_text or "工厂采购文件已提取成功，但没有成功进入工作流，请检查详情。",
+            message_text or _("工厂采购文件已提取成功，但没有成功进入工作流，请检查详情。"),
         )
         return redirect("portal:factory_detail", confirmation_id=confirmation.id)
 
     messages.warning(
         request,
-        f"工厂采购文件已上传，但需要检查：{_short_text(message_text)}",
+        _('工厂采购文件已上传，但需要检查：%(value1)s') % {'value1': _short_text(message_text)},
     )
     return redirect("portal:factory_detail", confirmation_id=confirmation.id)
 
@@ -288,7 +288,7 @@ def library_product_department_add(request):
 
         messages.success(
             request,
-            f"科室“{department.name}”已创建。",
+            _('科室“%(value1)s”已创建。') % {'value1': department.name},
         )
 
         return redirect(
@@ -301,33 +301,33 @@ def library_product_department_add(request):
         "portal/library/products/form.html",
         {
             "form": form,
-            "form_title": "新增科室",
+            "form_title": _("新增科室"),
             "form_description": (
-                "创建产品库的一级科室入口。"
+                _("创建产品库的一级科室入口。")
             ),
-            "submit_text": "创建科室",
+            "submit_text": _("创建科室"),
             "cancel_url": reverse(
                 "portal:library_products"
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "产品库",
+                    "label": _("产品库"),
                     "url": reverse(
                         "portal:library_products"
                     ),
                 },
                 {
-                    "label": "新增科室",
+                    "label": _("新增科室"),
                     "url": "",
                 },
             ],
@@ -366,8 +366,7 @@ def library_product_factory_add(
 
         messages.success(
             request,
-            f"工厂“{factory_node.name}”已添加到"
-            f"“{department.name}”。",
+            _('工厂“%(value1)s”已添加到“%(value2)s”。') % {'value1': factory_node.name, 'value2': department.name},
         )
 
         return redirect(
@@ -380,28 +379,28 @@ def library_product_factory_add(
         "portal/library/products/form.html",
         {
             "form": form,
-            "form_title": "新增或关联工厂",
+            "form_title": _("新增或关联工厂"),
             "form_description": (
-                f"将工厂添加到科室“{department.name}”。"
+                _('将工厂添加到科室“%(value1)s”。') % {'value1': department.name}
             ),
-            "submit_text": "保存工厂",
+            "submit_text": _("保存工厂"),
             "cancel_url": reverse(
                 "portal:library_product_department",
                 args=[department.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "产品库",
+                    "label": _("产品库"),
                     "url": reverse(
                         "portal:library_products"
                     ),
@@ -414,7 +413,7 @@ def library_product_factory_add(
                     ),
                 },
                 {
-                    "label": "新增工厂",
+                    "label": _("新增工厂"),
                     "url": "",
                 },
             ],
@@ -453,7 +452,7 @@ def library_product_category_add(
 
         messages.success(
             request,
-            f"产品分类“{category.name}”已创建。",
+            _('产品分类“%(value1)s”已创建。') % {'value1': category.name},
         )
 
         return redirect(
@@ -466,29 +465,28 @@ def library_product_category_add(
         "portal/library/products/form.html",
         {
             "form": form,
-            "form_title": "新增产品分类",
+            "form_title": _("新增产品分类"),
             "form_description": (
-                f"为工厂“{factory_node.name}”"
-                "创建一个产品分类。"
+                _('为工厂“%(value1)s”创建一个产品分类。') % {'value1': factory_node.name}
             ),
-            "submit_text": "创建分类",
+            "submit_text": _("创建分类"),
             "cancel_url": reverse(
                 "portal:library_product_factory",
                 args=[factory_node.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "产品库",
+                    "label": _("产品库"),
                     "url": reverse(
                         "portal:library_products"
                     ),
@@ -508,7 +506,7 @@ def library_product_category_add(
                     ),
                 },
                 {
-                    "label": "新增产品分类",
+                    "label": _("新增产品分类"),
                     "url": "",
                 },
             ],
@@ -548,7 +546,7 @@ def library_product_add(
 
         messages.success(
             request,
-            f"产品“{product.code}”已创建。",
+            _('产品“%(value1)s”已创建。') % {'value1': product.code},
         )
 
         return redirect(
@@ -561,28 +559,28 @@ def library_product_add(
         "portal/library/products/form.html",
         {
             "form": form,
-            "form_title": "新增产品",
+            "form_title": _("新增产品"),
             "form_description": (
-                f"在分类“{category.name}”中新增产品。"
+                _('在分类“%(value1)s”中新增产品。') % {'value1': category.name}
             ),
-            "submit_text": "创建产品",
+            "submit_text": _("创建产品"),
             "cancel_url": reverse(
                 "portal:library_product_category",
                 args=[category.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "产品库",
+                    "label": _("产品库"),
                     "url": reverse(
                         "portal:library_products"
                     ),
@@ -611,7 +609,7 @@ def library_product_add(
                     ),
                 },
                 {
-                    "label": "新增产品",
+                    "label": _("新增产品"),
                     "url": "",
                 },
             ],
@@ -655,7 +653,7 @@ def library_hospital_add(request):
 
         messages.success(
             request,
-            f"医院“{hospital.name}”已创建。",
+            _('医院“%(value1)s”已创建。') % {'value1': hospital.name},
         )
 
         return redirect(
@@ -668,33 +666,33 @@ def library_hospital_add(request):
         "portal/library/master_data_form.html",
         {
             "form": form,
-            "form_title": "新增医院",
+            "form_title": _("新增医院"),
             "form_description": (
-                "创建新的医院主数据记录。"
+                _("创建新的医院主数据记录。")
             ),
-            "submit_text": "创建医院",
+            "submit_text": _("创建医院"),
             "cancel_url": reverse(
                 "portal:library_hospitals"
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "医院库",
+                    "label": _("医院库"),
                     "url": reverse(
                         "portal:library_hospitals"
                     ),
                 },
                 {
-                    "label": "新增医院",
+                    "label": _("新增医院"),
                     "url": "",
                 },
             ],
@@ -725,7 +723,7 @@ def library_hospital_edit(request, hospital_id):
 
         messages.success(
             request,
-            f"医院“{hospital.name}”已更新。",
+            _('医院“%(value1)s”已更新。') % {'value1': hospital.name},
         )
 
         return redirect(
@@ -738,26 +736,26 @@ def library_hospital_edit(request, hospital_id):
         "portal/library/master_data_form.html",
         {
             "form": form,
-            "form_title": "编辑医院",
+            "form_title": _("编辑医院"),
             "form_description": hospital.name,
-            "submit_text": "保存修改",
+            "submit_text": _("保存修改"),
             "cancel_url": reverse(
                 "portal:library_hospital_detail",
                 args=[hospital.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "医院库",
+                    "label": _("医院库"),
                     "url": reverse(
                         "portal:library_hospitals"
                     ),
@@ -770,7 +768,7 @@ def library_hospital_edit(request, hospital_id):
                     ),
                 },
                 {
-                    "label": "编辑",
+                    "label": _("编辑"),
                     "url": "",
                 },
             ],
@@ -811,13 +809,12 @@ def library_hospital_toggle_active(
     if hospital.is_active:
         messages.success(
             request,
-            f"医院“{hospital.name}”已重新启用。",
+            _('医院“%(value1)s”已重新启用。') % {'value1': hospital.name},
         )
     else:
         messages.warning(
             request,
-            f"医院“{hospital.name}”已停用。"
-            "历史订单不会被删除。",
+            _('医院“%(value1)s”已停用。历史订单不会被删除。') % {'value1': hospital.name},
         )
 
     return redirect(
@@ -862,7 +859,7 @@ def library_factory_add(request):
 
         messages.success(
             request,
-            f"工厂“{factory}”已创建。",
+            _('工厂“%(value1)s”已创建。') % {'value1': factory},
         )
 
         return redirect(
@@ -875,33 +872,33 @@ def library_factory_add(request):
         "portal/library/master_data_form.html",
         {
             "form": form,
-            "form_title": "新增工厂",
+            "form_title": _("新增工厂"),
             "form_description": (
-                "创建新的工厂主数据记录。"
+                _("创建新的工厂主数据记录。")
             ),
-            "submit_text": "创建工厂",
+            "submit_text": _("创建工厂"),
             "cancel_url": reverse(
                 "portal:library_factories"
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "工厂库",
+                    "label": _("工厂库"),
                     "url": reverse(
                         "portal:library_factories"
                     ),
                 },
                 {
-                    "label": "新增工厂",
+                    "label": _("新增工厂"),
                     "url": "",
                 },
             ],
@@ -932,7 +929,7 @@ def library_factory_edit(request, factory_id):
 
         messages.success(
             request,
-            f"工厂“{factory}”已更新。",
+            _('工厂“%(value1)s”已更新。') % {'value1': factory},
         )
 
         return redirect(
@@ -945,26 +942,26 @@ def library_factory_edit(request, factory_id):
         "portal/library/master_data_form.html",
         {
             "form": form,
-            "form_title": "编辑工厂",
+            "form_title": _("编辑工厂"),
             "form_description": str(factory),
-            "submit_text": "保存修改",
+            "submit_text": _("保存修改"),
             "cancel_url": reverse(
                 "portal:library_factory_detail",
                 args=[factory.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse("portal:home"),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "工厂库",
+                    "label": _("工厂库"),
                     "url": reverse(
                         "portal:library_factories"
                     ),
@@ -977,7 +974,7 @@ def library_factory_edit(request, factory_id):
                     ),
                 },
                 {
-                    "label": "编辑",
+                    "label": _("编辑"),
                     "url": "",
                 },
             ],
@@ -1018,13 +1015,12 @@ def library_factory_toggle_active(
     if factory.is_active:
         messages.success(
             request,
-            f"工厂“{factory}”已重新启用。",
+            _('工厂“%(value1)s”已重新启用。') % {'value1': factory},
         )
     else:
         messages.warning(
             request,
-            f"工厂“{factory}”已停用。"
-            "已有产品和历史业务记录不会被删除。",
+            _('工厂“%(value1)s”已停用。已有产品和历史业务记录不会被删除。') % {'value1': factory},
         )
 
     return redirect(
@@ -1077,7 +1073,7 @@ def library_price_policy_add(request):
 
         messages.success(
             request,
-            f"价格规则“{policy.name or policy}”已创建。",
+            _('价格规则“%(value1)s”已创建。') % {'value1': policy.name or policy},
         )
 
         return redirect(
@@ -1090,36 +1086,36 @@ def library_price_policy_add(request):
         "portal/library/prices/form.html",
         {
             "form": form,
-            "form_title": "新增价格规则",
+            "form_title": _("新增价格规则"),
             "form_description": (
-                "按工厂、产品分类和医院订单日期"
-                "定义价格。"
+                _("按工厂、产品分类和医院订单日期"
+                "定义价格。")
             ),
-            "submit_text": "创建规则",
+            "submit_text": _("创建规则"),
             "cancel_url": reverse(
                 "portal:library_prices"
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse(
                         "portal:home"
                     ),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "价格规则",
+                    "label": _("价格规则"),
                     "url": reverse(
                         "portal:library_prices"
                     ),
                 },
                 {
-                    "label": "新增规则",
+                    "label": _("新增规则"),
                     "url": "",
                 },
             ],
@@ -1156,7 +1152,7 @@ def library_price_policy_edit(
 
         messages.success(
             request,
-            f"价格规则“{policy.name or policy}”已更新。",
+            _('价格规则“%(value1)s”已更新。') % {'value1': policy.name or policy},
         )
 
         return redirect(
@@ -1169,30 +1165,30 @@ def library_price_policy_edit(
         "portal/library/prices/form.html",
         {
             "form": form,
-            "form_title": "编辑价格规则",
+            "form_title": _("编辑价格规则"),
             "form_description": (
                 policy.name or str(policy)
             ),
-            "submit_text": "保存修改",
+            "submit_text": _("保存修改"),
             "cancel_url": reverse(
                 "portal:library_price_policy_detail",
                 args=[policy.id],
             ),
             "breadcrumbs": [
                 {
-                    "label": "首页",
+                    "label": _("首页"),
                     "url": reverse(
                         "portal:home"
                     ),
                 },
                 {
-                    "label": "资料库",
+                    "label": _("资料库"),
                     "url": reverse(
                         "portal:library_home"
                     ),
                 },
                 {
-                    "label": "价格规则",
+                    "label": _("价格规则"),
                     "url": reverse(
                         "portal:library_prices"
                     ),
@@ -1200,7 +1196,7 @@ def library_price_policy_edit(
                 {
                     "label": (
                         policy.name
-                        or f"规则 #{policy.id}"
+                        or _('规则 #%(value1)s') % {'value1': policy.id}
                     ),
                     "url": reverse(
                         "portal:library_price_policy_detail",
@@ -1208,7 +1204,7 @@ def library_price_policy_edit(
                     ),
                 },
                 {
-                    "label": "编辑",
+                    "label": _("编辑"),
                     "url": "",
                 },
             ],
@@ -1250,7 +1246,7 @@ def library_price_policy_toggle_active(
 
         messages.error(
             request,
-            "无法重新启用该规则："
+            _("无法重新启用该规则：")
             + "；".join(exc.messages),
         )
 
@@ -1269,13 +1265,12 @@ def library_price_policy_toggle_active(
     if policy.is_active:
         messages.success(
             request,
-            f"价格规则“{policy.name or policy}”已重新启用。",
+            _('价格规则“%(value1)s”已重新启用。') % {'value1': policy.name or policy},
         )
     else:
         messages.warning(
             request,
-            f"价格规则“{policy.name or policy}”已停用。"
-            "历史订单价格快照不会改变。",
+            _('价格规则“%(value1)s”已停用。历史订单价格快照不会改变。') % {'value1': policy.name or policy},
         )
 
     return redirect(
@@ -1526,7 +1521,7 @@ def workflow_item_action(request, item_id):
             if price_errors:
                 messages.error(
                     request,
-                    "价格规则重新应用失败："
+                    _("价格规则重新应用失败：")
                     + "；".join(
                         str(error)
                         for error in price_errors
@@ -1536,9 +1531,7 @@ def workflow_item_action(request, item_id):
             elif validation_errors:
                 messages.error(
                     request,
-                    f"已更新 {updated_count} 个产品价格，"
-                    "但重新验证仍存在错误，"
-                    "请检查工作流详情。",
+                    _('已更新 %(value1)s 个产品价格，但重新验证仍存在错误，请检查工作流详情。') % {'value1': updated_count},
                 )
 
             elif (
@@ -1547,23 +1540,19 @@ def workflow_item_action(request, item_id):
             ):
                 messages.warning(
                     request,
-                    f"已更新 {updated_count} 个产品价格"
-                    "并完成重新验证，"
-                    "但仍有需要检查的提醒。",
+                    _('已更新 %(value1)s 个产品价格并完成重新验证，但仍有需要检查的提醒。') % {'value1': updated_count},
                 )
 
             else:
                 messages.success(
                     request,
-                    f"已重新应用价格规则，"
-                    f"更新 {updated_count} 个产品价格，"
-                    "工作流验证已通过。",
+                    _('已重新应用价格规则，更新 %(value1)s 个产品价格，工作流验证已通过。') % {'value1': updated_count},
                 )
 
         except Exception as exc:
             messages.error(
                 request,
-                f"重新应用价格规则失败：{exc}",
+                _('重新应用价格规则失败：%(value1)s') % {'value1': exc},
             )
 
         return redirect(next_url)
@@ -1576,7 +1565,7 @@ def workflow_item_action(request, item_id):
             if result and "error" in result:
                 messages.error(
                     request,
-                    f"Order {order_number} / Batch {batch_number}：比对验证失败：{result['error']}",
+                    _('Order %(value1)s / Batch %(value2)s：比对验证失败：%(value3)s') % {'value1': order_number, 'value2': batch_number, 'value3': result['error']},
                 )
             elif result:
                 status = result.get("status")
@@ -1586,34 +1575,32 @@ def workflow_item_action(request, item_id):
                 if status == "ready":
                     messages.success(
                         request,
-                        f"Order {order_number} / Batch {batch_number}：比对验证通过。",
+                        _('Order %(value1)s / Batch %(value2)s：比对验证通过。') % {'value1': order_number, 'value2': batch_number},
                     )
                 elif status == "blocked":
                     messages.error(
                         request,
                         (
-                            f"Order {order_number} / Batch {batch_number}：比对后发现阻塞问题。"
-                            f"errors={error_count}, warnings={warning_count}。"
+                            _('Order %(value1)s / Batch %(value2)s：比对后发现阻塞问题。errors=%(value3)s, warnings=%(value4)s。') % {'value1': order_number, 'value2': batch_number, 'value3': error_count, 'value4': warning_count}
                         ),
                     )
                 else:
                     messages.warning(
                         request,
                         (
-                            f"Order {order_number} / Batch {batch_number}：需要人工检查。"
-                            f"errors={error_count}, warnings={warning_count}。"
+                            _('Order %(value1)s / Batch %(value2)s：需要人工检查。errors=%(value3)s, warnings=%(value4)s。') % {'value1': order_number, 'value2': batch_number, 'value3': error_count, 'value4': warning_count}
                         ),
                     )
             else:
                 messages.warning(
                     request,
-                    f"Order {order_number} / Batch {batch_number}：没有返回验证结果。",
+                    _('Order %(value1)s / Batch %(value2)s：没有返回验证结果。') % {'value1': order_number, 'value2': batch_number},
                 )
 
         except Exception as exc:
             messages.error(
                 request,
-                f"Order {order_number} / Batch {batch_number}：比对验证异常：{exc}",
+                _('Order %(value1)s / Batch %(value2)s：比对验证异常：%(value3)s') % {'value1': order_number, 'value2': batch_number, 'value3': exc},
             )
 
         return redirect(next_url)
@@ -1630,34 +1617,31 @@ def workflow_item_action(request, item_id):
                 messages.error(
                     request,
                     (
-                        f"Order {order_number} / Batch {batch_number}：生成文件失败："
-                        f"{result.get('error')}"
+                        _('Order %(value1)s / Batch %(value2)s：生成文件失败：%(value3)s') % {'value1': order_number, 'value2': batch_number, 'value3': result.get('error')}
                     ),
                 )
             elif result:
                 messages.success(
                     request,
                     (
-                        f"Order {order_number} / Batch {batch_number}：文件已生成。"
-                        f"Invoice={result.get('invoice_number')}，"
-                        f"PO={result.get('po_number')}。"
+                        _('Order %(value1)s / Batch %(value2)s：文件已生成。Invoice=%(value3)s，PO=%(value4)s。') % {'value1': order_number, 'value2': batch_number, 'value3': result.get('invoice_number'), 'value4': result.get('po_number')}
                     ),
                 )
             else:
                 messages.warning(
                     request,
-                    f"Order {order_number} / Batch {batch_number}：没有返回生成结果。",
+                    _('Order %(value1)s / Batch %(value2)s：没有返回生成结果。') % {'value1': order_number, 'value2': batch_number},
                 )
 
         except Exception as exc:
             messages.error(
                 request,
-                f"Order {order_number} / Batch {batch_number}：生成文件异常：{exc}",
+                _('Order %(value1)s / Batch %(value2)s：生成文件异常：%(value3)s') % {'value1': order_number, 'value2': batch_number, 'value3': exc},
             )
 
         return redirect(next_url)
 
-    messages.warning(request, "未知操作。")
+    messages.warning(request, _("未知操作。"))
     return redirect(next_url)
 
 
@@ -1723,9 +1707,9 @@ def backorder_detail(request, backorder_id):
                     quantity_requested=request.POST.get("quantity_requested"),
                     user=request.user,
                 )
-                messages.success(request, "库存已预留。")
+                messages.success(request, _("库存已预留。"))
             except Exception as exc:
-                messages.error(request, f"库存预留失败：{exc}")
+                messages.error(request, _('库存预留失败：%(value1)s') % {'value1': exc})
 
             return redirect("portal:backorder_detail", backorder_id=backorder_id)
 
@@ -1736,10 +1720,10 @@ def backorder_detail(request, backorder_id):
                 )
                 messages.success(
                     request,
-                    "库存补发 ShipmentBatch 已创建，并已进入 Workflow。",
+                    _("库存补发 ShipmentBatch 已创建，并已进入 Workflow。"),
                 )
             except Exception as exc:
-                messages.error(request, f"创建库存补发批次失败：{exc}")
+                messages.error(request, _('创建库存补发批次失败：%(value1)s') % {'value1': exc})
 
             return redirect("portal:backorder_detail", backorder_id=backorder_id)
 
@@ -1765,17 +1749,17 @@ def _generate_and_download_factory_request(request, order):
     if errors:
         messages.error(
             request,
-            "订单基础验证未通过，暂时不能生成 Factory Request。",
+            _("订单基础验证未通过，暂时不能生成 Factory Request。"),
         )
         return None
 
     if not document or not document.pdf_file:
-        raise ValueError("Factory Request PDF 未成功生成。")
+        raise ValueError(_("Factory Request PDF 未成功生成。"))
 
     if warnings:
         messages.warning(
             request,
-            "Factory Request 已生成，但订单基础验证仍有提醒。",
+            _("Factory Request 已生成，但订单基础验证仍有提醒。"),
         )
 
     pdf_handle = document.pdf_file.open("rb")
@@ -1814,7 +1798,7 @@ def order_upload(request):
         uploaded_file = request.FILES.get("hospital_order_pdf")
 
         if not uploaded_file:
-            messages.error(request, "请选择一个医院订单 PDF 文件。")
+            messages.error(request, _("请选择一个医院订单 PDF 文件。"))
             return redirect("portal:order_upload")
 
         try:
@@ -1838,7 +1822,7 @@ def order_upload(request):
             order.refresh_from_db()
             messages.error(
                 request,
-                "医院订单已上传，但自动提取失败。请联系管理员并检查服务日志。",
+                _("医院订单已上传，但自动提取失败。请联系管理员并检查服务日志。"),
             )
             return redirect("portal:order_detail", order_id=order.id)
 
@@ -1847,34 +1831,34 @@ def order_upload(request):
         if status == "error":
             messages.error(
                 request,
-                "医院订单已上传，但提取结果存在错误。请在详情页检查。",
+                _("医院订单已上传，但提取结果存在错误。请在详情页检查。"),
             )
             return redirect("portal:order_detail", order_id=order.id)
 
         if status == "pending":
             messages.warning(
                 request,
-                "医院订单已上传，但系统没有确认提取完成。请在详情页检查。",
+                _("医院订单已上传，但系统没有确认提取完成。请在详情页检查。"),
             )
             return redirect("portal:order_detail", order_id=order.id)
 
         if errors:
             messages.error(
                 request,
-                f"医院订单 {order.bon_de_commande} 已成功提取，但订单基础验证存在问题。请检查详情页。",
+                _('医院订单 %(value1)s 已成功提取，但订单基础验证存在问题。请检查详情页。') % {'value1': order.bon_de_commande},
             )
             return redirect("portal:order_detail", order_id=order.id)
 
         if warnings:
             messages.warning(
                 request,
-                f"医院订单 {order.bon_de_commande} 已成功提取，但有一些提醒。请检查详情页。",
+                _('医院订单 %(value1)s 已成功提取，但有一些提醒。请检查详情页。') % {'value1': order.bon_de_commande},
             )
             return redirect("portal:order_detail", order_id=order.id)
 
         messages.success(
             request,
-            f"医院订单 {order.bon_de_commande} 已上传、自动提取并通过基础验证。",
+            _('医院订单 %(value1)s 已上传、自动提取并通过基础验证。') % {'value1': order.bon_de_commande},
         )
         return redirect("portal:order_list")
 
@@ -1906,7 +1890,7 @@ def order_edit(request, order_id):
         if errors:
             messages.error(
                 request,
-                "修改已保存，但订单基础验证仍存在问题，未生成 Factory Request。",
+                _("修改已保存，但订单基础验证仍存在问题，未生成 Factory Request。"),
             )
             return redirect("portal:order_detail", order_id=order.id)
 
@@ -1918,16 +1902,16 @@ def order_edit(request, order_id):
             if response is not None:
                 return response
         except Exception as exc:
-            messages.error(request, f"Factory Request 生成失败：{exc}")
+            messages.error(request, _('Factory Request 生成失败：%(value1)s') % {'value1': exc})
 
         return redirect("portal:order_detail", order_id=order.id)
 
     if errors:
-        messages.error(request, "修改已保存，但订单基础验证仍存在问题。")
+        messages.error(request, _("修改已保存，但订单基础验证仍存在问题。"))
     elif warnings:
-        messages.warning(request, "修改已保存，但订单基础验证存在提醒。")
+        messages.warning(request, _("修改已保存，但订单基础验证存在提醒。"))
     else:
-        messages.success(request, "修改已保存，订单基础验证已通过。")
+        messages.success(request, _("修改已保存，订单基础验证已通过。"))
 
     return redirect("portal:order_detail", order_id=order.id)
 
@@ -1955,26 +1939,26 @@ def order_action(request, order_id):
             if status in ["error", "pending"]:
                 messages.error(
                     request,
-                    f"订单 {order.bon_de_commande} 已重新提取，但提取状态异常。",
+                    _('订单 %(value1)s 已重新提取，但提取状态异常。') % {'value1': order.bon_de_commande},
                 )
             elif errors:
                 messages.error(
                     request,
-                    f"订单 {order.bon_de_commande} 已重新提取，但基础验证存在问题。",
+                    _('订单 %(value1)s 已重新提取，但基础验证存在问题。') % {'value1': order.bon_de_commande},
                 )
             elif warnings:
                 messages.warning(
                     request,
-                    f"订单 {order.bon_de_commande} 已重新提取，但存在提醒。",
+                    _('订单 %(value1)s 已重新提取，但存在提醒。') % {'value1': order.bon_de_commande},
                 )
             else:
                 messages.success(
                     request,
-                    f"订单 {order.bon_de_commande} 已重新提取并通过基础验证。",
+                    _('订单 %(value1)s 已重新提取并通过基础验证。') % {'value1': order.bon_de_commande},
                 )
 
         except Exception as exc:
-            messages.error(request, f"重新提取失败：{exc}")
+            messages.error(request, _('重新提取失败：%(value1)s') % {'value1': exc})
 
         return redirect("portal:order_detail", order_id=order.id)
 
@@ -1982,11 +1966,11 @@ def order_action(request, order_id):
         errors, warnings = validate_portal_order_after_extraction(order)
 
         if errors:
-            messages.error(request, "订单基础验证存在问题，请检查详情页。")
+            messages.error(request, _("订单基础验证存在问题，请检查详情页。"))
         elif warnings:
-            messages.warning(request, "订单基础验证存在提醒，请检查详情页。")
+            messages.warning(request, _("订单基础验证存在提醒，请检查详情页。"))
         else:
-            messages.success(request, "订单基础验证已通过。")
+            messages.success(request, _("订单基础验证已通过。"))
 
         return redirect("portal:order_detail", order_id=order.id)
 
@@ -1999,11 +1983,11 @@ def order_action(request, order_id):
             if response is not None:
                 return response
         except Exception as exc:
-            messages.error(request, f"Factory Request 生成失败：{exc}")
+            messages.error(request, _('Factory Request 生成失败：%(value1)s') % {'value1': exc})
 
         return redirect("portal:order_detail", order_id=order.id)
 
-    messages.error(request, "未知操作。")
+    messages.error(request, _("未知操作。"))
     return redirect("portal:order_detail", order_id=order.id)
 
 
@@ -2046,7 +2030,7 @@ def factory_upload(request):
         order_id = request.POST.get("order_id")
 
         if not uploaded_file:
-            messages.error(request, "请先选择工厂采购 PDF。")
+            messages.error(request, _("请先选择工厂采购 PDF。"))
             return render(
                 request,
                 "portal/factory/upload.html",
@@ -2093,7 +2077,7 @@ def factory_upload(request):
             logger.exception("Factory confirmation processing failed after upload")
             messages.error(
                 request,
-                "工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。",
+                _("工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。"),
             )
             return render(
                 request,
@@ -2132,7 +2116,7 @@ def order_factory_upload(request, order_id):
         confirmation_type = request.POST.get("confirmation_type")
 
         if not uploaded_file:
-            messages.error(request, "请先选择工厂采购 PDF。")
+            messages.error(request, _("请先选择工厂采购 PDF。"))
             return render(
                 request,
                 "portal/factory/upload.html",
@@ -2182,7 +2166,7 @@ def order_factory_upload(request, order_id):
             logger.exception("Factory confirmation processing failed after order upload")
             messages.error(
                 request,
-                "工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。",
+                _("工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。"),
             )
             return render(
                 request,
@@ -2235,11 +2219,11 @@ def factory_action(request, confirmation_id):
                 request=request,
                 confirmation=confirmation,
                 success=True,
-                message_text=f"工厂采购 FC #{confirmation.id} 已重新提取并进入工作流。",
+                message_text=_('工厂采购 FC #%(value1)s 已重新提取并进入工作流。') % {'value1': confirmation.id},
             )
 
         except Exception as exc:
-            messages.error(request, f"重新提取失败：{exc}")
+            messages.error(request, _('重新提取失败：%(value1)s') % {'value1': exc})
             return redirect("portal:factory_detail", confirmation_id=confirmation_id)
 
     if action == "save_serials":
@@ -2253,26 +2237,26 @@ def factory_action(request, confirmation_id):
             if errors:
                 messages.error(
                     request,
-                    "Serial 修改已保存失败，请检查错误：" + " / ".join(errors[:3]),
+                    _("Serial 修改已保存失败，请检查错误：") + " / ".join(errors[:3]),
                 )
 
             elif warnings:
                 messages.warning(
                     request,
-                    "Serial 修改已保存，并已重新同步后续流程，但存在提醒："
+                    _("Serial 修改已保存，并已重新同步后续流程，但存在提醒：")
                     + " / ".join(warnings[:3]),
                 )
 
             else:
                 messages.success(
                     request,
-                    "Serial 修改已保存，并已重新同步 ShipmentBatch / Workflow。",
+                    _("Serial 修改已保存，并已重新同步 ShipmentBatch / Workflow。"),
                 )
 
         except Exception as exc:
             messages.error(
                 request,
-                f"保存 Serial 修改失败：{exc}",
+                _('保存 Serial 修改失败：%(value1)s') % {'value1': exc},
             )
 
         return redirect("portal:factory_detail", confirmation_id=confirmation_id)
@@ -2287,12 +2271,12 @@ def factory_action(request, confirmation_id):
             )
             messages.success(
                 request,
-                "订单已关联，并已继续完成 ShipmentBatch / Workflow 同步。",
+                _("订单已关联，并已继续完成 ShipmentBatch / Workflow 同步。"),
             )
         except Exception as exc:
             messages.error(
                 request,
-                f"关联订单并继续处理失败：{exc}",
+                _('关联订单并继续处理失败：%(value1)s') % {'value1': exc},
             )
 
         return redirect("portal:factory_detail", confirmation_id=confirmation_id)
@@ -2306,19 +2290,16 @@ def factory_action(request, confirmation_id):
             messages.success(
                 request,
                 (
-                    f"工厂采购 FC #{result['confirmation_id']} 已删除。"
-                    f"Serial 删除 {result['serial_deleted']} 条，"
-                    f"ShipmentBatch 删除 {result['shipment_batch_deleted']} 条，"
-                    f"Workflow 删除 {result['workflow_deleted']} 条。"
+                    _('工厂采购 FC #%(value1)s 已删除。Serial 删除 %(value2)s 条，ShipmentBatch 删除 %(value3)s 条，Workflow 删除 %(value4)s 条。') % {'value1': result['confirmation_id'], 'value2': result['serial_deleted'], 'value3': result['shipment_batch_deleted'], 'value4': result['workflow_deleted']}
                 ),
             )
             return redirect("portal:factory_list")
 
         except Exception as exc:
-            messages.error(request, f"删除失败：{exc}")
+            messages.error(request, _('删除失败：%(value1)s') % {'value1': exc})
             return redirect("portal:factory_detail", confirmation_id=confirmation_id)
 
-    messages.warning(request, "未知操作。")
+    messages.warning(request, _("未知操作。"))
     return redirect("portal:factory_detail", confirmation_id=confirmation_id)
 
 # =============================================================================
@@ -2338,6 +2319,19 @@ def settlement_home(request):
         build_settlement_home_context(
             request
         ),
+    )
+
+
+@staff_member_required
+def settlement_comparison(request):
+    from portal.services.settlement_portal_service import (
+        build_settlement_comparison_context,
+    )
+
+    return render(
+        request,
+        "portal/settlements/comparison.html",
+        build_settlement_comparison_context(request),
     )
 
 

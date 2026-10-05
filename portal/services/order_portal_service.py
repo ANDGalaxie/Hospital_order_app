@@ -1,3 +1,5 @@
+from portal.i18n import display_validation_message
+from django.utils.translation import gettext as _
 import json
 from decimal import Decimal
 from django.db.models import BigIntegerField, Case, IntegerField, Q, Value, When
@@ -86,12 +88,12 @@ def order_extraction_status(order):
     confirmed_data = getattr(order, "confirmed_order_data", None)
 
     if error or raw_status in ["failed", "error"]:
-        return "提取失败", "danger", "error"
+        return _("提取失败"), "danger", "error"
 
     if extracted_at or extracted_data or confirmed_data or raw_status in ["extracted", "success", "done"]:
-        return "已提取", "success", "extracted"
+        return _("已提取"), "success", "extracted"
 
-    return "待提取", "warning", "pending"
+    return _("待提取"), "warning", "pending"
 
 
 def order_validation_status(order):
@@ -102,7 +104,7 @@ def order_validation_status(order):
     # to the shared Order fields. They are deliberately ignored by this
     # Hospital Order-stage presentation.
     if not validation_data:
-        return "待验证", "warning", "pending"
+        return _("待验证"), "warning", "pending"
 
     validated_at = getattr(order, "validated_at", None)
 
@@ -110,14 +112,14 @@ def order_validation_status(order):
     warnings = validation_data.get("warnings") or []
 
     if raw_status in ["failed", "error", "blocked"] or errors:
-        return "有问题", "danger", "issue"
+        return _("有问题"), "danger", "issue"
 
     if validated_at or raw_status in ["ready", "validated", "success", "ok"]:
         if warnings:
-            return "有提醒", "warning", "warning"
-        return "已验证", "success", "validated"
+            return _("有提醒"), "warning", "warning"
+        return _("已验证"), "success", "validated"
 
-    return "待验证", "warning", "pending"
+    return _("待验证"), "warning", "pending"
 
 
 def get_order_item_summary(order):
@@ -137,10 +139,10 @@ def get_order_item_summary(order):
             total_qty += value
 
     if line_count and total_qty:
-        return f"{line_count} 行 / {int(total_qty)} 件"
+        return _('%(value1)s 行 / %(value2)s 件') % {'value1': line_count, 'value2': int(total_qty)}
 
     if line_count:
-        return f"{line_count} 行"
+        return _('%(value1)s 行') % {'value1': line_count}
 
     return "—"
 
@@ -150,37 +152,37 @@ def get_order_next_action(order, workflow_count):
     validation_text, validation_class, validation_category = order_validation_status(order)
 
     if extraction_category == "pending":
-        return "提取订单", "warning"
+        return _("提取订单"), "warning"
 
     if extraction_category == "error":
-        return "检查提取错误", "danger"
+        return _("检查提取错误"), "danger"
 
     if validation_category == "issue" and has_non_product_validation_errors(order):
-        return "处理异常", "danger"
+        return _("处理异常"), "danger"
 
     product_review_state = get_order_product_review_state(order)
 
     if product_review_state in ["missing", "needs_review", "needs_confirmation"]:
-        return "请核对产品编码", "warning"
+        return _("请核对产品编码"), "warning"
 
     if workflow_count:
-        return "查看工作流", "success"
+        return _("查看工作流"), "success"
 
-    return "等待工厂确认", "info"
+    return _("等待工厂确认"), "info"
 
 
 def get_order_status_label(order):
     raw_status = getattr(order, "status", "") or ""
 
     mapping = {
-        "draft": ("草稿", "warning"),
-        "pending": ("处理中", "warning"),
-        "extracted": ("已提取", "info"),
-        "validated": ("已验证", "success"),
-        "confirmed": ("已确认", "success"),
-        "completed": ("已完成", "success"),
-        "error": ("有问题", "danger"),
-        "failed": ("失败", "danger"),
+        "draft": (_("草稿"), "warning"),
+        "pending": (_("处理中"), "warning"),
+        "extracted": (_("已提取"), "info"),
+        "validated": (_("已验证"), "success"),
+        "confirmed": (_("已确认"), "success"),
+        "completed": (_("已完成"), "success"),
+        "error": (_("有问题"), "danger"),
+        "failed": (_("失败"), "danger"),
     }
 
     return mapping.get(raw_status, (raw_status or "—", "info"))
@@ -407,11 +409,11 @@ def build_order_list_context(request):
         workflow_count = workflow_counts.get(order.id, 0)
 
         if workflow_count:
-            workflow_text = f"已进入 ({workflow_count})"
+            workflow_text = _('已进入 (%(value1)s)') % {'value1': workflow_count}
             workflow_class = "success"
             workflow_category = "entered"
         else:
-            workflow_text = "未进入"
+            workflow_text = _("未进入")
             workflow_class = "warning"
             workflow_category = "not_entered"
 
@@ -528,8 +530,8 @@ def build_order_detail_context(request, order_id):
     order_status_text, order_status_class = get_order_status_label(order)
 
     validation_data = get_portal_order_validation_data(order)
-    validation_errors = validation_data.get("errors") or []
-    validation_warnings = validation_data.get("warnings") or []
+    validation_errors = [display_validation_message(value) for value in (validation_data.get("errors") or [])]
+    validation_warnings = [display_validation_message(value) for value in (validation_data.get("warnings") or [])]
 
     item_rows = []
     total_requested = 0
@@ -552,13 +554,13 @@ def build_order_detail_context(request, order_id):
         match_status = str(item.product_match_status or "").lower()
 
         if match_status in ["matched", "success", "confirmed", "ok"]:
-            product_match_text = "已匹配"
+            product_match_text = _("已匹配")
             product_match_class = "success"
         elif match_status in ["failed", "error", "missing"]:
-            product_match_text = "未匹配"
+            product_match_text = _("未匹配")
             product_match_class = "danger"
         elif match_status in ["needs_review", "review"]:
-            product_match_text = "待核对"
+            product_match_text = _("待核对")
             product_match_class = "warning"
         elif match_status:
             product_match_text = item.product_match_status
@@ -607,11 +609,11 @@ def build_order_detail_context(request, order_id):
             item.product_id
             and hospital_price > 0
         ):
-            price_source_text = "产品库默认价格"
+            price_source_text = _("产品库默认价格")
             price_source_class = "warning"
 
         else:
-            price_source_text = "价格待处理"
+            price_source_text = _("价格待处理")
             price_source_class = "danger"
 
         item_rows.append(
@@ -1002,8 +1004,7 @@ def save_order_manual_edit(order, post_data):
             # 正式 Invoice / PO 等保护条件不应阻断
             # 用户已完成的产品信息修正。
             reapply_warning = (
-                "自动重新应用医院 PricePolicy 失败："
-                f"{exc}"
+                _('自动重新应用医院 PricePolicy 失败：%(value1)s') % {'value1': exc}
             )
 
     order.refresh_from_db()
@@ -1054,28 +1055,28 @@ def order_combined_status(order):
     validation_text, validation_class, validation_category = order_validation_status(order)
 
     if extraction_category == "pending":
-        return "待提取", "warning", "pending_extraction"
+        return _("待提取"), "warning", "pending_extraction"
 
     if extraction_category == "error":
-        return "提取失败", "danger", "extraction_error"
+        return _("提取失败"), "danger", "extraction_error"
 
     if validation_category == "issue" and has_non_product_validation_errors(order):
-        return "有问题", "danger", "issue"
+        return _("有问题"), "danger", "issue"
 
     if get_order_product_review_state(order) in [
         "missing",
         "needs_review",
         "needs_confirmation",
     ]:
-        return "产品编码待核对", "warning", "product_review"
+        return _("产品编码待核对"), "warning", "product_review"
 
     if validation_category == "pending":
-        return "待验证", "warning", "pending_validation"
+        return _("待验证"), "warning", "pending_validation"
 
     if validation_category == "warning":
-        return "有提醒", "warning", "warning"
+        return _("有提醒"), "warning", "warning"
 
     if validation_category == "validated":
-        return "已就绪", "success", "ready"
+        return _("已就绪"), "success", "ready"
 
-    return "待检查", "warning", "needs_review"
+    return _("待检查"), "warning", "needs_review"

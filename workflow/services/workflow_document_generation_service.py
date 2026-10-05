@@ -413,13 +413,85 @@ def build_batch_factory_po_items(batch: ShipmentBatch, factory_info: Dict[str, A
     if not result: raise ValueError("No Factory PO item was generated from the current ShipmentBatch.")
     return result,list(snapshot["warnings"])
 
-def build_batch_factory_po_data(batch: ShipmentBatch, company_info: Dict[str, Any], factory_info: Dict[str, Any], numbers: Dict[str, Any], factory_shipping_date=None, factory_shipping_date_source="", factory=None) -> Dict[str, Any]:
-    order=batch.order
-    po_order_date,po_order_date_source,po_warnings=get_batch_po_order_date(batch)
-    shipping_date=factory_shipping_date or (get_batch_shipping_date(batch) if batch.factory_confirmation_id else None)
-    if not shipping_date: raise ValueError("Factory PO requires an actual factory shipping date.")
-    items,warnings=build_batch_factory_po_items(batch,factory_info,shipping_date,factory_shipping_date_source,factory)
-    return {"po":{"po_number":numbers["po_number"],"order_date":format_date_display(po_order_date),"expected_arrival":format_date_display(shipping_date+timedelta(days=EXPECTED_ARRIVAL_DAYS)),"order_date_iso":po_order_date.isoformat(),"shipping_date_iso":shipping_date.isoformat(),"expected_arrival_iso":(shipping_date+timedelta(days=EXPECTED_ARRIVAL_DAYS)).isoformat()},"company":prepare_company_info(company_info),"factory":prepare_factory_info(factory_info),"shipping_address":get_po_shipping_address_lines(order),"items":items,"totals":{"total_raw":sum(float(x["amount_raw"]) for x in items),"total":format_po_eur(sum(float(x["amount_raw"]) for x in items))},"debug":{"order_id":order.id,"bon_de_commande":order.bon_de_commande,"shipment_batch_id":batch.id,"document_sequence":numbers,"po_order_date_source":po_order_date_source,"discount_reference_date":shipping_date.isoformat(),"factory_shipping_date_source":factory_shipping_date_source},"warnings":warnings+po_warnings+numbers.get("batch_numbering_warnings",[])}
+def build_batch_factory_po_data(
+    batch: ShipmentBatch,
+    company_info: Dict[str, Any],
+    factory_info: Dict[str, Any],
+    numbers: Dict[str, Any],
+    factory_shipping_date=None,
+    factory_shipping_date_source="",
+    factory=None,
+) -> Dict[str, Any]:
+    order = batch.order
+    po_order_date, po_order_date_source, po_warnings = (
+        get_batch_po_order_date(batch)
+    )
+    shipping_date = factory_shipping_date or (
+        get_batch_shipping_date(batch)
+        if batch.factory_confirmation_id
+        else None
+    )
+
+    if not shipping_date:
+        raise ValueError(
+            "Factory PO requires an actual factory shipping date."
+        )
+
+    items, warnings = build_batch_factory_po_items(
+        batch,
+        factory_info,
+        shipping_date,
+        factory_shipping_date_source,
+        factory,
+    )
+    total_amount = sum(float(item["amount_raw"]) for item in items)
+    total_units_raw = sum(
+        (
+            Decimal(str(item.get("quantity_raw") or 0))
+            for item in items
+        ),
+        Decimal("0"),
+    )
+    expected_arrival = shipping_date + timedelta(
+        days=EXPECTED_ARRIVAL_DAYS
+    )
+
+    return {
+        "po": {
+            "po_number": numbers["po_number"],
+            "source": f"BON DE COMMANDE N° {order.bon_de_commande}",
+            "bon_de_commande": order.bon_de_commande,
+            "order_date": format_date_display(po_order_date),
+            "expected_arrival": format_date_display(expected_arrival),
+            "order_date_iso": po_order_date.isoformat(),
+            "shipping_date_iso": shipping_date.isoformat(),
+            "expected_arrival_iso": expected_arrival.isoformat(),
+        },
+        "company": prepare_company_info(company_info),
+        "factory": prepare_factory_info(factory_info),
+        "shipping_address": get_po_shipping_address_lines(order),
+        "items": items,
+        "totals": {
+            "total_raw": total_amount,
+            "total": format_po_eur(total_amount),
+            "total_units_raw": float(total_units_raw),
+            "total_units": format_quantity(float(total_units_raw)),
+        },
+        "debug": {
+            "order_id": order.id,
+            "bon_de_commande": order.bon_de_commande,
+            "shipment_batch_id": batch.id,
+            "document_sequence": numbers,
+            "po_order_date_source": po_order_date_source,
+            "discount_reference_date": shipping_date.isoformat(),
+            "factory_shipping_date_source": factory_shipping_date_source,
+        },
+        "warnings": (
+            warnings
+            + po_warnings
+            + numbers.get("batch_numbering_warnings", [])
+        ),
+    }
 
 @transaction.atomic
 def save_generated_document_record_for_batch(batch: ShipmentBatch, document_type: str, document_number: str, pdf_path: Path, html_path: Path, source_data: Dict[str, Any], generated_by, overwrite_existing=False) -> GeneratedDocument:

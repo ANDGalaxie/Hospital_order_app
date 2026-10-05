@@ -204,8 +204,98 @@
     font-size: 31px;
 }
 
-.settlement-recent-panel {
+.settlement-comparison-panel {
     margin-top: 20px;
+}
+
+.settlement-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.settlement-section-action {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    min-height: 36px;
+    margin-top: 0;
+    padding: 0 13px;
+    border-color: #dbeafe;
+    border-radius: 11px;
+    background: #f8fbff;
+    color: #2563eb;
+    font-size: 12px;
+    box-shadow: none;
+    white-space: nowrap;
+}
+
+.settlement-section-action:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    text-decoration: none;
+}
+
+.settlement-section-action:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.16);
+    outline-offset: 2px;
+}
+
+.comparison-filter-panel {
+    padding: 18px 20px;
+    border-color: #dbe3ef;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.settlement-comparison-search {
+    display: grid;
+    grid-template-columns: minmax(320px, 620px) auto;
+    align-items: end;
+    justify-content: start;
+    gap: 12px;
+}
+
+.settlement-comparison-search label {
+    display: block;
+    margin-bottom: 7px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 760;
+}
+
+.settlement-comparison-search input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    outline: none;
+    background: white;
+    color: #0f172a;
+    font: inherit;
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.settlement-comparison-search input::placeholder {
+    color: #94a3b8;
+}
+
+.settlement-comparison-search input:focus {
+    border-color: rgba(37, 99, 235, 0.6);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.09);
+}
+
+.settlement-comparison-search .portal-button {
+    min-height: 44px;
+    white-space: nowrap;
+    box-shadow: none;
+}
+
+.comparison-full-panel {
+    margin-top: 0;
 }
 
 .settlement-section-heading h2 {
@@ -216,6 +306,82 @@
     margin: 5px 0 16px;
     color: #64748b;
     font-size: 12px;
+}
+
+.settlement-comparison-table {
+    min-width: 880px;
+    table-layout: fixed;
+}
+
+.settlement-comparison-table th,
+.settlement-comparison-table td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+.settlement-comparison-table th:nth-child(1) {
+    width: 13%;
+}
+
+.settlement-comparison-table th:nth-child(2) {
+    width: 15%;
+}
+
+.settlement-comparison-table th:nth-child(3) {
+    width: 8%;
+}
+
+.settlement-comparison-table th:nth-child(4),
+.settlement-comparison-table th:nth-child(5) {
+    width: 25%;
+}
+
+.settlement-comparison-table th:nth-child(6) {
+    width: 14%;
+}
+
+.settlement-comparison-table tr.settlement-order-start td {
+    border-top: 2px solid #cbd5e1;
+    background: #f8fafc;
+}
+
+.settlement-comparison-table tbody tr:first-child td {
+    border-top-width: 1px;
+}
+
+.settlement-comparison-order,
+.settlement-comparison-money {
+    color: #0f172a;
+    font-weight: 750;
+}
+
+.settlement-comparison-amount,
+.settlement-document-missing {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.settlement-comparison-empty {
+    padding: 28px 12px;
+    color: #64748b;
+    text-align: center;
+}
+
+.settlement-status.generated {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.settlement-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.settlement-status.data-error {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .settlement-filter-panel {
@@ -490,8 +656,29 @@
     .settlement-kpi-grid,
     .settlement-kpi-grid.account-kpis,
     .settlement-filter-form,
-    .settlement-filter-form.transaction-filters {
+    .settlement-filter-form.transaction-filters,
+    .settlement-comparison-search {
         grid-template-columns: 1fr;
+    }
+
+    .settlement-section-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .settlement-section-action {
+        margin-top: 4px;
+    }
+
+    .settlement-comparison-search .settlement-filter-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        width: 100%;
+    }
+
+    .settlement-comparison-search .portal-button {
+        width: 100%;
     }
 }
 

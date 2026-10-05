@@ -1,8 +1,8 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}
-{{ document.document_number }} | 文档中心
+{% blocktrans trimmed with value1=document.document_number %}{{ value1 }} | 文档中心{% endblocktrans %}
 {% endblock %}
 
 {% block extra_css %}
@@ -13,11 +13,11 @@
 {% block breadcrumb %}
 <nav class="document-breadcrumb">
     <a href="{% url 'portal:home' %}">
-        首页
+        {% trans "首页" %}
     </a>
     <span>›</span>
     <a href="{% url 'portal:document_center' %}">
-        文档中心
+        {% trans "文档中心" %}
     </a>
     <span>›</span>
     <span>{{ document.document_number }}</span>
@@ -36,8 +36,8 @@
         </div>
 
         <p>
-            生成于
-            {{ document.generated_at|date:"Y-m-d H:i" }}
+            {% blocktrans trimmed with value1=document.generated_at|date:"Y-m-d H:i" %}生成于
+            {{ value1 }}{% endblocktrans %}
         </p>
     </div>
 
@@ -47,7 +47,7 @@
                href="{{ document.portal_pdf.url }}"
                target="_blank"
                rel="noopener">
-                打开 PDF
+                {% trans "打开 PDF" %}
             </a>
         {% endif %}
 
@@ -56,7 +56,7 @@
                href="{{ document.portal_html.url }}"
                target="_blank"
                rel="noopener">
-                打开 HTML
+                {% trans "打开 HTML" %}
             </a>
         {% endif %}
     </div>
@@ -64,10 +64,10 @@
 
 <section class="document-detail-stat-grid">
     <div>
-        <span>文档金额</span>
+        <span>{% trans "文档金额" %}</span>
         <strong>
             {% if document.portal_amount is not None %}
-                €{{ document.portal_amount|floatformat:2 }}
+                €{{ document.portal_amount|floatformat:"2u" }}
             {% else %}
                 —
             {% endif %}
@@ -75,15 +75,15 @@
     </div>
 
     <div>
-        <span>产品行数</span>
+        <span>{% trans "产品行数" %}</span>
         <strong>{{ document.portal_item_count }}</strong>
     </div>
 
     <div>
-        <span>总数量</span>
+        <span>{% trans "总数量" %}</span>
         <strong>
             {% if document.portal_total_quantity is not None %}
-                {{ document.portal_total_quantity|floatformat:0 }}
+                {{ document.portal_total_quantity|floatformat:"0u" }}
             {% else %}
                 —
             {% endif %}
@@ -91,7 +91,7 @@
     </div>
 
     <div>
-        <span>付款截止日期</span>
+        <span>{% trans "付款截止日期" %}</span>
         <strong>
             {{ document.portal_due_date|default:"—" }}
         </strong>
@@ -101,33 +101,33 @@
 <section class="document-detail-grid">
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            文档资料
+            {% trans "文档资料" %}
         </h2>
 
         <div class="document-detail-list">
             <div>
-                <span>文档类型</span>
+                <span>{% trans "文档类型" %}</span>
                 <strong>
                     {{ document.portal_type_label }}
                 </strong>
             </div>
 
             <div>
-                <span>文档编号</span>
+                <span>{% trans "文档编号" %}</span>
                 <strong>
                     {{ document.document_number }}
                 </strong>
             </div>
 
             <div>
-                <span>生成人</span>
+                <span>{% trans "生成人" %}</span>
                 <strong>
                     {{ document.generated_by.get_full_name|default:document.generated_by.username }}
                 </strong>
             </div>
 
             <div>
-                <span>生成时间</span>
+                <span>{% trans "生成时间" %}</span>
                 <strong>
                     {{ document.generated_at|date:"Y-m-d H:i" }}
                 </strong>
@@ -137,12 +137,12 @@
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            业务来源
+            {% trans "业务来源" %}
         </h2>
 
         <div class="document-detail-list">
             <div>
-                <span>医院订单</span>
+                <span>{% trans "医院订单" %}</span>
                 <strong>
                     <a href="{{ order_url }}">
                         {{ document.order.bon_de_commande }}
@@ -151,21 +151,21 @@
             </div>
 
             <div>
-                <span>医院</span>
+                <span>{% trans "医院" %}</span>
                 <strong>
                     {{ document.portal_hospital_label }}
                 </strong>
             </div>
 
             <div>
-                <span>工厂</span>
+                <span>{% trans "工厂" %}</span>
                 <strong>
                     {{ document.portal_factory_label }}
                 </strong>
             </div>
 
             <div>
-                <span>发货批次</span>
+                <span>{% trans "发货批次" %}</span>
                 <strong>
                     {% if document.shipment_batch %}
                         Batch
@@ -181,14 +181,14 @@
             {% if workflow_url %}
                 <a class="portal-button"
                    href="{{ workflow_url }}">
-                    打开 Workflow
+                    {% trans "打开 Workflow" %}
                 </a>
             {% endif %}
 
             {% if confirmation_url %}
                 <a class="portal-button"
                    href="{{ confirmation_url }}">
-                    打开工厂确认
+                    {% trans "打开工厂确认" %}
                 </a>
             {% endif %}
         </div>
@@ -196,7 +196,7 @@
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            PDF 文件
+            {% trans "PDF 文件" %}
         </h2>
 
         {% if document.portal_pdf.name %}
@@ -206,29 +206,29 @@
                 </strong>
 
                 <span>
-                    {{ document.portal_pdf.size_label|default:"大小未知" }}
+                    {{ document.portal_pdf.size_label|default:_("大小未知") }}
                 </span>
 
                 {% if document.portal_pdf.exists %}
                     <span class="document-file-ok">
-                        文件存在
+                        {% trans "文件存在" %}
                     </span>
                 {% else %}
                     <span class="document-file-missing">
-                        数据库有记录，但文件不存在
+                        {% trans "数据库有记录，但文件不存在" %}
                     </span>
                 {% endif %}
             </div>
         {% else %}
             <p class="document-muted">
-                没有 PDF 文件记录。
+                {% trans "没有 PDF 文件记录。" %}
             </p>
         {% endif %}
     </article>
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            HTML 文件
+            {% trans "HTML 文件" %}
         </h2>
 
         {% if document.portal_html.name %}
@@ -238,22 +238,22 @@
                 </strong>
 
                 <span>
-                    {{ document.portal_html.size_label|default:"大小未知" }}
+                    {{ document.portal_html.size_label|default:_("大小未知") }}
                 </span>
 
                 {% if document.portal_html.exists %}
                     <span class="document-file-ok">
-                        文件存在
+                        {% trans "文件存在" %}
                     </span>
                 {% else %}
                     <span class="document-file-missing">
-                        数据库有记录，但文件不存在
+                        {% trans "数据库有记录，但文件不存在" %}
                     </span>
                 {% endif %}
             </div>
         {% else %}
             <p class="document-muted">
-                没有 HTML 文件记录。
+                {% trans "没有 HTML 文件记录。" %}
             </p>
         {% endif %}
     </article>
@@ -261,19 +261,19 @@
     {% if source_items %}
         <article class="portal-panel document-full-width">
             <h2 class="portal-panel-title">
-                产品明细快照
+                {% trans "产品明细快照" %}
             </h2>
 
             <div class="portal-table-wrap">
                 <table class="portal-table">
                     <thead>
                         <tr>
-                            <th>产品号</th>
-                            <th>描述</th>
-                            <th>数量</th>
-                            <th>单价</th>
-                            <th>折扣</th>
-                            <th>金额</th>
+                            <th>{% trans "产品号" %}</th>
+                            <th>{% trans "描述" %}</th>
+                            <th>{% trans "数量" %}</th>
+                            <th>{% trans "单价" %}</th>
+                            <th>{% trans "折扣" %}</th>
+                            <th>{% trans "金额" %}</th>
                         </tr>
                     </thead>
 
@@ -314,7 +314,7 @@
     <article class="portal-panel document-full-width">
         <details class="document-snapshot">
             <summary>
-                查看完整生成快照
+                {% trans "查看完整生成快照" %}
             </summary>
 
             <pre>{{ source_json }}</pre>
@@ -324,7 +324,7 @@
     {% if document.notes %}
         <article class="portal-panel document-full-width">
             <h2 class="portal-panel-title">
-                备注
+                {% trans "备注" %}
             </h2>
 
             <div class="document-notes">

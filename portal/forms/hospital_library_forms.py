@@ -1,3 +1,5 @@
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 import re
 import unicodedata
 
@@ -48,15 +50,15 @@ class HospitalPortalForm(forms.ModelForm):
         )
 
         labels = {
-            "name": "医院正式名称",
-            "billing_address": "账单地址",
-            "default_shipping_address": "默认收货地址",
-            "contact_name": "联系人",
-            "phone": "电话",
-            "fax": "传真",
-            "email": "邮箱",
-            "notes": "备注",
-            "is_active": "启用",
+            "name": _("医院正式名称"),
+            "billing_address": _("账单地址"),
+            "default_shipping_address": _("默认收货地址"),
+            "contact_name": _("联系人"),
+            "phone": _("电话"),
+            "fax": _("传真"),
+            "email": _("邮箱"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
 
         widgets = {
@@ -75,6 +77,7 @@ class HospitalPortalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field in self.fields.values():
+            field.help_text = gettext(str(field.help_text))
             widget = field.widget
 
             if isinstance(widget, forms.CheckboxInput):
@@ -105,7 +108,7 @@ class HospitalPortalForm(forms.ModelForm):
 
         if duplicate_query.exists():
             raise forms.ValidationError(
-                "已经存在同名医院。"
+                _("已经存在同名医院。")
             )
 
         return name

@@ -1,23 +1,23 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}资料库 | Acoeurs France{% endblock %}
+{% block title %}{% trans "资料库 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
 {% endblock %}
 
 {% block breadcrumb %}
-<a href="{% url 'portal:home' %}">首页</a>
+<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
 <span>/</span>
-<span>资料库</span>
+<span>{% trans "资料库" %}</span>
 {% endblock %}
 
 {% block content %}
     <section class="portal-page-header home-header">
         <div>
-            <h1>资料库</h1>
-            <p>维护产品、医院、工厂、价格、发货批次和待补发等资料信息。</p>
+            <h1>{% trans "资料库" %}</h1>
+            <p>{% trans "维护产品、医院、工厂、价格、发货批次和待补发等资料信息。" %}</p>
         </div>
     </section>
 
@@ -48,7 +48,7 @@
             </a>
         {% empty %}
             <div class="portal-panel">
-                <p>资料库模块暂未配置。</p>
+                <p>{% trans "资料库模块暂未配置。" %}</p>
             </div>
         {% endfor %}
     </section>

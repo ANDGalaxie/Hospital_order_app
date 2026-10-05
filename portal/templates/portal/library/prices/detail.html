@@ -1,8 +1,8 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}
-{{ policy.name|default:"价格规则" }} | 价格规则
+{% blocktrans trimmed with value1=policy.name|default:_("价格规则") %}{{ value1 }} | 价格规则{% endblocktrans %}
 {% endblock %}
 
 {% block extra_css %}
@@ -12,18 +12,18 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
     <a href="{% url 'portal:library_home' %}">
-        资料库
+        {% trans "资料库" %}
     </a>
     <span>›</span>
     <a href="{% url 'portal:library_prices' %}">
-        价格规则
+        {% trans "价格规则" %}
     </a>
     <span>›</span>
     <span>
-        {{ policy.name|default:"未命名规则" }}
+        {{ policy.name|default:_("未命名规则") }}
     </span>
 </nav>
 {% endblock %}
@@ -33,7 +33,7 @@
     <div>
         <div class="master-title-row">
             <h1>
-                {{ policy.name|default:"未命名价格规则" }}
+                {{ policy.name|default:_("未命名价格规则") }}
             </h1>
 
             <span class="status-pill {{ policy.portal_status_class }}">
@@ -42,9 +42,9 @@
         </div>
 
         <p>
-            规则编号 #{{ policy.id }} ·
+            {% blocktrans trimmed with value1=policy.id value2=reference_date|date:"Y-m-d" %}规则编号 #{{ value1 }} ·
             当前状态基准日期：
-            {{ reference_date|date:"Y-m-d" }}
+            {{ value2 }}{% endblocktrans %}
         </p>
     </div>
 
@@ -52,7 +52,7 @@
         <div class="portal-header-actions">
             <a class="portal-button"
                href="{% url 'portal:library_price_policy_edit' policy.id %}">
-                编辑规则
+                {% trans "编辑规则" %}
             </a>
 
             <form method="post"
@@ -63,13 +63,13 @@
                     <button
                         class="portal-button danger"
                         type="submit">
-                        停用规则
+                        {% trans "停用规则" %}
                     </button>
                 {% else %}
                     <button
                         class="portal-button primary"
                         type="submit">
-                        重新启用
+                        {% trans "重新启用" %}
                     </button>
                 {% endif %}
             </form>
@@ -79,31 +79,31 @@
 
 <section class="master-stat-grid">
     <div class="master-stat-card">
-        <span>医院销售单价</span>
+        <span>{% trans "医院销售单价" %}</span>
         <strong>
-            €{{ policy.hospital_unit_price|floatformat:2 }}
+            €{{ policy.hospital_unit_price|floatformat:"2u" }}
         </strong>
     </div>
 
     <div class="master-stat-card">
-        <span>工厂采购单价</span>
+        <span>{% trans "工厂采购单价" %}</span>
         <strong>
-            €{{ policy.factory_unit_price|floatformat:2 }}
+            €{{ policy.factory_unit_price|floatformat:"2u" }}
         </strong>
     </div>
 
     <div class="master-stat-card">
-        <span>基础单件毛利</span>
+        <span>{% trans "基础单件毛利" %}</span>
         <strong>
-            €{{ base_margin|floatformat:2 }}
+            €{{ base_margin|floatformat:"2u" }}
         </strong>
         <small>
-            毛利率 {{ base_margin_rate|floatformat:2 }}%
+            {% blocktrans trimmed with value1=base_margin_rate|floatformat:"2u" %}毛利率 {{ value1 }}%{% endblocktrans %}
         </small>
     </div>
 
     <div class="master-stat-card">
-        <span>受影响启用产品</span>
+        <span>{% trans "受影响启用产品" %}</span>
         <strong>
             {{ affected_product_count }}
         </strong>
@@ -113,12 +113,12 @@
 <section class="master-detail-grid">
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            适用范围
+            {% trans "适用范围" %}
         </h2>
 
         <div class="master-detail-list">
             <div>
-                <span>适用工厂</span>
+                <span>{% trans "适用工厂" %}</span>
                 <strong>
                     {% if policy.factory %}
                         <a class="master-record-link"
@@ -126,13 +126,13 @@
                             {{ policy.factory.short_name|default:policy.factory.name }}
                         </a>
                     {% else %}
-                        全部工厂 / 全局回退
+                        {% trans "全部工厂 / 全局回退" %}
                     {% endif %}
                 </strong>
             </div>
 
             <div>
-                <span>产品分类</span>
+                <span>{% trans "产品分类" %}</span>
                 <strong>
                     {% if policy.category %}
                         <a class="master-record-link"
@@ -140,22 +140,22 @@
                             {{ policy.category.get_full_path }}
                         </a>
                     {% else %}
-                        全部产品分类
+                        {% trans "全部产品分类" %}
                     {% endif %}
                 </strong>
             </div>
 
             <div>
-                <span>开始日期</span>
+                <span>{% trans "开始日期" %}</span>
                 <strong>
-                    {{ policy.start_date|date:"Y-m-d"|default:"无下限" }}
+                    {{ policy.start_date|date:"Y-m-d"|default:_("无下限") }}
                 </strong>
             </div>
 
             <div>
-                <span>结束日期</span>
+                <span>{% trans "结束日期" %}</span>
                 <strong>
-                    {{ policy.end_date|date:"Y-m-d"|default:"长期有效" }}
+                    {{ policy.end_date|date:"Y-m-d"|default:_("长期有效") }}
                 </strong>
             </div>
         </div>
@@ -163,36 +163,36 @@
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            临期折扣
+            {% trans "临期折扣" %}
         </h2>
 
         <div class="master-detail-list">
             <div>
-                <span>临期门槛</span>
+                <span>{% trans "临期门槛" %}</span>
                 <strong>
-                    {{ policy.expiration_threshold_days }}
-                    天
+                    {% blocktrans trimmed with value1=policy.expiration_threshold_days %}{{ value1 }}
+                    天{% endblocktrans %}
                 </strong>
             </div>
 
             <div>
-                <span>折扣率</span>
+                <span>{% trans "折扣率" %}</span>
                 <strong>
-                    {{ policy.discount_percent_display|floatformat:2 }}%
+                    {{ policy.discount_percent_display|floatformat:"2u" }}%
                 </strong>
             </div>
 
             <div>
-                <span>临期折后采购价</span>
+                <span>{% trans "临期折后采购价" %}</span>
                 <strong>
-                    €{{ discounted_factory_price|floatformat:2 }}
+                    €{{ discounted_factory_price|floatformat:"2u" }}
                 </strong>
             </div>
 
             <div>
-                <span>临期折后单件毛利</span>
+                <span>{% trans "临期折后单件毛利" %}</span>
                 <strong>
-                    €{{ discounted_margin|floatformat:2 }}
+                    €{{ discounted_margin|floatformat:"2u" }}
                 </strong>
             </div>
         </div>
@@ -200,14 +200,14 @@
 
     <article class="portal-panel master-full-width">
         <h2 class="portal-panel-title">
-            受影响产品
+            {% trans "受影响产品" %}
         </h2>
 
         <p class="price-panel-description">
-            这里只显示前 20 个启用产品，
+            {% blocktrans trimmed with value1=affected_product_count %}这里只显示前 20 个启用产品，
             当前规则共影响
-            {{ affected_product_count }}
-            个产品。
+            {{ value1 }}
+            个产品。{% endblocktrans %}
         </p>
 
         <div class="price-product-grid">
@@ -220,7 +220,7 @@
                 </a>
             {% empty %}
                 <div class="factory-structure-empty">
-                    当前规则没有匹配到启用产品。
+                    {% trans "当前规则没有匹配到启用产品。" %}
                 </div>
             {% endfor %}
         </div>
@@ -228,30 +228,30 @@
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            系统信息
+            {% trans "系统信息" %}
         </h2>
 
         <div class="master-detail-list">
             <div>
-                <span>启用状态</span>
+                <span>{% trans "启用状态" %}</span>
                 <strong>
                     {% if policy.is_active %}
-                        启用
+                        {% trans "启用" %}
                     {% else %}
-                        停用
+                        {% trans "停用" %}
                     {% endif %}
                 </strong>
             </div>
 
             <div>
-                <span>创建时间</span>
+                <span>{% trans "创建时间" %}</span>
                 <strong>
                     {{ policy.created_at|date:"Y-m-d H:i" }}
                 </strong>
             </div>
 
             <div>
-                <span>更新时间</span>
+                <span>{% trans "更新时间" %}</span>
                 <strong>
                     {{ policy.updated_at|date:"Y-m-d H:i" }}
                 </strong>
@@ -261,7 +261,7 @@
 
     <article class="portal-panel">
         <h2 class="portal-panel-title">
-            备注
+            {% trans "备注" %}
         </h2>
 
         <div class="master-notes">

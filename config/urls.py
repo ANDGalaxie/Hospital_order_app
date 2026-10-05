@@ -7,6 +7,7 @@ from .views import healthz
 
 urlpatterns = [
     path("healthz/", healthz, name="healthz"),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("admin/", admin.site.urls),
     path("portal/", include("portal.urls")),
 ]

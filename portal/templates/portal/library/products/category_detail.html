@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ category.name }} | 产品库{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=category.name %}{{ value1 }} | 产品库{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
@@ -9,11 +9,11 @@
 
 {% block breadcrumb %}
 <nav class="library-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_products' %}">产品库</a>
+    <a href="{% url 'portal:library_products' %}">{% trans "产品库" %}</a>
 
     {% if department %}
         <span>›</span>
@@ -38,14 +38,14 @@
 <section class="portal-page-header">
     <div>
         <h1>{{ category.name }}</h1>
-        <p>{{ product_count }} 个启用产品。</p>
+        <p>{% blocktrans trimmed with value1=product_count %}{{ value1 }} 个启用产品。{% endblocktrans %}</p>
     </div>
 
     {% if can_add_product %}
         <div class="portal-header-actions">
             <a class="portal-button primary"
             href="{% url 'portal:library_product_add' category.id %}">
-                ＋ 新增产品
+                {% trans "＋ 新增产品" %}
             </a>
         </div>
     {% endif %}
@@ -57,14 +57,14 @@
             type="search"
             name="q"
             value="{{ query }}"
-            placeholder="在当前分类中搜索产品编号或描述"
+            placeholder="{% trans "在当前分类中搜索产品编号或描述" %}"
         >
-        <button class="portal-button primary" type="submit">搜索</button>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
 
         {% if query %}
             <a class="portal-button"
                href="{% url 'portal:library_product_category' category.id %}">
-                清除
+                {% trans "清除" %}
             </a>
         {% endif %}
     </form>
@@ -74,12 +74,12 @@
     <table class="portal-table">
         <thead>
             <tr>
-                <th>产品编号</th>
-                <th>描述</th>
-                <th>工厂</th>
-                <th>医院价格</th>
-                <th>工厂价格</th>
-                <th>状态</th>
+                <th>{% trans "产品编号" %}</th>
+                <th>{% trans "描述" %}</th>
+                <th>{% trans "工厂" %}</th>
+                <th>{% trans "医院价格" %}</th>
+                <th>{% trans "工厂价格" %}</th>
+                <th>{% trans "状态" %}</th>
             </tr>
         </thead>
 
@@ -98,16 +98,16 @@
                     <td>{{ product.factory_unit_price|default:"-" }}</td>
                     <td>
                         {% if product.is_active %}
-                            <span class="status-pill success">启用</span>
+                            <span class="status-pill success">{% trans "启用" %}</span>
                         {% else %}
-                            <span class="status-pill">停用</span>
+                            <span class="status-pill">{% trans "停用" %}</span>
                         {% endif %}
                     </td>
                 </tr>
             {% empty %}
                 <tr>
                     <td colspan="6" class="portal-empty">
-                        当前分类没有符合条件的产品。
+                        {% trans "当前分类没有符合条件的产品。" %}
                     </td>
                 </tr>
             {% endfor %}

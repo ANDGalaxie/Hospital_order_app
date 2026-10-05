@@ -1,3 +1,5 @@
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db.models import Q
 
@@ -12,6 +14,7 @@ class PortalStyledFormMixin:
 
     def apply_portal_styles(self):
         for field in self.fields.values():
+            field.help_text = gettext(str(field.help_text))
             widget = field.widget
 
             if isinstance(widget, forms.CheckboxInput):
@@ -44,10 +47,10 @@ class DepartmentCreateForm(
             "is_active",
         )
         labels = {
-            "name": "科室名称",
-            "sort_order": "显示顺序",
-            "notes": "备注",
-            "is_active": "启用",
+            "name": _("科室名称"),
+            "sort_order": _("显示顺序"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
         widgets = {
             "notes": forms.Textarea(
@@ -72,7 +75,7 @@ class DepartmentCreateForm(
 
         if exists:
             raise forms.ValidationError(
-                "已经存在同名科室。"
+                _("已经存在同名科室。")
             )
 
         return name
@@ -100,43 +103,43 @@ class FactoryNodeCreateForm(
     MODE_NEW = "new"
 
     mode = forms.ChoiceField(
-        label="添加方式",
+        label=_("添加方式"),
         choices=(),
         widget=forms.RadioSelect,
     )
 
     existing_factory = forms.ModelChoiceField(
-        label="选择已有工厂",
+        label=_("选择已有工厂"),
         queryset=Factory.objects.none(),
         required=False,
-        empty_label="请选择工厂",
+        empty_label=_("请选择工厂"),
     )
 
     node_name = forms.CharField(
-        label="卡片显示名称",
+        label=_("卡片显示名称"),
         required=False,
         help_text=(
-            "可留空。留空时自动使用工厂简称或正式名称。"
+            _("可留空。留空时自动使用工厂简称或正式名称。")
         ),
     )
 
     new_factory_name = forms.CharField(
-        label="新工厂正式名称",
+        label=_("新工厂正式名称"),
         required=False,
     )
 
     new_factory_legal_name = forms.CharField(
-        label="新工厂法律名称",
+        label=_("新工厂法律名称"),
         required=False,
     )
 
     new_factory_short_name = forms.CharField(
-        label="新工厂简称",
+        label=_("新工厂简称"),
         required=False,
     )
 
     new_factory_address = forms.CharField(
-        label="新工厂地址",
+        label=_("新工厂地址"),
         required=False,
         widget=forms.Textarea(
             attrs={"rows": 3}
@@ -144,28 +147,28 @@ class FactoryNodeCreateForm(
     )
 
     new_factory_buyer = forms.CharField(
-        label="采购联系人 / Buyer",
+        label=_("采购联系人 / Buyer"),
         required=False,
     )
 
     new_factory_match_keywords = forms.CharField(
-        label="自动匹配关键词",
+        label=_("自动匹配关键词"),
         required=False,
         widget=forms.Textarea(
             attrs={"rows": 4}
         ),
-        help_text="每行一个关键词。",
+        help_text=_("每行一个关键词。"),
     )
 
     sort_order = forms.IntegerField(
-        label="显示顺序",
+        label=_("显示顺序"),
         required=False,
         min_value=0,
         initial=0,
     )
 
     notes = forms.CharField(
-        label="备注",
+        label=_("备注"),
         required=False,
         widget=forms.Textarea(
             attrs={"rows": 4}
@@ -173,7 +176,7 @@ class FactoryNodeCreateForm(
     )
 
     is_active = forms.BooleanField(
-        label="启用",
+        label=_("启用"),
         required=False,
         initial=True,
     )
@@ -193,7 +196,7 @@ class FactoryNodeCreateForm(
         choices = [
             (
                 self.MODE_EXISTING,
-                "关联已有工厂",
+                _("关联已有工厂"),
             ),
         ]
 
@@ -201,7 +204,7 @@ class FactoryNodeCreateForm(
             choices.append(
                 (
                     self.MODE_NEW,
-                    "创建新工厂",
+                    _("创建新工厂"),
                 )
             )
 
@@ -239,13 +242,13 @@ class FactoryNodeCreateForm(
             if not existing_factory:
                 self.add_error(
                     "existing_factory",
-                    "请选择一个已有工厂。",
+                    _("请选择一个已有工厂。"),
                 )
 
         elif mode == self.MODE_NEW:
             if not self.allow_create_factory:
                 raise forms.ValidationError(
-                    "当前用户没有创建工厂的权限。"
+                    _("当前用户没有创建工厂的权限。")
                 )
 
             new_name = (
@@ -261,7 +264,7 @@ class FactoryNodeCreateForm(
             if not new_name:
                 self.add_error(
                     "new_factory_name",
-                    "请输入新工厂正式名称。",
+                    _("请输入新工厂正式名称。"),
                 )
 
             duplicate_query = Q(
@@ -277,8 +280,8 @@ class FactoryNodeCreateForm(
                 duplicate_query
             ).exists():
                 raise forms.ValidationError(
-                    "工厂库中似乎已经存在该工厂，"
-                    "请改用“关联已有工厂”。"
+                    _("工厂库中似乎已经存在该工厂，"
+                    "请改用“关联已有工厂”。")
                 )
 
         return cleaned
@@ -369,10 +372,10 @@ class ProductCategoryCreateForm(
             "is_active",
         )
         labels = {
-            "name": "产品分类名称",
-            "sort_order": "显示顺序",
-            "notes": "备注",
-            "is_active": "启用",
+            "name": _("产品分类名称"),
+            "sort_order": _("显示顺序"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
         widgets = {
             "notes": forms.Textarea(
@@ -403,7 +406,7 @@ class ProductCategoryCreateForm(
 
         if exists:
             raise forms.ValidationError(
-                "该工厂下已经存在同名产品分类。"
+                _("该工厂下已经存在同名产品分类。")
             )
 
         return name
@@ -438,12 +441,12 @@ class ProductCreateForm(
             "is_active",
         )
         labels = {
-            "code": "产品编号",
-            "description": "产品描述",
-            "hospital_unit_price": "医院销售价格",
-            "factory_unit_price": "工厂采购价格",
-            "notes": "备注",
-            "is_active": "启用",
+            "code": _("产品编号"),
+            "description": _("产品描述"),
+            "hospital_unit_price": _("医院销售价格"),
+            "factory_unit_price": _("工厂采购价格"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
         widgets = {
             "description": forms.Textarea(
@@ -473,7 +476,7 @@ class ProductCreateForm(
             code__iexact=code
         ).exists():
             raise forms.ValidationError(
-                "该产品编号已经存在。"
+                _("该产品编号已经存在。")
             )
 
         return code
@@ -485,8 +488,8 @@ class ProductCreateForm(
 
         if not factory_node or not factory_node.factory:
             raise ValueError(
-                "当前产品分类没有关联真实工厂，"
-                "无法创建产品。"
+                _("当前产品分类没有关联真实工厂，"
+                "无法创建产品。")
             )
 
         product.category = self.category

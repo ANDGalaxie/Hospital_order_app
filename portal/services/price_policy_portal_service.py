@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -41,7 +42,7 @@ def get_policy_portal_status(
     if not policy.is_active:
         return {
             "code": "inactive",
-            "label": "已停用",
+            "label": _("已停用"),
             "css_class": "neutral",
         }
 
@@ -51,7 +52,7 @@ def get_policy_portal_status(
     ):
         return {
             "code": "future",
-            "label": "未来生效",
+            "label": _("未来生效"),
             "css_class": "warning",
         }
 
@@ -61,13 +62,13 @@ def get_policy_portal_status(
     ):
         return {
             "code": "expired",
-            "label": "已过期",
+            "label": _("已过期"),
             "css_class": "danger",
         }
 
     return {
         "code": "current",
-        "label": "生效中",
+        "label": _("生效中"),
         "css_class": "success",
     }
 
@@ -141,13 +142,13 @@ def decorate_policy_for_portal(
         policy.factory.short_name
         or policy.factory.name
         if policy.factory
-        else "全部工厂"
+        else _("全部工厂")
     )
 
     policy.portal_category_label = (
         policy.category.get_full_path()
         if policy.category
-        else "全部产品分类"
+        else _("全部产品分类")
     )
 
     policy.discount_percent_display = (

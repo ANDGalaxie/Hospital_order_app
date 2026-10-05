@@ -1,0 +1,118 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "订单 / 批次金额对照 | 发票与结算" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'portal/css/settlements.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="settlement-breadcrumb">
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
+    <span>›</span>
+    <a href="{% url 'portal:settlement_home' %}">
+        {% trans "发票与结算" %}
+    </a>
+    <span>›</span>
+    <span>{% trans "金额对照" %}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{% trans "订单 / 批次金额对照" %}</h1>
+        <p>
+            {% trans "查看全部医院订单及各发货批次对应的 Hospital Invoice 与 Factory PO。" %}
+        </p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button"
+           href="{% url 'portal:settlement_home' %}">
+            {% trans "返回发票与结算" %}
+        </a>
+    </div>
+</section>
+
+<section class="settlement-kpi-grid comparison-kpis">
+    <article class="settlement-kpi">
+        <span>{% trans "订单总数" %}</span>
+        <strong>{{ summary.order_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{% trans "ShipmentBatch 数量" %}</span>
+        <strong>{{ summary.batch_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{% trans "已生成 Invoice" %}</span>
+        <strong>{{ summary.invoice_count }}</strong>
+    </article>
+
+    <article class="settlement-kpi">
+        <span>{% trans "已生成 PO" %}</span>
+        <strong>{{ summary.po_count }}</strong>
+    </article>
+</section>
+
+<section class="settlement-filter-panel comparison-filter-panel">
+    <form method="get"
+          class="settlement-comparison-search">
+        <div>
+            <label for="comparison-search">
+                {% trans "医院订单号 / BON" %}
+            </label>
+            <input
+                id="comparison-search"
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="{% trans "输入完整或部分 BON" %}"
+            >
+        </div>
+
+        <div class="settlement-filter-actions">
+            <button class="portal-button primary"
+                    type="submit">
+                {% trans "搜索" %}
+            </button>
+
+            {% if query %}
+                <a class="portal-button"
+                   href="{% url 'portal:settlement_comparison' %}">
+                    {% trans "清除" %}
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<section class="portal-panel settlement-comparison-panel comparison-full-panel">
+    {% include "portal/settlements/_comparison_table.html" with rows=rows %}
+</section>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="settlement-pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
+            {% trans "上一页" %}
+        </a>
+    {% endif %}
+
+    <span>
+        {% blocktrans trimmed with value1=page_obj.number value2=page_obj.paginator.num_pages %}第 {{ value1 }} 页，
+        共 {{ value2 }} 页{% endblocktrans %}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
+            {% trans "下一页" %}
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

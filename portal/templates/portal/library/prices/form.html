@@ -1,8 +1,8 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}
-{{ form_title }} | 价格规则
+{% blocktrans trimmed with value1=form_title %}{{ value1 }} | 价格规则{% endblocktrans %}
 {% endblock %}
 
 {% block extra_css %}
@@ -37,9 +37,8 @@
 </section>
 
 <section class="price-form-notice">
-    <strong>规则优先级：</strong>
-    具体工厂和具体分类规则优先于工厂通用规则，
-    工厂通用规则优先于全局回退规则。
+    <strong>{% trans "规则优先级：" %}</strong>
+    {% trans "具体工厂和具体分类规则优先于工厂通用规则， 工厂通用规则优先于全局回退规则。" %}
 </section>
 
 <section class="portal-panel master-form-panel">
@@ -54,7 +53,7 @@
         {% endif %}
 
         <div class="price-form-section">
-            <h2>规则识别</h2>
+            <h2>{% trans "规则识别" %}</h2>
 
             <div class="master-form-grid">
                 <div class="master-form-field">
@@ -89,7 +88,7 @@
         </div>
 
         <div class="price-form-section">
-            <h2>适用范围</h2>
+            <h2>{% trans "适用范围" %}</h2>
 
             <div class="master-form-grid">
                 <div class="master-form-field">
@@ -125,7 +124,7 @@
         </div>
 
         <div class="price-form-section">
-            <h2>生效时间</h2>
+            <h2>{% trans "生效时间" %}</h2>
 
             <div class="master-form-grid">
                 <div class="master-form-field">
@@ -161,7 +160,7 @@
         </div>
 
         <div class="price-form-section">
-            <h2>价格</h2>
+            <h2>{% trans "价格" %}</h2>
 
             <div class="master-form-grid">
                 <div class="master-form-field">
@@ -189,7 +188,7 @@
         </div>
 
         <div class="price-form-section">
-            <h2>临期折扣</h2>
+            <h2>{% trans "临期折扣" %}</h2>
 
             <div class="master-form-grid">
                 <div class="master-form-field">
@@ -225,7 +224,7 @@
         </div>
 
         <div class="price-form-section">
-            <h2>备注</h2>
+            <h2>{% trans "备注" %}</h2>
 
             <div class="master-form-field">
                 {{ form.notes }}
@@ -239,7 +238,7 @@
         <div class="master-form-actions">
             <a class="portal-button"
                href="{{ cancel_url }}">
-                取消
+                {% trans "取消" %}
             </a>
 
             <button

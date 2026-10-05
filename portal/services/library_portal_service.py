@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.apps import apps
 from django.urls import reverse
 
@@ -39,48 +40,48 @@ def build_library_home_context(request):
 
     modules = [
         {
-            "title": "产品库",
-            "subtitle": "维护 BMA 产品编号、规格、描述和产品匹配信息。",
+            "title": _("产品库"),
+            "subtitle": _("维护 BMA 产品编号、规格、描述和产品匹配信息。"),
             "icon": "portal/img/app-icons/library.png",
             "theme": "purple",
             "url": reverse("portal:library_products"),
             "badge": product_count,
         },
         {
-            "title": "医院库",
-            "subtitle": "维护医院名称、收货地址、账单地址和匹配规则。",
+            "title": _("医院库"),
+            "subtitle": _("维护医院名称、收货地址、账单地址和匹配规则。"),
             "icon": "portal/img/app-icons/hospital-orders.png",
             "theme": "teal",
             "url": reverse("portal:library_hospitals"),
             "badge": hospital_count,
         },
         {
-            "title": "工厂库",
-            "subtitle": "维护供应工厂名称、地址和采购相关信息。",
+            "title": _("工厂库"),
+            "subtitle": _("维护供应工厂名称、地址和采购相关信息。"),
             "icon": "portal/img/app-icons/factory-purchase.png",
             "theme": "green",
             "url": reverse("portal:library_factories"),
             "badge": factory_count,
         },
         {
-            "title": "价格规则",
-            "subtitle": "维护医院销售价格、工厂采购价格和价格策略。",
+            "title": _("价格规则"),
+            "subtitle": _("维护医院销售价格、工厂采购价格和价格策略。"),
             "icon": "portal/img/app-icons/finance.png",
             "theme": "orange",
             "url": reverse("portal:library_prices"),
             "badge": price_count,
         },
         {
-            "title": "发货批次库",
-            "subtitle": "查看每一批发货记录、数量快照与工作流状态。",
+            "title": _("发货批次库"),
+            "subtitle": _("查看每一批发货记录、数量快照与工作流状态。"),
             "icon": "portal/img/app-icons/workflow.png",
             "theme": "violet",
             "url": reverse("portal:shipment_list"),
             "badge": shipment_batch_count,
         },
         {
-            "title": "待补发库",
-            "subtitle": "查看当前待补发行并进入工厂补发或库存补发。",
+            "title": _("待补发库"),
+            "subtitle": _("查看当前待补发行并进入工厂补发或库存补发。"),
             "icon": "portal/img/app-icons/library.png",
             "theme": "teal",
             "url": reverse("portal:backorder_list"),

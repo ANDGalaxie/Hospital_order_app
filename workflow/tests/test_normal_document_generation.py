@@ -220,6 +220,20 @@ class NormalDocumentGenerationTransactionTests(TransactionTestCase):
         self.assertEqual(DocumentSequence.objects.count(), 1)
         po_document = result["factory_po"]["generated_document"]
         self.assertEqual(po_document.document_number, "DELAHK0108S")
+        frozen_po_data = po_document.source_data["po_data"]
+        self.assertEqual(
+            frozen_po_data["po"]["bon_de_commande"],
+            self.order.bon_de_commande,
+        )
+        self.assertEqual(
+            frozen_po_data["po"]["source"],
+            "BON DE COMMANDE N° 900001",
+        )
+        self.assertEqual(
+            frozen_po_data["totals"]["total_units_raw"],
+            1.0,
+        )
+        self.assertEqual(frozen_po_data["totals"]["total_units"], "1")
         self.assertEqual(
             po_document.source_data["numbers"]["po_number"],
             "DELAHK0108S",

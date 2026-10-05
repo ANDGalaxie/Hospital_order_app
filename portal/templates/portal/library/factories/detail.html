@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ factory }} | 工厂库{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=factory %}{{ value1 }} | 工厂库{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -10,11 +10,11 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_factories' %}">工厂库</a>
+    <a href="{% url 'portal:library_factories' %}">{% trans "工厂库" %}</a>
     <span>›</span>
     <span>{{ factory }}</span>
 </nav>
@@ -28,11 +28,11 @@
 
             {% if factory.is_active %}
                 <span class="status-pill success">
-                    启用
+                    {% trans "启用" %}
                 </span>
             {% else %}
                 <span class="status-pill">
-                    停用
+                    {% trans "停用" %}
                 </span>
             {% endif %}
         </div>
@@ -44,7 +44,7 @@
         <div class="portal-header-actions">
             <a class="portal-button"
                href="{% url 'portal:library_factory_edit' factory.id %}">
-                编辑工厂
+                {% trans "编辑工厂" %}
             </a>
 
             <form method="post"
@@ -54,12 +54,12 @@
                 {% if factory.is_active %}
                     <button class="portal-button danger"
                             type="submit">
-                        停用工厂
+                        {% trans "停用工厂" %}
                     </button>
                 {% else %}
                     <button class="portal-button primary"
                             type="submit">
-                        重新启用
+                        {% trans "重新启用" %}
                     </button>
                 {% endif %}
             </form>
@@ -69,64 +69,64 @@
 
 {% if missing_fields %}
 <section class="master-warning-panel">
-    <strong>资料需要补充：</strong>
+    <strong>{% trans "资料需要补充：" %}</strong>
     {{ missing_fields|join:"、" }}
 </section>
 {% endif %}
 
 <section class="master-stat-grid">
     <div class="master-stat-card">
-        <span>关联科室</span>
+        <span>{% trans "关联科室" %}</span>
         <strong>{{ department_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>产品分类</span>
+        <span>{% trans "产品分类" %}</span>
         <strong>{{ category_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>启用产品</span>
+        <span>{% trans "启用产品" %}</span>
         <strong>{{ active_product_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>停用产品</span>
+        <span>{% trans "停用产品" %}</span>
         <strong>{{ inactive_product_count }}</strong>
     </div>
 </section>
 
 <section class="master-detail-grid">
     <article class="portal-panel">
-        <h2 class="portal-panel-title">基本资料</h2>
+        <h2 class="portal-panel-title">{% trans "基本资料" %}</h2>
 
         <div class="master-detail-list">
             <div>
-                <span>正式名称</span>
+                <span>{% trans "正式名称" %}</span>
                 <strong>{{ factory.name }}</strong>
             </div>
 
             <div>
-                <span>完整法律名称</span>
+                <span>{% trans "完整法律名称" %}</span>
                 <strong>
                     {{ factory.legal_name|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>简称</span>
+                <span>{% trans "简称" %}</span>
                 <strong>
                     {{ factory.short_name|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>状态</span>
+                <span>{% trans "状态" %}</span>
                 <strong>
                     {% if factory.is_active %}
-                        启用
+                        {% trans "启用" %}
                     {% else %}
-                        停用
+                        {% trans "停用" %}
                     {% endif %}
                 </strong>
             </div>
@@ -134,32 +134,32 @@
     </article>
 
     <article class="portal-panel">
-        <h2 class="portal-panel-title">采购资料</h2>
+        <h2 class="portal-panel-title">{% trans "采购资料" %}</h2>
 
         <div class="master-detail-list">
             <div>
-                <span>采购联系人 / Buyer</span>
+                <span>{% trans "采购联系人 / Buyer" %}</span>
                 <strong>
                     {{ factory.buyer|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>默认产品描述</span>
+                <span>{% trans "默认产品描述" %}</span>
                 <strong>
                     {{ factory.default_product_description|default:"-" }}
                 </strong>
             </div>
 
             <div>
-                <span>创建时间</span>
+                <span>{% trans "创建时间" %}</span>
                 <strong>
                     {{ factory.created_at|date:"Y-m-d H:i" }}
                 </strong>
             </div>
 
             <div>
-                <span>更新时间</span>
+                <span>{% trans "更新时间" %}</span>
                 <strong>
                     {{ factory.updated_at|date:"Y-m-d H:i" }}
                 </strong>
@@ -168,7 +168,7 @@
     </article>
 
     <article class="portal-panel master-full-width">
-        <h2 class="portal-panel-title">工厂地址</h2>
+        <h2 class="portal-panel-title">{% trans "工厂地址" %}</h2>
 
         <div class="master-address-box">
             <strong>
@@ -178,7 +178,7 @@
     </article>
 
     <article class="portal-panel master-full-width">
-        <h2 class="portal-panel-title">自动匹配关键词</h2>
+        <h2 class="portal-panel-title">{% trans "自动匹配关键词" %}</h2>
 
         {% if factory.match_keywords %}
             <div class="factory-keyword-list">
@@ -190,7 +190,7 @@
             </div>
         {% else %}
             <div class="master-notes">
-                暂未设置自动匹配关键词。
+                {% trans "暂未设置自动匹配关键词。" %}
             </div>
         {% endif %}
     </article>
@@ -199,11 +199,11 @@
         <div class="factory-structure-heading">
             <div>
                 <h2 class="portal-panel-title">
-                    关联产品结构
+                    {% trans "关联产品结构" %}
                 </h2>
 
                 <p>
-                    显示该真实工厂在产品库中的科室入口和产品分类。
+                    {% trans "显示该真实工厂在产品库中的科室入口和产品分类。" %}
                 </p>
             </div>
         </div>
@@ -213,19 +213,19 @@
                 <section class="factory-structure-block">
                     <div class="factory-structure-title">
                         <div>
-                            <span>科室</span>
+                            <span>{% trans "科室" %}</span>
                             <strong>
                                 {% if structure.department %}
                                     {{ structure.department.name }}
                                 {% else %}
-                                    未关联科室
+                                    {% trans "未关联科室" %}
                                 {% endif %}
                             </strong>
                         </div>
 
                         <a class="portal-button"
                            href="{{ structure.product_library_url }}">
-                            打开产品库
+                            {% trans "打开产品库" %}
                         </a>
                     </div>
 
@@ -234,27 +234,27 @@
                             <a href="{% url 'portal:library_product_category' category.id %}">
                                 <strong>{{ category.name }}</strong>
                                 <span>
-                                    {{ category.active_product_count }}
-                                    个产品
+                                    {% blocktrans trimmed with value1=category.active_product_count %}{{ value1 }}
+                                    个产品{% endblocktrans %}
                                 </span>
                             </a>
                         {% empty %}
                             <div class="factory-structure-empty">
-                                当前工厂入口下没有产品分类。
+                                {% trans "当前工厂入口下没有产品分类。" %}
                             </div>
                         {% endfor %}
                     </div>
                 </section>
             {% empty %}
                 <div class="factory-structure-empty">
-                    该工厂尚未关联产品库中的任何科室入口。
+                    {% trans "该工厂尚未关联产品库中的任何科室入口。" %}
                 </div>
             {% endfor %}
         </div>
     </article>
 
     <article class="portal-panel master-full-width">
-        <h2 class="portal-panel-title">备注</h2>
+        <h2 class="portal-panel-title">{% trans "备注" %}</h2>
 
         <div class="master-notes">
             {{ factory.notes|default:"-"|linebreaksbr }}

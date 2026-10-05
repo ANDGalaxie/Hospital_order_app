@@ -1,30 +1,47 @@
+from portal.i18n import display_choice, display_choices
+from django.utils.translation import gettext as _, gettext_lazy
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core.paginator import Paginator
-from django.db.models import Prefetch, Q
+from django.db.models import (
+    BigIntegerField,
+    Case,
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Value,
+    When,
+)
+from django.db.models.functions import Cast
 from django.urls import reverse
 from django.utils import timezone
 
 from documents.models import GeneratedDocument
+from orders.models import Order, OrderItem
 from settlements.models import (
     PaymentTransaction,
     SettlementAccount,
 )
+from shipments.models import ShipmentBatch
 
 
 ZERO_MONEY = Decimal("0.00")
 
 PAYABLE_SORT_CHOICES = (
-    ("payment_priority", "待付款优先"),
-    ("arrival_asc", "预计到货：早 → 晚"),
-    ("generated_desc", "文件生成：新 → 旧"),
-    ("issue_desc", "开立日期：新 → 旧"),
-    ("remaining_desc", "待付金额：高 → 低"),
+    ("payment_priority", gettext_lazy("待付款优先")),
+    ("arrival_asc", gettext_lazy("预计到货：早 → 晚")),
+    ("generated_desc", gettext_lazy("文件生成：新 → 旧")),
+    ("issue_desc", gettext_lazy("开立日期：新 → 旧")),
+    ("remaining_desc", gettext_lazy("待付金额：高 → 低")),
 )
 
 STATUS_LABELS = dict(
-    SettlementAccount.Status.choices
+    display_choices(SettlementAccount.Status.choices)
 )
 
 STATUS_CLASSES = {
@@ -34,6 +51,216 @@ STATUS_CLASSES = {
     SettlementAccount.Status.OVERDUE: "overdue",
     SettlementAccount.Status.CANCELLED: "cancelled",
 }
+
+
+def get_frozen_document_amount(document, payload_key):
+    source_data = document.source_data
+
+    if not isinstance(source_data, dict):
+        return None
+
+    payload = source_data.get(payload_key)
+
+    if not isinstance(payload, dict):
+        return None
+
+    totals = payload.get("totals")
+
+    if not isinstance(totals, dict):
+        return None
+
+    raw_amount = totals.get("total_raw")
+
+    if raw_amount in [None, ""]:
+        return None
+
+    try:
+        amount = Decimal(str(raw_amount))
+    except (TypeError, ValueError, ArithmeticError):
+        return None
+
+    if not amount.is_finite():
+        return None
+
+    return amount
+
+
+def get_order_batch_comparison_queryset(query=""):
+    has_batch = ShipmentBatch.objects.filter(order_id=OuterRef("pk"))
+    numeric_bon_condition = Q(bon_de_commande__regex=r"^[0-9]+$")
+
+    queryset = (
+        Order.objects.annotate(
+            portal_has_batch=Exists(has_batch),
+            portal_bon_is_numeric=Case(
+                When(numeric_bon_condition, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            portal_bon_numeric=Case(
+                When(
+                    numeric_bon_condition,
+                    then=Cast("bon_de_commande", BigIntegerField()),
+                ),
+                default=Value(None),
+                output_field=BigIntegerField(),
+            ),
+        )
+        .filter(portal_has_batch=True)
+        .order_by(
+            "-portal_bon_is_numeric",
+            "-portal_bon_numeric",
+            "-id",
+        )
+    )
+
+    if query:
+        queryset = queryset.filter(bon_de_commande__icontains=query)
+
+    return queryset
+
+
+def build_order_batch_amount_rows(order_queryset=None):
+    """Expand complete order groups without recalculating document prices."""
+    if order_queryset is None:
+        order_queryset = get_order_batch_comparison_queryset()[:15]
+
+    order_items = OrderItem.objects.only(
+        "id",
+        "order_id",
+        "requested_quantity",
+        "hospital_unit_price",
+    ).order_by("id")
+    shipment_batches = ShipmentBatch.objects.only(
+        "id",
+        "order_id",
+        "batch_number",
+    ).order_by("batch_number", "id")
+
+    orders = list(
+        order_queryset.prefetch_related(
+            Prefetch(
+                "items",
+                queryset=order_items,
+                to_attr="portal_amount_items",
+            ),
+            Prefetch(
+                "shipment_batches",
+                queryset=shipment_batches,
+                to_attr="portal_amount_batches",
+            ),
+        )
+    )
+
+    batch_ids = [
+        batch.id
+        for order in orders
+        for batch in order.portal_amount_batches
+    ]
+    documents_by_batch = defaultdict(dict)
+
+    documents = (
+        GeneratedDocument.objects.filter(
+            shipment_batch_id__in=batch_ids,
+            document_type__in=[
+                GeneratedDocument.DocumentType.HOSPITAL_INVOICE,
+                GeneratedDocument.DocumentType.FACTORY_PO,
+            ],
+        )
+        .order_by("-generated_at", "-id")
+    )
+
+    for document in documents:
+        documents_by_batch[document.shipment_batch_id].setdefault(
+            document.document_type,
+            document,
+        )
+
+    rows = []
+
+    for order in orders:
+        order_total = ZERO_MONEY
+        order_data_invalid = not order.portal_amount_items
+
+        for item in order.portal_amount_items:
+            unit_price = item.hospital_unit_price
+
+            if unit_price is None or unit_price <= ZERO_MONEY:
+                order_data_invalid = True
+                continue
+
+            order_total += (
+                Decimal(item.requested_quantity or 0)
+                * Decimal(unit_price)
+            )
+
+        order_total = order_total.quantize(Decimal("0.01"))
+
+        for batch_index, batch in enumerate(order.portal_amount_batches):
+            batch_documents = documents_by_batch.get(batch.id, {})
+            invoice = batch_documents.get(
+                GeneratedDocument.DocumentType.HOSPITAL_INVOICE
+            )
+            factory_po = batch_documents.get(
+                GeneratedDocument.DocumentType.FACTORY_PO
+            )
+            invoice_amount = (
+                get_frozen_document_amount(invoice, "invoice_data")
+                if invoice
+                else None
+            )
+            factory_po_amount = (
+                get_frozen_document_amount(factory_po, "po_data")
+                if factory_po
+                else None
+            )
+            document_data_invalid = (
+                (invoice is not None and invoice_amount is None)
+                or (factory_po is not None and factory_po_amount is None)
+            )
+
+            if order_data_invalid or document_data_invalid:
+                status_text = _("数据异常")
+                status_class = "data-error"
+            elif invoice is None or factory_po is None:
+                status_text = _("待生成")
+                status_class = "pending"
+            else:
+                status_text = _("已生成")
+                status_class = "generated"
+
+            rows.append(
+                {
+                    "order_id": order.id,
+                    "batch_id": batch.id,
+                    "is_order_start": batch_index == 0,
+                    "order_number": (
+                        order.bon_de_commande if batch_index == 0 else ""
+                    ),
+                    "order_total": (
+                        order_total if batch_index == 0 else None
+                    ),
+                    "batch_number": batch.batch_number,
+                    "invoice": invoice,
+                    "invoice_amount": invoice_amount,
+                    "invoice_url": (
+                        reverse("portal:document_detail", args=[invoice.id])
+                        if invoice
+                        else ""
+                    ),
+                    "factory_po": factory_po,
+                    "factory_po_amount": factory_po_amount,
+                    "factory_po_url": (
+                        reverse("portal:document_detail", args=[factory_po.id])
+                        if factory_po
+                        else ""
+                    ),
+                    "status_text": status_text,
+                    "status_class": status_class,
+                }
+            )
+
+    return rows
 
 
 def parse_iso_date(value):
@@ -333,7 +560,7 @@ def decorate_account(account):
     )
 
     account.portal_direction_label = (
-        account.get_direction_display()
+        display_choice(account.get_direction_display())
     )
 
     return account
@@ -436,11 +663,11 @@ def build_settlement_home_context(request):
 
     cards = [
         {
-            "title": "医院应收",
+            "title": _("医院应收"),
             "subtitle": "Hospital Receivables",
             "description": (
-                "查看医院发票、到期日期、"
-                "已收金额和待收余额。"
+                _("查看医院发票、到期日期、"
+                "已收金额和待收余额。")
             ),
             "symbol": "AR",
             "theme": "receivable",
@@ -450,7 +677,7 @@ def build_settlement_home_context(request):
             "count": (
                 receivable_summary["count"]
             ),
-            "amount_label": "待收余额",
+            "amount_label": _("待收余额"),
             "amount": (
                 receivable_summary[
                     "remaining_total"
@@ -458,11 +685,11 @@ def build_settlement_home_context(request):
             ),
         },
         {
-            "title": "工厂应付",
+            "title": _("工厂应付"),
             "subtitle": "Factory Payables",
             "description": (
-                "查看工厂 PO、应付金额、"
-                "已付金额和待付余额。"
+                _("查看工厂 PO、应付金额、"
+                "已付金额和待付余额。")
             ),
             "symbol": "AP",
             "theme": "payable",
@@ -472,7 +699,7 @@ def build_settlement_home_context(request):
             "count": (
                 payable_summary["count"]
             ),
-            "amount_label": "待付余额",
+            "amount_label": _("待付余额"),
             "amount": (
                 payable_summary[
                     "remaining_total"
@@ -480,11 +707,11 @@ def build_settlement_home_context(request):
             ),
         },
         {
-            "title": "收付款流水",
+            "title": _("收付款流水"),
             "subtitle": "Payment Transactions",
             "description": (
-                "查看全部有效流水和"
-                "已冲销的收付款记录。"
+                _("查看全部有效流水和"
+                "已冲销的收付款记录。")
             ),
             "symbol": "TXN",
             "theme": "transaction",
@@ -492,7 +719,7 @@ def build_settlement_home_context(request):
                 "portal:settlement_transactions"
             ),
             "count": transaction_count,
-            "amount_label": "有效流水",
+            "amount_label": _("有效流水"),
             "amount": posted_transaction_count,
             "amount_is_money": False,
         },
@@ -512,7 +739,63 @@ def build_settlement_home_context(request):
         "posted_transaction_count": (
             posted_transaction_count
         ),
-        "recent_accounts": accounts[:8],
+        "order_batch_amount_rows": (
+            build_order_batch_amount_rows()
+        ),
+    }
+
+
+def build_settlement_comparison_context(request):
+    query = str(request.GET.get("q") or "").strip()
+    order_queryset = get_order_batch_comparison_queryset(query=query)
+    paginator = Paginator(order_queryset, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    rows = build_order_batch_amount_rows(page_obj.object_list)
+    filtered_order_ids = order_queryset.values("pk")
+
+    batch_count = ShipmentBatch.objects.filter(
+        order_id__in=filtered_order_ids
+    ).count()
+    document_counts = (
+        GeneratedDocument.objects.filter(
+            shipment_batch__order_id__in=filtered_order_ids,
+            document_type__in=[
+                GeneratedDocument.DocumentType.HOSPITAL_INVOICE,
+                GeneratedDocument.DocumentType.FACTORY_PO,
+            ],
+        )
+        .aggregate(
+            invoice_count=Count(
+                "id",
+                filter=Q(
+                    document_type=(
+                        GeneratedDocument.DocumentType.HOSPITAL_INVOICE
+                    )
+                ),
+            ),
+            po_count=Count(
+                "id",
+                filter=Q(
+                    document_type=GeneratedDocument.DocumentType.FACTORY_PO
+                ),
+            ),
+        )
+    )
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    return {
+        "rows": rows,
+        "page_obj": page_obj,
+        "query": query,
+        "query_without_page": query_params.urlencode(),
+        "summary": {
+            "order_count": paginator.count,
+            "batch_count": batch_count,
+            "invoice_count": document_counts["invoice_count"],
+            "po_count": document_counts["po_count"],
+        },
     }
 
 
@@ -592,9 +875,9 @@ def build_account_list_context(
     valid_statuses = {
         value
         for value, label
-        in SettlementAccount
+        in display_choices(SettlementAccount
         .Status
-        .choices
+        .choices)
     }
 
     if status_filter in valid_statuses:
@@ -689,15 +972,15 @@ def build_account_list_context(
         "issue_from": issue_from_text,
         "issue_to": issue_to_text,
         "status_choices": (
-            SettlementAccount
+            display_choices(SettlementAccount
             .Status
-            .choices
+            .choices)
         ),
         "direction": direction,
         "page_title": (
-            "医院应收"
+            _("医院应收")
             if is_receivable
-            else "工厂应付"
+            else _("工厂应付")
         ),
         "page_subtitle": (
             "Hospital Receivables"
@@ -705,19 +988,19 @@ def build_account_list_context(
             else "Factory Payables"
         ),
         "counterparty_label": (
-            "医院"
+            _("医院")
             if is_receivable
-            else "工厂"
+            else _("工厂")
         ),
         "posted_label": (
-            "已收"
+            _("已收")
             if is_receivable
-            else "已付"
+            else _("已付")
         ),
         "remaining_label": (
-            "待收"
+            _("待收")
             if is_receivable
-            else "待付"
+            else _("待付")
         ),
         "list_url": reverse(
             (
@@ -747,9 +1030,9 @@ def decorate_transaction(transaction):
     )
 
     transaction.portal_direction_label = (
-        "收款"
+        _("收款")
         if is_receivable
-        else "付款"
+        else _("付款")
     )
 
     transaction.portal_direction_class = (
@@ -853,9 +1136,9 @@ def build_transaction_list_context(
     valid_directions = {
         value
         for value, label
-        in SettlementAccount
+        in display_choices(SettlementAccount
         .Direction
-        .choices
+        .choices)
     }
 
     if direction_filter in valid_directions:
@@ -868,9 +1151,9 @@ def build_transaction_list_context(
     valid_statuses = {
         value
         for value, label
-        in PaymentTransaction
+        in display_choices(PaymentTransaction
         .Status
-        .choices
+        .choices)
     }
 
     if status_filter in valid_statuses:
@@ -881,9 +1164,9 @@ def build_transaction_list_context(
     valid_methods = {
         value
         for value, label
-        in PaymentTransaction
+        in display_choices(PaymentTransaction
         .Method
-        .choices
+        .choices)
     }
 
     if method_filter in valid_methods:
@@ -981,19 +1264,19 @@ def build_transaction_list_context(
         "date_from": date_from_text,
         "date_to": date_to_text,
         "direction_choices": (
-            SettlementAccount
+            display_choices(SettlementAccount
             .Direction
-            .choices
+            .choices)
         ),
         "status_choices": (
-            PaymentTransaction
+            display_choices(PaymentTransaction
             .Status
-            .choices
+            .choices)
         ),
         "method_choices": (
-            PaymentTransaction
+            display_choices(PaymentTransaction
             .Method
-            .choices
+            .choices)
         ),
         "transaction_count": len(
             transactions

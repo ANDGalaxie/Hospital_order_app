@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}工作台 |Acoeurs France{% endblock %}
+{% block title %}{% trans "工作台 |Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
@@ -10,8 +10,8 @@
 {% block content %}
     <section class="portal-page-header home-header">
         <div>
-            <h1>工作台</h1>
-            <p>请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。</p>
+            <h1>{% trans "工作台" %}</h1>
+            <p>{% trans "请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。" %}</p>
         </div>
     </section>
 

@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}产品库 | Acoeurs France{% endblock %}
+{% block title %}{% trans "产品库 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
@@ -10,19 +10,19 @@
 
 {% block breadcrumb %}
 <nav class="library-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <span>产品库</span>
+    <span>{% trans "产品库" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>产品库</h1>
-        <p>按科室、工厂和产品分类浏览全部产品资料。</p>
+        <h1>{% trans "产品库" %}</h1>
+        <p>{% trans "按科室、工厂和产品分类浏览全部产品资料。" %}</p>
     </div>
 </section>
 
@@ -32,13 +32,13 @@
             type="search"
             name="q"
             value="{{ query }}"
-            placeholder="搜索产品编号、描述、工厂或产品分类"
+            placeholder="{% trans "搜索产品编号、描述、工厂或产品分类" %}"
         >
-        <button class="portal-button primary" type="submit">搜索</button>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
 
         {% if query %}
             <a class="portal-button" href="{% url 'portal:library_products' %}">
-                清除
+                {% trans "清除" %}
             </a>
         {% endif %}
     </form>
@@ -48,8 +48,8 @@
 <section class="library-section">
     <div class="library-section-heading">
         <div>
-            <h2>搜索结果</h2>
-            <p>关键词：{{ query }}</p>
+            <h2>{% trans "搜索结果" %}</h2>
+            <p>{% blocktrans trimmed with value1=query %}关键词：{{ value1 }}{% endblocktrans %}</p>
         </div>
         <span class="count-badge">{{ search_results|length }}</span>
     </div>
@@ -58,12 +58,12 @@
         <table class="portal-table">
             <thead>
                 <tr>
-                    <th>产品编号</th>
-                    <th>描述</th>
-                    <th>分类路径</th>
-                    <th>工厂</th>
-                    <th>医院价格</th>
-                    <th>工厂价格</th>
+                    <th>{% trans "产品编号" %}</th>
+                    <th>{% trans "描述" %}</th>
+                    <th>{% trans "分类路径" %}</th>
+                    <th>{% trans "工厂" %}</th>
+                    <th>{% trans "医院价格" %}</th>
+                    <th>{% trans "工厂价格" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -90,7 +90,7 @@
                 {% empty %}
                     <tr>
                         <td colspan="6" class="portal-empty">
-                            没有找到匹配的产品。
+                            {% trans "没有找到匹配的产品。" %}
                         </td>
                     </tr>
                 {% endfor %}
@@ -103,8 +103,8 @@
 <section class="library-section">
     <div class="library-section-heading">
         <div>
-            <h2>科室</h2>
-            <p>选择一个科室，继续浏览该科室下的工厂。</p>
+            <h2>{% trans "科室" %}</h2>
+            <p>{% trans "选择一个科室，继续浏览该科室下的工厂。" %}</p>
         </div>
     </div>
 
@@ -115,19 +115,19 @@
                 <h3>{{ department.name }}</h3>
 
                 <div class="node-stat-row">
-                    <span>{{ department.factory_count }} 个工厂</span>
-                    <span>{{ department.category_count }} 个分类</span>
+                    <span>{% blocktrans trimmed with value1=department.factory_count %}{{ value1 }} 个工厂{% endblocktrans %}</span>
+                    <span>{% blocktrans trimmed with value1=department.category_count %}{{ value1 }} 个分类{% endblocktrans %}</span>
                 </div>
 
                 <div class="node-product-count">
-                    {{ department.product_count }} 个产品
+                    {% blocktrans trimmed with value1=department.product_count %}{{ value1 }} 个产品{% endblocktrans %}
                 </div>
 
                 <div class="node-arrow">›</div>
             </a>
         {% empty %}
             <div class="portal-panel">
-                暂无科室记录。
+                {% trans "暂无科室记录。" %}
             </div>
         {% endfor %}
 
@@ -135,8 +135,8 @@
             <a class="product-node-card add-node-card"
             href="{% url 'portal:library_product_department_add' %}">
                 <div class="node-icon add-icon">＋</div>
-                <h3>新增科室</h3>
-                <p>创建新的产品科室。</p>
+                <h3>{% trans "新增科室" %}</h3>
+                <p>{% trans "创建新的产品科室。" %}</p>
                 <div class="node-arrow">›</div>
             </a>
         {% endif %}

@@ -1,3 +1,5 @@
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
 
 from django import forms
@@ -44,26 +46,26 @@ class PricePolicyPortalForm(forms.ModelForm):
     """
 
     expiration_discount_percent = forms.DecimalField(
-        label="临期折扣率（%）",
+        label=_("临期折扣率（%）"),
         min_value=Decimal("0"),
         max_value=Decimal("100"),
         decimal_places=2,
         max_digits=6,
         initial=Decimal("30"),
         help_text=(
-            "输入 30 表示优惠 30%，"
-            "即工厂最终按原采购价的 70% 结算。"
+            _("输入 30 表示优惠 30%，"
+            "即工厂最终按原采购价的 70% 结算。")
         ),
     )
 
     category = ProductCategoryChoiceField(
-        label="产品分类",
+        label=_("产品分类"),
         queryset=ProductCategory.objects.none(),
         required=False,
-        empty_label="全部产品分类 / 工厂通用规则",
+        empty_label=_("全部产品分类 / 工厂通用规则"),
         help_text=(
-            "留空表示适用于所选工厂的全部产品。"
-            "工厂也留空时表示全局回退规则。"
+            _("留空表示适用于所选工厂的全部产品。"
+            "工厂也留空时表示全局回退规则。")
         ),
     )
 
@@ -84,34 +86,34 @@ class PricePolicyPortalForm(forms.ModelForm):
         )
 
         labels = {
-            "name": "规则名称",
-            "factory": "适用工厂",
-            "start_date": "开始日期",
-            "end_date": "结束日期",
-            "hospital_unit_price": "医院销售单价",
-            "factory_unit_price": "工厂采购单价",
-            "expiration_threshold_days": "临期门槛天数",
-            "notes": "备注",
-            "is_active": "启用",
+            "name": _("规则名称"),
+            "factory": _("适用工厂"),
+            "start_date": _("开始日期"),
+            "end_date": _("结束日期"),
+            "hospital_unit_price": _("医院销售单价"),
+            "factory_unit_price": _("工厂采购单价"),
+            "expiration_threshold_days": _("临期门槛天数"),
+            "notes": _("备注"),
+            "is_active": _("启用"),
         }
 
         help_texts = {
             "name": (
-                "建议包含工厂、分类和年份，"
-                "例如：SINOMED 支架 2026。"
+                _("建议包含工厂、分类和年份，"
+                "例如：SINOMED 支架 2026。")
             ),
             "factory": (
-                "留空表示全局回退规则。"
+                _("留空表示全局回退规则。")
             ),
             "start_date": (
-                "包含该日期。留空表示无下限。"
+                _("包含该日期。留空表示无下限。")
             ),
             "end_date": (
-                "包含该日期。留空表示长期有效。"
+                _("包含该日期。留空表示长期有效。")
             ),
             "expiration_threshold_days": (
-                "例如 365 表示距离有效期不足 "
-                "365 天时应用临期折扣。"
+                _("例如 365 表示距离有效期不足 "
+                "365 天时应用临期折扣。")
             ),
         }
 
@@ -190,6 +192,7 @@ class PricePolicyPortalForm(forms.ModelForm):
         )
 
         for field in self.fields.values():
+            field.help_text = gettext(str(field.help_text))
             widget = field.widget
 
             if isinstance(
@@ -253,7 +256,7 @@ class PricePolicyPortalForm(forms.ModelForm):
 
         if value < 0 or value > 100:
             raise forms.ValidationError(
-                "折扣率必须在 0% 到 100% 之间。"
+                _("折扣率必须在 0% 到 100% 之间。")
             )
 
         return value
@@ -291,13 +294,13 @@ class PricePolicyPortalForm(forms.ModelForm):
 
 class PricePolicySimulationForm(forms.Form):
     product = ProductChoiceField(
-        label="产品编号",
+        label=_("产品编号"),
         queryset=Product.objects.none(),
-        empty_label="请选择产品",
+        empty_label=_("请选择产品"),
     )
 
     target_date = forms.DateField(
-        label="医院订单日期",
+        label=_("医院订单日期"),
         widget=forms.DateInput(
             attrs={"type": "date"}
         ),
@@ -331,6 +334,7 @@ class PricePolicySimulationForm(forms.Form):
             ].initial = initial_date
 
         for field in self.fields.values():
+            field.help_text = gettext(str(field.help_text))
             field.widget.attrs.setdefault(
                 "class",
                 "master-form-control",

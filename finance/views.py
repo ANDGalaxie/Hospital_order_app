@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+from portal.i18n import display_choices
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -104,8 +106,7 @@ def parse_filter_date(
 
     if parsed_value is None:
         errors.append(
-            f"{label}格式无效，"
-            "请使用 YYYY-MM-DD。"
+            _('%(value1)s格式无效，请使用 YYYY-MM-DD。') % {'value1': label}
         )
 
     return parsed_value
@@ -146,13 +147,13 @@ def parse_finance_filters(request):
 
     date_from = parse_filter_date(
         date_from_raw,
-        "开始日期",
+        _("开始日期"),
         errors,
     )
 
     date_to = parse_filter_date(
         date_to_raw,
-        "结束日期",
+        _("结束日期"),
         errors,
     )
 
@@ -162,7 +163,7 @@ def parse_finance_filters(request):
         and date_from > date_to
     ):
         errors.append(
-            "开始日期不能晚于结束日期。"
+            _("开始日期不能晚于结束日期。")
         )
 
         date_from = None
@@ -221,6 +222,21 @@ def settlement_dashboard(request):
             ],
         )
     )
+
+    dashboard_data["kpi_cards"] = [
+        {**card, "label": _(card["label"]), "help": _(card["help"])}
+        for card in dashboard_data["kpi_cards"]
+    ]
+    dashboard_data["status_choices"] = display_choices(dashboard_data["status_choices"])
+    dashboard_data["chart_data"]["ui"] = {
+        "empty": _("暂无趋势数据"),
+        "sales": _("销售额"),
+        "purchases": _("采购额"),
+        "gross_profit": _("预计毛利润"),
+        "receipts": _("医院收款"),
+        "payments": _("工厂付款"),
+        "net_inflow": _("现金净流入"),
+    }
 
     reporting_currency = dashboard_data[
         "reporting_currency"

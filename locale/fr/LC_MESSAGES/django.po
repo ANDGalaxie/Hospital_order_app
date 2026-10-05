@@ -1,0 +1,5012 @@
+# Portal user interface translations.
+# Business data and formal documents are not translated by these catalogs.
+msgid ""
+msgstr ""
+"Project-Id-Version: hospital_order_app\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-05 12:25+0000\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: finance/templates/finance/settlement_dashboard.html:5
+msgid "财务数据 · Acoeur"
+msgstr "Données financières · Acoeur"
+
+#: finance/templates/finance/settlement_dashboard.html:17
+#: portal/templates/portal/backorders/detail.html:7
+#: portal/templates/portal/backorders/list.html:7
+#: portal/templates/portal/documents/detail.html:16
+#: portal/templates/portal/documents/home.html:14
+#: portal/templates/portal/documents/list.html:14
+#: portal/templates/portal/factory/detail.html:11
+#: portal/templates/portal/factory/list.html:11
+#: portal/templates/portal/factory/upload.html:11
+#: portal/templates/portal/library/coming_soon.html:7
+#: portal/templates/portal/library/factories/detail.html:13
+#: portal/templates/portal/library/factories/list.html:13
+#: portal/templates/portal/library/home.html:11
+#: portal/templates/portal/library/hospitals/detail.html:13
+#: portal/templates/portal/library/hospitals/list.html:13
+#: portal/templates/portal/library/prices/detail.html:15
+#: portal/templates/portal/library/prices/list.html:13
+#: portal/templates/portal/library/prices/simulator.html:15
+#: portal/templates/portal/library/products/category_detail.html:12
+#: portal/templates/portal/library/products/department_detail.html:12
+#: portal/templates/portal/library/products/factory_detail.html:12
+#: portal/templates/portal/library/products/home.html:13
+#: portal/templates/portal/library/products/product_detail.html:12
+#: portal/templates/portal/settlements/account_detail.html:16
+#: portal/templates/portal/settlements/account_list.html:14
+#: portal/templates/portal/settlements/comparison.html:13
+#: portal/templates/portal/settlements/home.html:14
+#: portal/templates/portal/settlements/transactions.html:14
+#: portal/templates/portal/shipments/detail.html:7
+#: portal/templates/portal/shipments/list.html:7 portal/views.py:314
+#: portal/views.py:393 portal/views.py:479 portal/views.py:573
+#: portal/views.py:679 portal/views.py:748 portal/views.py:885
+#: portal/views.py:954 portal/views.py:1100 portal/views.py:1179
+msgid "首页"
+msgstr "Accueil"
+
+#: finance/templates/finance/settlement_dashboard.html:19
+#: portal/services/home_portal_service.py:78
+msgid "财务数据"
+msgstr "Données financières"
+
+#: finance/templates/finance/settlement_dashboard.html:30
+msgid "财务实绩"
+msgstr "Résultats financiers"
+
+#: finance/templates/finance/settlement_dashboard.html:33
+msgid "基于正式 Invoice、Factory PO 和有效收付款流水计算。"
+msgstr ""
+"Calculés à partir des documents officiels Invoice et Factory PO et des "
+"transactions de paiement valides."
+
+#: finance/templates/finance/settlement_dashboard.html:39
+#, python-format
+msgid "记账币种：%(value1)s"
+msgstr "Devise comptable : %(value1)s"
+
+#: finance/templates/finance/settlement_dashboard.html:46
+#: portal/services/home_portal_service.py:88
+#: portal/templates/portal/settlements/account_detail.html:22
+#: portal/templates/portal/settlements/account_list.html:19
+#: portal/templates/portal/settlements/comparison.html:16
+#: portal/templates/portal/settlements/home.html:17
+#: portal/templates/portal/settlements/home.html:24
+#: portal/templates/portal/settlements/transactions.html:19
+msgid "发票与结算"
+msgstr "Factures et règlements"
+
+#: finance/templates/finance/settlement_dashboard.html:53
+#: portal/templates/portal/backorders/list.html:22
+msgid "导出 XLSX"
+msgstr "Exporter en XLSX"
+
+#: finance/templates/finance/settlement_dashboard.html:65
+#: portal/templates/portal/settlements/account_list.html:157
+msgid "开立日期从"
+msgstr "Date d’émission à partir du"
+
+#: finance/templates/finance/settlement_dashboard.html:78
+#: portal/templates/portal/settlements/account_list.html:170
+msgid "开立日期至"
+msgstr "Date d’émission jusqu’au"
+
+#: finance/templates/finance/settlement_dashboard.html:91
+#: finance/templates/finance/settlement_dashboard.html:353
+#: finance/templates/finance/settlement_dashboard.html:411
+#: finance/templates/finance/settlement_dashboard.html:469
+#: portal/services/settlement_portal_service.py:991
+#: portal/settlement_views.py:148
+#: portal/templates/portal/backorders/detail.html:31
+#: portal/templates/portal/backorders/list.html:37
+#: portal/templates/portal/backorders/list.html:47
+#: portal/templates/portal/documents/detail.html:154
+#: portal/templates/portal/orders/detail.html:99
+#: portal/templates/portal/orders/list.html:87
+#: portal/templates/portal/shipments/list.html:58
+#: portal/templates/portal/workflow/detail.html:34
+#: portal/templates/portal/workflow/list.html:84
+msgid "医院"
+msgstr "Hôpital"
+
+#: finance/templates/finance/settlement_dashboard.html:99
+#: portal/templates/portal/library/hospitals/list.html:123
+msgid "医院名称"
+msgstr "Nom de l’hôpital"
+
+#: finance/templates/finance/settlement_dashboard.html:105
+#: finance/templates/finance/settlement_dashboard.html:470
+#: portal/services/settlement_portal_service.py:993
+#: portal/settlement_views.py:150
+#: portal/templates/portal/documents/detail.html:161
+#: portal/templates/portal/factory/detail.html:88
+#: portal/templates/portal/factory/list.html:51
+#: portal/templates/portal/library/prices/list.html:91
+#: portal/templates/portal/library/prices/list.html:208
+#: portal/templates/portal/library/prices/simulator.html:98
+#: portal/templates/portal/library/products/category_detail.html:79
+#: portal/templates/portal/library/products/home.html:64
+#: portal/templates/portal/orders/detail.html:104
+msgid "工厂"
+msgstr "Usine"
+
+#: finance/templates/finance/settlement_dashboard.html:113
+msgid "工厂名称"
+msgstr "Nom de l’usine"
+
+#: finance/templates/finance/settlement_dashboard.html:119
+#: finance/templates/finance/settlement_dashboard.html:468
+#: portal/templates/portal/factory/detail.html:70
+#: portal/templates/portal/factory/list.html:50
+#: portal/templates/portal/orders/detail.html:94
+#: portal/templates/portal/orders/list.html:86
+#: portal/templates/portal/settlements/account_list.html:214
+#: portal/templates/portal/settlements/transactions.html:214
+#: portal/templates/portal/workflow/detail.html:29
+#: portal/templates/portal/workflow/list.html:83
+msgid "订单号"
+msgstr "Numéro de commande"
+
+#: finance/templates/finance/settlement_dashboard.html:133
+msgid "结算状态"
+msgstr "État du règlement"
+
+#: finance/templates/finance/settlement_dashboard.html:141
+#: portal/templates/portal/library/prices/list.html:150
+#: portal/templates/portal/settlements/account_list.html:98
+#: portal/templates/portal/shipments/list.html:42
+msgid "全部状态"
+msgstr "Tous les statuts"
+
+#: finance/templates/finance/settlement_dashboard.html:162
+#: portal/templates/portal/backorders/list.html:38
+#: portal/templates/portal/shipments/list.html:47
+msgid "筛选"
+msgstr "Filtrer"
+
+#: finance/templates/finance/settlement_dashboard.html:170
+#: portal/templates/portal/library/products/category_detail.html:67
+#: portal/templates/portal/library/products/home.html:41
+#: portal/templates/portal/orders/list.html:66
+#: portal/templates/portal/settlements/comparison.html:87
+#: portal/templates/portal/workflow/list.html:63
+msgid "清除"
+msgstr "Effacer"
+
+#: finance/templates/finance/settlement_dashboard.html:205
+msgid "暂无财务数据。"
+msgstr "Aucune donnée financière."
+
+#: finance/templates/finance/settlement_dashboard.html:217
+msgid "权责发生趋势"
+msgstr "Évolution en droits constatés"
+
+#: finance/templates/finance/settlement_dashboard.html:221
+msgid "按 Invoice / PO 开立月份"
+msgstr "Par mois d’émission des Invoice / PO"
+
+#: finance/templates/finance/settlement_dashboard.html:230
+msgid "权责发生趋势图"
+msgstr "Graphique d’évolution en droits constatés"
+
+#: finance/templates/finance/settlement_dashboard.html:237
+#: finance/templates/finance/settlement_dashboard.html:297
+#: portal/templates/portal/documents/list.html:127
+msgid "月份"
+msgstr "Mois"
+
+#: finance/templates/finance/settlement_dashboard.html:238
+#: finance/templates/finance/settlement_dashboard.html:473 finance/views.py:233
+msgid "销售额"
+msgstr "Ventes"
+
+#: finance/templates/finance/settlement_dashboard.html:239
+#: finance/templates/finance/settlement_dashboard.html:474 finance/views.py:234
+msgid "采购额"
+msgstr "Achats"
+
+#: finance/templates/finance/settlement_dashboard.html:240 finance/views.py:235
+#: portal/i18n.py:123
+msgid "预计毛利润"
+msgstr "Marge brute estimée"
+
+#: finance/templates/finance/settlement_dashboard.html:262
+msgid "尚无正式 Invoice 或 PO。"
+msgstr "Aucune Invoice ou PO officielle."
+
+#: finance/templates/finance/settlement_dashboard.html:277
+msgid "实际现金流"
+msgstr "Flux de trésorerie réels"
+
+#: finance/templates/finance/settlement_dashboard.html:281
+msgid "按实际收付款日期"
+msgstr "Par date réelle d’encaissement ou de paiement"
+
+#: finance/templates/finance/settlement_dashboard.html:290
+msgid "实际现金流趋势图"
+msgstr "Graphique des flux de trésorerie réels"
+
+#: finance/templates/finance/settlement_dashboard.html:298 finance/views.py:236
+msgid "医院收款"
+msgstr "Encaissements hospitaliers"
+
+#: finance/templates/finance/settlement_dashboard.html:299 finance/views.py:237
+msgid "工厂付款"
+msgstr "Paiements fournisseurs"
+
+#: finance/templates/finance/settlement_dashboard.html:300 finance/views.py:238
+msgid "现金净流入"
+msgstr "Entrées nettes de trésorerie"
+
+#: finance/templates/finance/settlement_dashboard.html:322
+msgid "尚未登记有效收付款流水。"
+msgstr "Aucune transaction de paiement valide enregistrée."
+
+#: finance/templates/finance/settlement_dashboard.html:339
+#: portal/templates/portal/settlements/home.html:54
+msgid "逾期应收"
+msgstr "Créances échues"
+
+#: finance/templates/finance/settlement_dashboard.html:351
+#: finance/templates/finance/settlement_dashboard.html:409
+#: portal/services/home_portal_service.py:45
+msgid "订单"
+msgstr "Commandes"
+
+#: finance/templates/finance/settlement_dashboard.html:354
+#: finance/templates/finance/settlement_dashboard.html:412
+#: portal/templates/portal/settlements/account_list.html:217
+msgid "截止日期"
+msgstr "Échéance"
+
+#: finance/templates/finance/settlement_dashboard.html:355
+#: finance/templates/finance/settlement_dashboard.html:413
+#: finance/templates/finance/settlement_dashboard.html:478
+#: portal/services/settlement_portal_service.py:1001
+msgid "待收"
+msgstr "À recevoir"
+
+#: finance/templates/finance/settlement_dashboard.html:382
+msgid "当前没有逾期应收。"
+msgstr "Aucune créance échue."
+
+#: finance/templates/finance/settlement_dashboard.html:397
+#: portal/templates/portal/settlements/account_list.html:131
+msgid "30 天内到期"
+msgstr "Échéance sous 30 jours"
+
+#: finance/templates/finance/settlement_dashboard.html:440
+msgid "30 天内没有即将到期应收。"
+msgstr "Aucune créance à échéance dans les 30 jours."
+
+#: finance/templates/finance/settlement_dashboard.html:456
+msgid "订单财务明细"
+msgstr "Détail financier des commandes"
+
+#: finance/templates/finance/settlement_dashboard.html:460
+#, python-format
+msgid "%(value1)s 个订单"
+msgstr "%(value1)s commandes"
+
+#: finance/templates/finance/settlement_dashboard.html:475
+msgid "预计毛利"
+msgstr "Marge brute estimée"
+
+#: finance/templates/finance/settlement_dashboard.html:476
+#: portal/services/settlement_portal_service.py:996
+msgid "已收"
+msgstr "Reçu"
+
+#: finance/templates/finance/settlement_dashboard.html:477
+#: portal/services/settlement_portal_service.py:998
+msgid "已付"
+msgstr "Payé"
+
+#: finance/templates/finance/settlement_dashboard.html:479
+#: portal/services/settlement_portal_service.py:1003
+msgid "待付"
+msgstr "À payer"
+
+#: finance/templates/finance/settlement_dashboard.html:529
+msgid "尚无正式财务订单数据。"
+msgstr "Aucune donnée financière officielle de commande."
+
+#: finance/templates/finance/settlement_dashboard.html:539
+#, python-format
+msgid ""
+"数据生成时间： %(value1)s · 有效结算账户： %(value2)s · 有效流水： %(value3)s"
+msgstr ""
+"Données générées le : %(value1)s · Comptes de règlement valides : %(value2)s "
+"· Transactions valides : %(value3)s"
+
+#: finance/views.py:109
+#, python-format
+msgid "%(value1)s格式无效，请使用 YYYY-MM-DD。"
+msgstr "Format de %(value1)s invalide. Utilisez AAAA-MM-JJ."
+
+#: finance/views.py:150 portal/forms/price_policy_forms.py:91
+#: portal/templates/portal/documents/list.html:178
+#: portal/templates/portal/library/prices/detail.html:149
+msgid "开始日期"
+msgstr "Date de début"
+
+#: finance/views.py:156 portal/forms/price_policy_forms.py:92
+#: portal/templates/portal/documents/list.html:191
+#: portal/templates/portal/library/prices/detail.html:156
+msgid "结束日期"
+msgstr "Date de fin"
+
+#: finance/views.py:166
+msgid "开始日期不能晚于结束日期。"
+msgstr "La date de début ne peut pas être postérieure à la date de fin."
+
+#: finance/views.py:232
+msgid "暂无趋势数据"
+msgstr "Aucune donnée de tendance"
+
+#: portal/forms/factory_library_forms.py:32
+msgid "工厂正式名称"
+msgstr "Nom officiel de l’usine"
+
+#: portal/forms/factory_library_forms.py:33
+#: portal/templates/portal/library/factories/detail.html:110
+msgid "完整法律名称"
+msgstr "Dénomination légale complète"
+
+#: portal/forms/factory_library_forms.py:34
+msgid "工厂简称"
+msgstr "Nom abrégé de l’usine"
+
+#: portal/forms/factory_library_forms.py:35
+#: portal/services/factory_library_portal_service.py:196
+#: portal/templates/portal/library/factories/detail.html:171
+msgid "工厂地址"
+msgstr "Adresse de l’usine"
+
+#: portal/forms/factory_library_forms.py:36
+#: portal/forms/product_library_forms.py:150
+#: portal/services/factory_library_portal_service.py:200
+#: portal/templates/portal/library/factories/detail.html:141
+msgid "采购联系人 / Buyer"
+msgstr "Contact achats / Buyer"
+
+#: portal/forms/factory_library_forms.py:37
+#: portal/templates/portal/library/factories/detail.html:148
+msgid "默认产品描述"
+msgstr "Description du produit par défaut"
+
+#: portal/forms/factory_library_forms.py:38
+#: portal/forms/product_library_forms.py:155
+#: portal/services/factory_library_portal_service.py:205
+#: portal/templates/portal/library/factories/detail.html:181
+msgid "自动匹配关键词"
+msgstr "Mots-clés de rapprochement automatique"
+
+#: portal/forms/factory_library_forms.py:39
+#: portal/forms/hospital_library_forms.py:60
+#: portal/forms/price_policy_forms.py:96
+#: portal/forms/product_library_forms.py:52
+#: portal/forms/product_library_forms.py:171
+#: portal/forms/product_library_forms.py:377
+#: portal/forms/product_library_forms.py:448
+#: portal/templates/portal/documents/detail.html:327
+#: portal/templates/portal/library/factories/detail.html:257
+#: portal/templates/portal/library/hospitals/detail.html:164
+#: portal/templates/portal/library/prices/detail.html:264
+#: portal/templates/portal/library/prices/form.html:227
+#: portal/templates/portal/library/products/product_detail.html:115
+#: portal/templates/portal/orders/detail.html:382 settlements/forms.py:44
+msgid "备注"
+msgstr "Notes"
+
+#: portal/forms/factory_library_forms.py:40
+#: portal/forms/hospital_library_forms.py:61
+#: portal/forms/price_policy_forms.py:97
+#: portal/forms/product_library_forms.py:53
+#: portal/forms/product_library_forms.py:179
+#: portal/forms/product_library_forms.py:378
+#: portal/forms/product_library_forms.py:449
+#: portal/templates/portal/library/factories/detail.html:31
+#: portal/templates/portal/library/factories/detail.html:127
+#: portal/templates/portal/library/factories/list.html:81
+#: portal/templates/portal/library/factories/list.html:133
+#: portal/templates/portal/library/hospitals/detail.html:30
+#: portal/templates/portal/library/hospitals/list.html:80
+#: portal/templates/portal/library/hospitals/list.html:161
+#: portal/templates/portal/library/prices/detail.html:239
+#: portal/templates/portal/library/products/category_detail.html:101
+#: portal/templates/portal/library/products/product_detail.html:72
+msgid "启用"
+msgstr "Actif"
+
+#: portal/forms/factory_library_forms.py:45 portal/i18n.py:131
+msgid "产品库卡片和日常页面优先显示此简称。"
+msgstr ""
+"Ce nom abrégé est utilisé en priorité sur les fiches produits et les pages "
+"courantes."
+
+#: portal/forms/factory_library_forms.py:48 portal/i18n.py:150
+msgid "生成 Factory Purchase Order 时使用的默认描述。"
+msgstr ""
+"Description par défaut utilisée pour générer une Factory Purchase Order."
+
+#: portal/forms/factory_library_forms.py:51 portal/i18n.py:149
+msgid "每行填写一个关键词，例如简称、英文名、地址关键词。"
+msgstr ""
+"Saisissez un mot-clé par ligne : nom abrégé, nom anglais ou élément "
+"d’adresse."
+
+#: portal/forms/factory_library_forms.py:105
+msgid "工厂库中已经存在相同正式名称的工厂。"
+msgstr "Une usine portant ce nom officiel existe déjà."
+
+#: portal/forms/factory_library_forms.py:130
+msgid "工厂库中已经存在相同简称的工厂。"
+msgstr "Une usine portant ce nom abrégé existe déjà."
+
+#: portal/forms/hospital_library_forms.py:53
+#: portal/templates/portal/library/hospitals/detail.html:82
+msgid "医院正式名称"
+msgstr "Nom officiel de l’hôpital"
+
+#: portal/forms/hospital_library_forms.py:54
+#: portal/services/hospital_library_portal_service.py:115
+#: portal/templates/portal/library/hospitals/detail.html:148
+#: portal/templates/portal/library/hospitals/list.html:124
+#: portal/templates/portal/orders/detail.html:168
+msgid "账单地址"
+msgstr "Adresse de facturation"
+
+#: portal/forms/hospital_library_forms.py:55
+#: portal/services/hospital_library_portal_service.py:118
+#: portal/templates/portal/library/hospitals/detail.html:155
+#: portal/templates/portal/library/hospitals/list.html:125
+msgid "默认收货地址"
+msgstr "Adresse de livraison par défaut"
+
+#: portal/forms/hospital_library_forms.py:56
+#: portal/templates/portal/library/hospitals/detail.html:114
+#: portal/templates/portal/library/hospitals/list.html:126
+msgid "联系人"
+msgstr "Contact"
+
+#: portal/forms/hospital_library_forms.py:57
+#: portal/templates/portal/library/hospitals/detail.html:121
+#: portal/templates/portal/library/hospitals/list.html:127
+msgid "电话"
+msgstr "Téléphone"
+
+#: portal/forms/hospital_library_forms.py:58
+#: portal/templates/portal/library/hospitals/detail.html:128
+msgid "传真"
+msgstr "Fax"
+
+#: portal/forms/hospital_library_forms.py:59
+#: portal/templates/portal/library/hospitals/detail.html:135
+msgid "邮箱"
+msgstr "E-mail"
+
+#: portal/forms/hospital_library_forms.py:111
+msgid "已经存在同名医院。"
+msgstr "Un hôpital portant ce nom existe déjà."
+
+#: portal/forms/price_policy_forms.py:49
+msgid "临期折扣率（%）"
+msgstr "Remise pour péremption proche (%)"
+
+#: portal/forms/price_policy_forms.py:56 portal/i18n.py:153
+msgid "输入 30 表示优惠 30%，即工厂最终按原采购价的 70% 结算。"
+msgstr ""
+"Saisissez 30 pour une remise de 30 % : le règlement à l’usine correspond à "
+"70 % du prix d’achat initial."
+
+#: portal/forms/price_policy_forms.py:62
+#: portal/templates/portal/library/factories/detail.html:84
+#: portal/templates/portal/library/prices/detail.html:135
+#: portal/templates/portal/library/prices/list.html:116
+#: portal/templates/portal/library/prices/list.html:209
+#: portal/templates/portal/library/prices/simulator.html:105
+#: portal/templates/portal/library/products/product_detail.html:90
+msgid "产品分类"
+msgstr "Catégorie de produits"
+
+#: portal/forms/price_policy_forms.py:65
+msgid "全部产品分类 / 工厂通用规则"
+msgstr "Toutes les catégories / Règle générale de l’usine"
+
+#: portal/forms/price_policy_forms.py:67 portal/i18n.py:152
+msgid "留空表示适用于所选工厂的全部产品。工厂也留空时表示全局回退规则。"
+msgstr ""
+"Laissez vide pour couvrir tous les produits de l’usine sélectionnée. Sans "
+"usine, la règle sert de règle de repli globale."
+
+#: portal/forms/price_policy_forms.py:89
+#: portal/templates/portal/library/prices/list.html:207
+msgid "规则名称"
+msgstr "Nom de la règle"
+
+#: portal/forms/price_policy_forms.py:90
+#: portal/templates/portal/library/prices/detail.html:121
+msgid "适用工厂"
+msgstr "Usine concernée"
+
+#: portal/forms/price_policy_forms.py:93
+#: portal/templates/portal/library/prices/detail.html:82
+msgid "医院销售单价"
+msgstr "Prix de vente unitaire à l’hôpital"
+
+#: portal/forms/price_policy_forms.py:94
+#: portal/templates/portal/library/prices/detail.html:89
+msgid "工厂采购单价"
+msgstr "Prix d’achat unitaire à l’usine"
+
+#: portal/forms/price_policy_forms.py:95
+msgid "临期门槛天数"
+msgstr "Seuil de péremption en jours"
+
+#: portal/forms/price_policy_forms.py:102 portal/i18n.py:147
+msgid "建议包含工厂、分类和年份，例如：SINOMED 支架 2026。"
+msgstr ""
+"Indiquez l’usine, la catégorie et l’année, par exemple : SINOMED Stents 2026."
+
+#: portal/forms/price_policy_forms.py:106 portal/i18n.py:151
+msgid "留空表示全局回退规则。"
+msgstr "Laissez vide pour une règle de repli globale."
+
+#: portal/forms/price_policy_forms.py:109 portal/i18n.py:137
+msgid "包含该日期。留空表示无下限。"
+msgstr "Date incluse. Laissez vide pour ne pas fixer de limite de début."
+
+#: portal/forms/price_policy_forms.py:112 portal/i18n.py:138
+msgid "包含该日期。留空表示长期有效。"
+msgstr "Date incluse. Laissez vide pour une durée de validité illimitée."
+
+#: portal/forms/price_policy_forms.py:115 portal/i18n.py:135
+msgid "例如 365 表示距离有效期不足 365 天时应用临期折扣。"
+msgstr ""
+"Par exemple, 365 applique la remise lorsqu’il reste moins de 365 jours avant "
+"péremption."
+
+#: portal/forms/price_policy_forms.py:259
+msgid "折扣率必须在 0% 到 100% 之间。"
+msgstr "La remise doit être comprise entre 0 % et 100 %."
+
+#: portal/forms/price_policy_forms.py:297
+#: portal/forms/product_library_forms.py:444
+#: portal/templates/portal/library/prices/simulator.html:91
+#: portal/templates/portal/library/products/category_detail.html:77
+#: portal/templates/portal/library/products/home.html:61
+#: portal/templates/portal/library/products/product_detail.html:64
+msgid "产品编号"
+msgstr "Référence produit"
+
+#: portal/forms/price_policy_forms.py:299
+msgid "请选择产品"
+msgstr "Sélectionnez un produit"
+
+#: portal/forms/price_policy_forms.py:303
+#: portal/templates/portal/library/prices/simulator.html:112
+msgid "医院订单日期"
+msgstr "Date de commande de l’hôpital"
+
+#: portal/forms/product_library_forms.py:50
+msgid "科室名称"
+msgstr "Nom du service"
+
+#: portal/forms/product_library_forms.py:51
+#: portal/forms/product_library_forms.py:164
+#: portal/forms/product_library_forms.py:376
+msgid "显示顺序"
+msgstr "Ordre d’affichage"
+
+#: portal/forms/product_library_forms.py:78
+msgid "已经存在同名科室。"
+msgstr "Un service portant ce nom existe déjà."
+
+#: portal/forms/product_library_forms.py:106
+msgid "添加方式"
+msgstr "Mode d’ajout"
+
+#: portal/forms/product_library_forms.py:112
+msgid "选择已有工厂"
+msgstr "Sélectionner une usine existante"
+
+#: portal/forms/product_library_forms.py:115
+msgid "请选择工厂"
+msgstr "Sélectionnez une usine"
+
+#: portal/forms/product_library_forms.py:119
+msgid "卡片显示名称"
+msgstr "Nom affiché sur la fiche"
+
+#: portal/forms/product_library_forms.py:122
+msgid "可留空。留空时自动使用工厂简称或正式名称。"
+msgstr ""
+"Facultatif. Si ce champ est vide, le nom abrégé ou officiel de l’usine est "
+"utilisé."
+
+#: portal/forms/product_library_forms.py:127
+msgid "新工厂正式名称"
+msgstr "Nom officiel de la nouvelle usine"
+
+#: portal/forms/product_library_forms.py:132
+msgid "新工厂法律名称"
+msgstr "Dénomination légale de la nouvelle usine"
+
+#: portal/forms/product_library_forms.py:137
+msgid "新工厂简称"
+msgstr "Nom abrégé de la nouvelle usine"
+
+#: portal/forms/product_library_forms.py:142
+msgid "新工厂地址"
+msgstr "Adresse de la nouvelle usine"
+
+#: portal/forms/product_library_forms.py:160
+msgid "每行一个关键词。"
+msgstr "Un mot-clé par ligne."
+
+#: portal/forms/product_library_forms.py:199
+msgid "关联已有工厂"
+msgstr "Associer une usine existante"
+
+#: portal/forms/product_library_forms.py:207
+msgid "创建新工厂"
+msgstr "Créer une usine"
+
+#: portal/forms/product_library_forms.py:245
+msgid "请选择一个已有工厂。"
+msgstr "Sélectionnez une usine existante."
+
+#: portal/forms/product_library_forms.py:251
+msgid "当前用户没有创建工厂的权限。"
+msgstr "Vous n’avez pas l’autorisation de créer des usines."
+
+#: portal/forms/product_library_forms.py:267
+msgid "请输入新工厂正式名称。"
+msgstr "Saisissez le nom officiel de la nouvelle usine."
+
+#: portal/forms/product_library_forms.py:283
+msgid "工厂库中似乎已经存在该工厂，请改用“关联已有工厂”。"
+msgstr ""
+"Cette usine semble déjà exister. Utilisez « Associer une usine existante »."
+
+#: portal/forms/product_library_forms.py:375
+msgid "产品分类名称"
+msgstr "Nom de la catégorie de produits"
+
+#: portal/forms/product_library_forms.py:409
+msgid "该工厂下已经存在同名产品分类。"
+msgstr "Une catégorie de produits portant ce nom existe déjà pour cette usine."
+
+#: portal/forms/product_library_forms.py:445
+#: portal/templates/portal/library/products/product_detail.html:110
+msgid "产品描述"
+msgstr "Description du produit"
+
+#: portal/forms/product_library_forms.py:446
+#: portal/templates/portal/library/products/product_detail.html:100
+msgid "医院销售价格"
+msgstr "Prix de vente à l’hôpital"
+
+#: portal/forms/product_library_forms.py:447
+#: portal/templates/portal/library/products/product_detail.html:105
+msgid "工厂采购价格"
+msgstr "Prix d’achat à l’usine"
+
+#: portal/forms/product_library_forms.py:479
+msgid "该产品编号已经存在。"
+msgstr "Cette référence produit existe déjà."
+
+#: portal/forms/product_library_forms.py:491
+msgid "当前产品分类没有关联真实工厂，无法创建产品。"
+msgstr ""
+"Cette catégorie n’est pas associée à une fiche usine ; impossible de créer "
+"un produit."
+
+#: portal/i18n.py:8 portal/i18n.py:9
+#: portal/services/backorder_portal_service.py:21
+#: portal/services/order_portal_service.py:183
+#: portal/services/shipment_portal_service.py:33
+#: portal/services/workflow_portal_service.py:137
+#: portal/templates/portal/workflow/list.html:40
+msgid "已完成"
+msgstr "Terminé"
+
+#: portal/i18n.py:10
+msgid "Factory Order Request"
+msgstr "Factory Order Request"
+
+#: portal/i18n.py:11
+msgid "Factory Purchase Order"
+msgstr "Factory Purchase Order"
+
+#: portal/i18n.py:12 portal/services/order_portal_service.py:185
+msgid "失败"
+msgstr "Échec"
+
+#: portal/i18n.py:13
+msgid "Hospital Invoice"
+msgstr "Hospital Invoice"
+
+#: portal/i18n.py:14 portal/templates/portal/factory/detail.html:124
+msgid "人工确认"
+msgstr "Confirmation manuelle"
+
+#: portal/i18n.py:15 portal/i18n.py:57
+#: portal/services/shipment_portal_service.py:24
+#: portal/services/shipment_portal_service.py:35
+#: portal/services/workflow_portal_service.py:72
+msgid "需要人工检查"
+msgstr "Vérification manuelle requise"
+
+#: portal/i18n.py:16 portal/services/order_portal_service.py:1082
+msgid "待检查"
+msgstr "À vérifier"
+
+#: portal/i18n.py:17 portal/i18n.py:44
+#: portal/services/factory_portal_service.py:76
+#: portal/services/factory_portal_service.py:77
+#: portal/services/factory_portal_service.py:81
+#: portal/services/factory_portal_service.py:755
+#: portal/services/order_portal_service.py:96
+#: portal/services/order_portal_service.py:1058
+#: portal/templates/portal/orders/list.html:33
+msgid "待提取"
+msgstr "À extraire"
+
+#: portal/i18n.py:18 portal/services/factory_portal_service.py:760
+#: portal/services/order_portal_service.py:1080
+msgid "已就绪"
+msgstr "Prêt"
+
+#: portal/i18n.py:19 portal/services/shipment_portal_service.py:31
+msgid "待处理"
+msgstr "En attente"
+
+#: portal/i18n.py:20 portal/services/factory_portal_service.py:304
+#: portal/services/shipment_portal_service.py:34
+msgid "超发"
+msgstr "Sur-livraison"
+
+#: portal/i18n.py:21 portal/i18n.py:39
+#: portal/services/backorder_portal_service.py:20
+#: portal/templates/portal/settlements/account_list.html:126
+msgid "已逾期"
+msgstr "En retard"
+
+#: portal/i18n.py:22 portal/services/shipment_portal_service.py:32
+msgid "部分完成"
+msgstr "Partiellement terminé"
+
+#: portal/i18n.py:23 portal/services/backorder_portal_service.py:19
+msgid "已计划"
+msgstr "Planifié"
+
+#: portal/i18n.py:24 portal/i18n.py:46
+msgid "提取成功"
+msgstr "Extraction réussie"
+
+#: portal/i18n.py:25 portal/services/shipment_portal_service.py:17
+msgid "人工记录"
+msgstr "Saisie manuelle"
+
+#: portal/i18n.py:26
+msgid "作废"
+msgstr "Annulé"
+
+#: portal/i18n.py:27
+msgid "其他"
+msgstr "Autre"
+
+#: portal/i18n.py:28 portal/services/settlement_portal_service.py:666
+#: portal/services/settlement_portal_service.py:981
+#: portal/templates/portal/settlements/account_detail.html:29
+msgid "医院应收"
+msgstr "Créances hospitalières"
+
+#: portal/i18n.py:29
+msgid "可以生成文件"
+msgstr "Prêt à générer les documents"
+
+#: portal/i18n.py:30
+msgid "可用"
+msgstr "Disponible"
+
+#: portal/i18n.py:31 portal/services/settlement_portal_service.py:688
+#: portal/services/settlement_portal_service.py:983
+#: portal/templates/portal/settlements/account_detail.html:33
+msgid "工厂应付"
+msgstr "Dettes fournisseurs"
+
+#: portal/i18n.py:32
+msgid "工厂确认文件"
+msgstr "Document de confirmation de l’usine"
+
+#: portal/i18n.py:33
+msgid "已付款"
+msgstr "Payé"
+
+#: portal/i18n.py:34 portal/templates/portal/settlements/transactions.html:57
+msgid "已冲销"
+msgstr "Contrepassé"
+
+#: portal/i18n.py:35
+msgid "已分配"
+msgstr "Affecté"
+
+#: portal/i18n.py:36 portal/services/workflow_portal_service.py:96
+msgid "已取消"
+msgstr "Annulé"
+
+#: portal/i18n.py:37
+msgid "已生成发货批次"
+msgstr "Lot d’expédition créé"
+
+#: portal/i18n.py:38
+msgid "已结清"
+msgstr "Soldé"
+
+#: portal/i18n.py:40
+msgid "已预留"
+msgstr "Réservé"
+
+#: portal/i18n.py:41
+msgid "库存产品"
+msgstr "Produits en stock"
+
+#: portal/i18n.py:42 portal/services/workflow_portal_service.py:112
+msgid "库存分配"
+msgstr "Affectation de stock"
+
+#: portal/i18n.py:43
+msgid "待发产品"
+msgstr "Produits à expédier"
+
+#: portal/i18n.py:45 portal/services/factory_portal_service.py:75
+#: portal/services/factory_portal_service.py:752
+#: portal/services/order_portal_service.py:91
+#: portal/services/order_portal_service.py:1061
+msgid "提取失败"
+msgstr "Échec de l’extraction"
+
+#: portal/i18n.py:47
+msgid "支票"
+msgstr "Chèque"
+
+#: portal/i18n.py:48
+msgid "有效"
+msgstr "Valide"
+
+#: portal/i18n.py:49
+msgid "未付款"
+msgstr "Non payé"
+
+#: portal/i18n.py:50
+msgid "现金"
+msgstr "Espèces"
+
+#: portal/i18n.py:51
+msgid "禁止生成文件"
+msgstr "Génération des documents bloquée"
+
+#: portal/i18n.py:52 portal/templates/portal/factory/detail.html:224
+msgid "补发货"
+msgstr "Livraison de reliquat"
+
+#: portal/i18n.py:53
+msgid "调整 / 特殊情况"
+msgstr "Ajustement / Cas particulier"
+
+#: portal/i18n.py:54
+msgid "部分付款"
+msgstr "Partiellement payé"
+
+#: portal/i18n.py:55
+msgid "银行卡"
+msgstr "Carte bancaire"
+
+#: portal/i18n.py:56
+msgid "银行转账"
+msgstr "Virement bancaire"
+
+#: portal/i18n.py:58
+msgid "预计可发产品"
+msgstr "Produits bientôt disponibles"
+
+#: portal/i18n.py:59 portal/templates/portal/factory/detail.html:223
+msgid "首批发货"
+msgstr "Première livraison"
+
+#: portal/i18n.py:74
+msgid ""
+"Factory PO 定价要求 ShipmentBatch 关联 FactoryConfirmation 或 "
+"InventoryAllocation。"
+msgstr "La tarification d’une Factory PO exige que ShipmentBatch soit associé à FactoryConfirmation ou InventoryAllocation."
+
+#: portal/i18n.py:75
+msgid "没有成功提取 bon de commande。"
+msgstr "Le bon de commande n’a pas pu être extrait."
+
+#: portal/i18n.py:76
+msgid "没有成功提取医院订单日期。"
+msgstr "La date de commande de l’hôpital n’a pas pu être extraite."
+
+#: portal/i18n.py:77
+msgid "没有成功提取医院名称。"
+msgstr "Le nom de l’hôpital n’a pas pu être extrait."
+
+#: portal/i18n.py:78
+msgid "医院没有匹配到数据库记录。"
+msgstr "L’hôpital n’a pas pu être rapproché d’une fiche existante."
+
+#: portal/i18n.py:79
+msgid "没有提取到收货地址。"
+msgstr "Aucune adresse de livraison n’a été extraite."
+
+#: portal/i18n.py:80
+msgid "没有提取到账单地址。"
+msgstr "Aucune adresse de facturation n’a été extraite."
+
+#: portal/i18n.py:81
+msgid "没有提取到任何产品明细。"
+msgstr "Aucune ligne de produit n’a été extraite."
+
+#: portal/i18n.py:82
+#, python-format
+msgid "产品行 #%(product)s 没有产品号。"
+msgstr "La ligne de produit n° %(product)s n’a pas de référence."
+
+#: portal/i18n.py:83
+#, python-format
+msgid "产品 %(product)s 没有匹配到产品库，请核对产品编码。"
+msgstr ""
+"Le produit %(product)s n’a pas été trouvé dans le catalogue. Veuillez "
+"vérifier sa référence."
+
+#: portal/i18n.py:84
+#, python-format
+msgid "产品 %(product)s 的订单数量异常。"
+msgstr "La quantité commandée pour le produit %(product)s est invalide."
+
+#: portal/i18n.py:85
+#, python-format
+msgid "产品 %(product)s 缺少有效医院单价。"
+msgstr "Le produit %(product)s n’a pas de prix unitaire hospitalier valide."
+
+#: portal/i18n.py:86
+#, python-format
+msgid "产品 %(product)s 尚未应用医院价格规则，请重新应用 PricePolicy。"
+msgstr ""
+"Aucune règle tarifaire hospitalière n’a été appliquée au produit "
+"%(product)s. Veuillez réappliquer PricePolicy."
+
+#: portal/i18n.py:87
+#, python-format
+msgid "产品 %(product)s 的产品编码待核对。"
+msgstr "La référence du produit %(product)s doit être vérifiée."
+
+#: portal/i18n.py:106
+msgid "医院已收金额"
+msgstr "Montants reçus des hôpitaux"
+
+#: portal/i18n.py:107
+msgid "医院已收金额减去工厂已付金额。"
+msgstr "Montants reçus des hôpitaux moins paiements aux usines."
+
+#: portal/i18n.py:108
+msgid "医院应收原始金额减去有效收款。"
+msgstr "Créances hospitalières initiales moins encaissements valides."
+
+#: portal/i18n.py:109
+msgid "医院开票销售额"
+msgstr "Ventes facturées aux hôpitaux"
+
+#: portal/i18n.py:110
+msgid "医院开票销售额减去工厂采购额。"
+msgstr "Ventes facturées aux hôpitaux moins achats aux usines."
+
+#: portal/i18n.py:111
+msgid "医院待收余额"
+msgstr "Solde à recevoir des hôpitaux"
+
+#: portal/i18n.py:112
+msgid "实际现金净流入"
+msgstr "Entrées nettes réelles de trésorerie"
+
+#: portal/i18n.py:113
+msgid "工厂已付金额"
+msgstr "Montants payés aux usines"
+
+#: portal/i18n.py:114
+msgid "工厂应付原始金额减去有效付款。"
+msgstr "Dettes fournisseurs initiales moins paiements valides."
+
+#: portal/i18n.py:115
+msgid "工厂待付余额"
+msgstr "Solde à payer aux usines"
+
+#: portal/i18n.py:116
+msgid "工厂采购额"
+msgstr "Achats aux usines"
+
+#: portal/i18n.py:117
+msgid "截止日期早于今天且仍有余额的医院应收。"
+msgstr ""
+"Créances hospitalières échues avant aujourd’hui avec un solde restant dû."
+
+#: portal/i18n.py:118
+msgid "有效 Factory PO 结算账户原始金额合计。"
+msgstr ""
+"Somme des montants initiaux des comptes de règlement Factory PO valides."
+
+#: portal/i18n.py:119
+msgid "有效医院 Invoice 结算账户原始金额合计。"
+msgstr ""
+"Somme des montants initiaux des comptes de règlement Invoice hospitaliers "
+"valides."
+
+#: portal/i18n.py:120
+msgid "有效医院收款流水合计。"
+msgstr "Total des encaissements hospitaliers valides."
+
+#: portal/i18n.py:121
+msgid "有效工厂付款流水合计。"
+msgstr "Total des paiements fournisseurs valides."
+
+#: portal/i18n.py:122
+msgid "逾期应收金额"
+msgstr "Montant des créances échues"
+
+#: portal/i18n.py:124
+msgid "预计毛利润除以医院开票销售额。"
+msgstr "Marge brute estimée divisée par les ventes facturées aux hôpitaux."
+
+#: portal/i18n.py:125
+msgid "预计毛利率"
+msgstr "Taux de marge brute estimé"
+
+#: portal/i18n.py:132
+#| msgid "产品描述"
+msgid "产品描述。"
+msgstr "Description du produit."
+
+#: portal/i18n.py:133
+msgid "产品编号，例如 BMA-2.2510。"
+msgstr "Référence produit, par exemple BMA-2.2510."
+
+#: portal/i18n.py:134
+#| msgid "工厂采购单价"
+msgid "从工厂采购的单价。"
+msgstr "Prix d’achat unitaire à l’usine."
+
+#: portal/i18n.py:136
+#| msgid "产品分类名称"
+msgid "分类名称。"
+msgstr "Nom de la catégorie."
+
+#: portal/i18n.py:139
+#| msgid "医院正式名称"
+msgid "医院正式名称。"
+msgstr "Nom officiel de l’hôpital."
+
+#: portal/i18n.py:140
+msgid "卖给医院的单价。"
+msgstr "Prix de vente unitaire à l’hôpital."
+
+#: portal/i18n.py:141
+msgid "发票地址 / billing address。"
+msgstr "Adresse de facturation."
+
+#: portal/i18n.py:142
+msgid "同一层级中的显示顺序，数字越小越靠前。"
+msgstr "Ordre d’affichage au même niveau ; les nombres les plus petits apparaissent en premier."
+
+#: portal/i18n.py:143
+#| msgid "备注"
+msgid "备注。"
+msgstr "Notes."
+
+#: portal/i18n.py:144
+#| msgid "工厂地址"
+msgid "工厂地址。"
+msgstr "Adresse de l’usine."
+
+#: portal/i18n.py:145
+#| msgid "完整法律名称"
+msgid "工厂完整法律名称。"
+msgstr "Dénomination légale complète de l’usine."
+
+#: portal/i18n.py:146
+#| msgid "工厂正式名称"
+msgid "工厂正式名称。"
+msgstr "Nom officiel de l’usine."
+
+#: portal/i18n.py:148
+msgid "是否启用。"
+msgstr "Indique si cette fiche est active."
+
+#: portal/i18n.py:154
+#| msgid "采购联系人 / Buyer"
+msgid "采购联系人 / Buyer。"
+msgstr "Contact achats / Buyer."
+
+#: portal/i18n.py:155
+msgid "默认收货地址。如果订单 PDF 里有收货地址，则优先使用订单 PDF。"
+msgstr "Adresse de livraison par défaut. L’adresse indiquée dans le PDF de commande est prioritaire si elle est disponible."
+
+#: portal/services/backorder_portal_service.py:18
+msgid "待安排"
+msgstr "À planifier"
+
+#: portal/services/backorder_portal_service.py:71
+#: portal/templates/portal/factory/detail.html:127
+#: portal/templates/portal/workflow/detail.html:170
+msgid "是"
+msgstr "Oui"
+
+#: portal/services/backorder_portal_service.py:71
+#: portal/templates/portal/factory/detail.html:129
+#: portal/templates/portal/workflow/detail.html:172
+msgid "否"
+msgstr "Non"
+
+#: portal/services/document_center_portal_service.py:517
+#: portal/templates/portal/documents/list.html:54
+msgid "全部文档"
+msgstr "Tous les documents"
+
+#: portal/services/document_center_portal_service.py:519
+msgid "查看全部 Invoice、Factory PO 和 Factory Request。"
+msgstr "Consultez tous les documents Invoice, Factory PO et Factory Request."
+
+#: portal/services/document_center_portal_service.py:526
+msgid "查看发送给医院的正式销售发票。"
+msgstr "Consultez les factures de vente officielles adressées aux hôpitaux."
+
+#: portal/services/document_center_portal_service.py:532
+msgid "查看发送给工厂的正式采购订单。"
+msgstr "Consultez les bons de commande officiels adressés aux usines."
+
+#: portal/services/document_center_portal_service.py:538
+#: portal/services/document_center_portal_service.py:607
+msgid "查看医院订单提取后生成的工厂需求文件。"
+msgstr ""
+"Consultez les Factory Request générées après extraction des commandes "
+"hospitalières."
+
+#: portal/services/document_center_portal_service.py:569
+msgid "医院销售发票"
+msgstr "Facture de vente à l’hôpital"
+
+#: portal/services/document_center_portal_service.py:571
+msgid "查看发送给医院的正式发票、金额、付款截止日期和生成快照。"
+msgstr ""
+"Consultez les factures hospitalières, montants, échéances et données figées "
+"à la génération."
+
+#: portal/services/document_center_portal_service.py:587
+msgid "工厂采购订单"
+msgstr "Bon de commande fournisseur"
+
+#: portal/services/document_center_portal_service.py:589
+msgid "查看发送给工厂的正式 PO、采购金额和临期折扣结果。"
+msgstr ""
+"Consultez les PO officielles, les montants d’achat et les remises pour "
+"péremption proche."
+
+#: portal/services/document_center_portal_service.py:605
+msgid "工厂需求文件"
+msgstr "Document de demande à l’usine"
+
+#: portal/services/factory_portal_service.py:74
+#: portal/services/order_portal_service.py:94
+#: portal/services/order_portal_service.py:180
+msgid "已提取"
+msgstr "Extrait"
+
+#: portal/services/factory_portal_service.py:78
+#: portal/services/order_portal_service.py:179
+#: portal/services/workflow_portal_service.py:94
+msgid "处理中"
+msgstr "En cours"
+
+#: portal/services/factory_portal_service.py:86
+#: portal/services/order_portal_service.py:557
+msgid "已匹配"
+msgstr "Rapproché"
+
+#: portal/services/factory_portal_service.py:93
+#, python-format
+msgid "识别到 %(value1)s，未匹配"
+msgstr "Référence %(value1)s détectée, sans correspondance"
+
+#: portal/services/factory_portal_service.py:95
+#: portal/services/order_portal_service.py:560
+msgid "未匹配"
+msgstr "Sans correspondance"
+
+#: portal/services/factory_portal_service.py:167
+msgid "已进入"
+msgstr "Dans le workflow"
+
+#: portal/services/factory_portal_service.py:170
+#: portal/services/factory_portal_service.py:172
+#: portal/services/order_portal_service.py:416
+msgid "未进入"
+msgstr "Hors workflow"
+
+#: portal/services/factory_portal_service.py:177
+msgid "人工确认订单"
+msgstr "Confirmer la commande manuellement"
+
+#: portal/services/factory_portal_service.py:180
+msgid "检查错误"
+msgstr "Examiner les erreurs"
+
+#: portal/services/factory_portal_service.py:183
+msgid "执行提取"
+msgstr "Extraire"
+
+#: portal/services/factory_portal_service.py:188
+#: portal/services/order_portal_service.py:169
+#: portal/templates/portal/shipments/detail.html:29
+msgid "查看工作流"
+msgstr "Voir le workflow"
+
+#: portal/services/factory_portal_service.py:190
+msgid "同步后续流程"
+msgstr "Synchroniser les étapes suivantes"
+
+#: portal/services/factory_portal_service.py:295
+msgid "订单中没有该产品"
+msgstr "Produit absent de la commande"
+
+#: portal/services/factory_portal_service.py:298
+msgid "数量一致"
+msgstr "Quantités concordantes"
+
+#: portal/services/factory_portal_service.py:301
+msgid "部分发货"
+msgstr "Livraison partielle"
+
+#: portal/services/factory_portal_service.py:340
+msgid "PDF 中未识别到 bon de commande，系统按所选医院订单继续处理。"
+msgstr ""
+"Aucun bon de commande n’a été détecté dans le PDF. Le traitement se poursuit "
+"avec la commande hospitalière sélectionnée."
+
+#: portal/services/factory_portal_service.py:344
+#, python-format
+msgid "PDF 识别编号为 %(value1)s，系统最终按医院订单 %(value2)s 继续处理。"
+msgstr ""
+"La référence du PDF est %(value1)s. Le traitement se poursuit avec la "
+"commande hospitalière %(value2)s."
+
+#: portal/services/factory_portal_service.py:409
+msgid "自动识别"
+msgstr "Détection automatique"
+
+#: portal/services/factory_portal_service.py:447
+msgid "未找到所选医院订单。"
+msgstr "La commande hospitalière sélectionnée est introuvable."
+
+#: portal/services/factory_portal_service.py:451
+#: portal/services/factory_portal_service.py:594
+msgid "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。"
+msgstr ""
+"Cette commande hospitalière n’est associée à aucune usine. Confirmez d’abord "
+"l’usine sur la commande."
+
+#: portal/services/factory_portal_service.py:458
+msgid "无效的发货类型。"
+msgstr "Type de livraison invalide."
+
+#: portal/services/factory_portal_service.py:496
+msgid "工厂采购文件已提取，但识别编号与已选择订单不一致。请人工确认后继续。"
+msgstr ""
+"L’extraction est terminée, mais la référence détectée diffère de la commande "
+"sélectionnée. Confirmez-la manuellement pour continuer."
+
+#: portal/services/factory_portal_service.py:503
+msgid "工厂采购文件已提取，但尚未完成后续处理。请在详情页继续。"
+msgstr ""
+"L’extraction est terminée, mais les étapes suivantes restent à traiter. "
+"Continuez sur la page de détail."
+
+#: portal/services/factory_portal_service.py:510
+#, python-format
+msgid ""
+"已上传并进入工作流，但验证发现 %(value1)s 个问题。请查看详情页或工作流页面。"
+msgstr ""
+"Le document a été importé et ajouté au workflow, mais la validation a relevé "
+"%(value1)s problèmes. Consultez le détail ou le workflow."
+
+#: portal/services/factory_portal_service.py:517
+#, python-format
+msgid "已上传并进入工作流，但有 %(value1)s 个提醒需要检查。"
+msgstr ""
+"Le document a été importé et ajouté au workflow, avec %(value1)s "
+"avertissements à examiner."
+
+#: portal/services/factory_portal_service.py:524
+msgid "已上传、自动提取并进入工作流，验证通过。"
+msgstr "Document importé, extrait et ajouté au workflow. Validation réussie."
+
+#: portal/services/factory_portal_service.py:530
+msgid ""
+"已上传并提取，但没有创建 WorkflowItem。请检查 ShipmentBatch / workflow sync。"
+msgstr ""
+"Document importé et extrait, mais aucun WorkflowItem n’a été créé. Vérifiez "
+"la synchronisation ShipmentBatch / workflow."
+
+#: portal/services/factory_portal_service.py:571
+msgid "请选择有效的人工发货类型。"
+msgstr "Sélectionnez un type de livraison manuelle valide."
+
+#: portal/services/factory_portal_service.py:588
+msgid ""
+"这份工厂文件已经对应发货批次，不能直接改绑到其他医院订单，需要人工检查。"
+msgstr ""
+"Ce document d’usine est déjà associé à un lot d’expédition. Sa réaffectation "
+"à une autre commande nécessite une vérification."
+
+#: portal/services/factory_portal_service.py:666
+msgid "未匹配订单"
+msgstr "Aucune commande correspondante"
+
+#: portal/services/factory_portal_service.py:689
+msgid ""
+"这份工厂确认已经生成过 Invoice 或 PO。为了避免文件和发货数据不一致，请先人工"
+"检查相关 workflow / documents，暂时不允许直接删除。"
+msgstr ""
+"Une Invoice ou une PO a déjà été générée pour cette confirmation. La "
+"suppression est bloquée : vérifiez le workflow et les documents pour éviter "
+"des incohérences de livraison."
+
+#: portal/services/factory_portal_service.py:758
+msgid "待匹配"
+msgstr "À rapprocher"
+
+#: portal/services/factory_portal_service.py:801
+msgid "这份工厂采购文件还没有匹配医院订单，不能保存 serial 修改。"
+msgstr ""
+"Ce document n’est associé à aucune commande hospitalière. Les modifications "
+"des numéros de série ne peuvent pas être enregistrées."
+
+#: portal/services/factory_portal_service.py:826
+#, python-format
+msgid "SerialItem #%(value1)s: 产品号不能为空。"
+msgstr "SerialItem n° %(value1)s : la référence produit est obligatoire."
+
+#: portal/services/factory_portal_service.py:830
+#, python-format
+msgid "SerialItem #%(value1)s: Serial Number 不能为空。"
+msgstr "SerialItem n° %(value1)s : le Serial Number est obligatoire."
+
+#: portal/services/factory_portal_service.py:835
+#, python-format
+msgid "Serial Number %(value1)s 在当前文件中重复。"
+msgstr "Le Serial Number %(value1)s apparaît plusieurs fois dans ce document."
+
+#: portal/services/factory_portal_service.py:851
+#, python-format
+msgid ""
+"Serial Number %(value1)s 已经存在于 FactoryConfirmation #%(value2)s，不能重复"
+"使用。"
+msgstr ""
+"Le Serial Number %(value1)s existe déjà dans FactoryConfirmation n° "
+"%(value2)s et ne peut pas être réutilisé."
+
+#: portal/services/factory_portal_service.py:859
+#, python-format
+msgid "产品 %(value1)s 不在产品库中，已保存但需要人工检查。"
+msgstr ""
+"Le produit %(value1)s est absent du catalogue. Enregistrement effectué, mais "
+"une vérification manuelle est requise."
+
+#: portal/services/factory_portal_service.py:917
+msgid "Serial 修改已保存，但同步 ShipmentBatch 失败。"
+msgstr ""
+"Modifications des numéros de série enregistrées, mais échec de "
+"synchronisation de ShipmentBatch."
+
+#: portal/services/factory_portal_service.py:940
+msgid "Serial 修改已保存，但同步 WorkflowItem 失败。"
+msgstr ""
+"Modifications des numéros de série enregistrées, mais échec de "
+"synchronisation de WorkflowItem."
+
+#: portal/services/home_portal_service.py:28
+#: portal/templates/portal/backorders/detail.html:9
+#: portal/templates/portal/backorders/list.html:9
+#: portal/templates/portal/library/coming_soon.html:9
+#: portal/templates/portal/library/factories/detail.html:15
+#: portal/templates/portal/library/factories/list.html:15
+#: portal/templates/portal/library/home.html:13
+#: portal/templates/portal/library/home.html:19
+#: portal/templates/portal/library/hospitals/detail.html:15
+#: portal/templates/portal/library/hospitals/list.html:15
+#: portal/templates/portal/library/prices/detail.html:18
+#: portal/templates/portal/library/prices/list.html:16
+#: portal/templates/portal/library/prices/simulator.html:18
+#: portal/templates/portal/library/products/category_detail.html:14
+#: portal/templates/portal/library/products/department_detail.html:14
+#: portal/templates/portal/library/products/factory_detail.html:14
+#: portal/templates/portal/library/products/home.html:15
+#: portal/templates/portal/library/products/product_detail.html:14
+#: portal/templates/portal/shipments/detail.html:9
+#: portal/templates/portal/shipments/list.html:9 portal/views.py:318
+#: portal/views.py:397 portal/views.py:483 portal/views.py:577
+#: portal/views.py:683 portal/views.py:752 portal/views.py:889
+#: portal/views.py:958 portal/views.py:1106 portal/views.py:1185
+msgid "资料库"
+msgstr "Bibliothèque"
+
+#: portal/services/home_portal_service.py:29
+msgid "产品、医院、工厂与价格等基础资料"
+msgstr "Référentiels produits, hôpitaux, usines et tarifs"
+
+#: portal/services/home_portal_service.py:30
+msgid "维护系统运行所需的主数据"
+msgstr "Gérer les données de référence du système"
+
+#: portal/services/home_portal_service.py:35
+msgid "基础资料"
+msgstr "Données de référence"
+
+#: portal/services/home_portal_service.py:38
+#: portal/templates/portal/backorders/list.html:46
+#: portal/templates/portal/documents/detail.html:145
+#: portal/templates/portal/documents/list.html:235
+#: portal/templates/portal/factory/detail.html:230
+#: portal/templates/portal/factory/upload.html:37
+#: portal/templates/portal/orders/list.html:13
+#: portal/templates/portal/settlements/_comparison_table.html:6
+#: portal/templates/portal/shipments/list.html:57
+msgid "医院订单"
+msgstr "Commandes hospitalières"
+
+#: portal/services/home_portal_service.py:39
+msgid "上传、提取与查看医院订单"
+msgstr "Importer, extraire et consulter les commandes hospitalières"
+
+#: portal/services/home_portal_service.py:40
+msgid "处理医院采购订单与产品明细"
+msgstr "Gérer les commandes hospitalières et leurs lignes de produits"
+
+#: portal/services/home_portal_service.py:48
+#: portal/templates/portal/factory/list.html:4
+#: portal/templates/portal/factory/list.html:13
+#: portal/templates/portal/factory/list.html:19
+#: portal/templates/portal/factory/upload.html:13
+msgid "工厂采购"
+msgstr "Achats fournisseurs"
+
+#: portal/services/home_portal_service.py:49
+msgid "工厂采购、序列号、有效期与发货信息"
+msgstr ""
+"Achats fournisseurs, numéros de série, dates de péremption et livraisons"
+
+#: portal/services/home_portal_service.py:50
+msgid "管理工厂采购文件和采购相关流程"
+msgstr "Gérer les documents d’achat et les processus associés"
+
+#: portal/services/home_portal_service.py:55
+msgid "确认文件"
+msgstr "Documents de confirmation"
+
+#: portal/services/home_portal_service.py:58
+#: portal/templates/portal/shipments/detail.html:91
+#: portal/templates/portal/shipments/list.html:65
+#: portal/templates/portal/workflow/list.html:13
+msgid "工作流"
+msgstr "Workflow"
+
+#: portal/services/home_portal_service.py:59
+msgid "跟踪订单状态、待处理事项与文件生成"
+msgstr ""
+"Suivre les commandes, les tâches en attente et la génération des documents"
+
+#: portal/services/home_portal_service.py:60
+msgid "集中处理订单从确认到出单的完整流程"
+msgstr ""
+"Gérer le processus complet, de la confirmation à la génération des documents"
+
+#: portal/services/home_portal_service.py:65
+msgid "流程项"
+msgstr "Éléments du workflow"
+
+#: portal/services/home_portal_service.py:68
+#: portal/templates/portal/documents/detail.html:20
+#: portal/templates/portal/documents/home.html:17
+#: portal/templates/portal/documents/home.html:24
+#: portal/templates/portal/documents/list.html:20
+msgid "文档中心"
+msgstr "Centre de documents"
+
+#: portal/services/home_portal_service.py:69
+msgid "查看和下载所有业务文件"
+msgstr "Consulter et télécharger tous les documents commerciaux"
+
+#: portal/services/home_portal_service.py:70
+msgid "集中管理 Factory Request、PO、Invoice 等文件"
+msgstr "Centraliser les documents Factory Request, PO et Invoice"
+
+#: portal/services/home_portal_service.py:75
+msgid "文档"
+msgstr "Documents"
+
+#: portal/services/home_portal_service.py:79
+msgid "销售额、成本、利润与经营数据"
+msgstr "Ventes, coûts, marges et données d’activité"
+
+#: portal/services/home_portal_service.py:80
+msgid "查看财务表现和业务趋势"
+msgstr "Consulter les résultats financiers et les tendances d’activité"
+
+#: portal/services/home_portal_service.py:85
+msgid "分析"
+msgstr "Analyses"
+
+#: portal/services/home_portal_service.py:89
+msgid "医院应收、工厂应付与收付款流水"
+msgstr ""
+"Créances hospitalières, dettes fournisseurs et transactions de paiement"
+
+#: portal/services/home_portal_service.py:90
+msgid "管理结算状态、到期日期和收付款记录"
+msgstr "Gérer les règlements, les échéances et les paiements"
+
+#: portal/services/home_portal_service.py:95
+msgid "结算"
+msgstr "Règlements"
+
+#: portal/services/hospital_library_portal_service.py:127
+#: portal/templates/portal/library/hospitals/detail.html:110
+msgid "联系方式"
+msgstr "Coordonnées"
+
+#: portal/services/library_portal_service.py:43
+#: portal/templates/portal/library/products/category_detail.html:16
+#: portal/templates/portal/library/products/department_detail.html:16
+#: portal/templates/portal/library/products/factory_detail.html:16
+#: portal/templates/portal/library/products/home.html:17
+#: portal/templates/portal/library/products/home.html:24
+#: portal/templates/portal/library/products/product_detail.html:16
+#: portal/views.py:324 portal/views.py:403 portal/views.py:489
+#: portal/views.py:583
+msgid "产品库"
+msgstr "Catalogue produits"
+
+#: portal/services/library_portal_service.py:44
+msgid "维护 BMA 产品编号、规格、描述和产品匹配信息。"
+msgstr ""
+"Gérer les références BMA, les caractéristiques, les descriptions et les "
+"informations de rapprochement."
+
+#: portal/services/library_portal_service.py:51
+#: portal/templates/portal/library/hospitals/detail.html:17
+#: portal/templates/portal/library/hospitals/list.html:17
+#: portal/templates/portal/library/hospitals/list.html:24 portal/views.py:689
+#: portal/views.py:758
+msgid "医院库"
+msgstr "Répertoire des hôpitaux"
+
+#: portal/services/library_portal_service.py:52
+msgid "维护医院名称、收货地址、账单地址和匹配规则。"
+msgstr ""
+"Gérer les noms des hôpitaux, leurs adresses de livraison et de facturation "
+"et les règles de rapprochement."
+
+#: portal/services/library_portal_service.py:59
+#: portal/templates/portal/library/factories/detail.html:17
+#: portal/templates/portal/library/factories/list.html:17
+#: portal/templates/portal/library/factories/list.html:24 portal/views.py:895
+#: portal/views.py:964
+msgid "工厂库"
+msgstr "Répertoire des usines"
+
+#: portal/services/library_portal_service.py:60
+msgid "维护供应工厂名称、地址和采购相关信息。"
+msgstr "Gérer les noms des usines, leurs adresses et les informations d’achat."
+
+#: portal/services/library_portal_service.py:67
+#: portal/templates/portal/library/prices/detail.html:5
+#: portal/templates/portal/library/prices/detail.html:22
+#: portal/templates/portal/library/prices/list.html:19
+#: portal/templates/portal/library/prices/list.html:26
+#: portal/templates/portal/library/prices/simulator.html:22
+#: portal/views.py:1112 portal/views.py:1191
+msgid "价格规则"
+msgstr "Règles tarifaires"
+
+#: portal/services/library_portal_service.py:68
+msgid "维护医院销售价格、工厂采购价格和价格策略。"
+msgstr ""
+"Gérer les prix de vente aux hôpitaux, les prix d’achat aux usines et les "
+"règles tarifaires."
+
+#: portal/services/library_portal_service.py:75
+#: portal/templates/portal/shipments/detail.html:11
+#: portal/templates/portal/shipments/list.html:4
+#: portal/templates/portal/shipments/list.html:11
+#: portal/templates/portal/shipments/list.html:17
+msgid "发货批次库"
+msgstr "Lots d’expédition"
+
+#: portal/services/library_portal_service.py:76
+msgid "查看每一批发货记录、数量快照与工作流状态。"
+msgstr ""
+"Consulter les lots d’expédition, les quantités figées et l’état du workflow."
+
+#: portal/services/library_portal_service.py:83
+#: portal/templates/portal/backorders/detail.html:11
+#: portal/templates/portal/backorders/list.html:4
+#: portal/templates/portal/backorders/list.html:11
+#: portal/templates/portal/backorders/list.html:17
+msgid "待补发库"
+msgstr "Reliquats"
+
+#: portal/services/library_portal_service.py:84
+msgid "查看当前待补发行并进入工厂补发或库存补发。"
+msgstr ""
+"Consulter les reliquats et organiser leur livraison depuis l’usine ou le "
+"stock."
+
+#: portal/services/order_portal_service.py:107
+#: portal/services/order_portal_service.py:122
+#: portal/services/order_portal_service.py:1074
+#: portal/services/workflow_portal_service.py:70
+#: portal/services/workflow_portal_service.py:71
+#: portal/templates/portal/orders/list.html:38
+#: portal/templates/portal/workflow/list.html:30
+#: portal/templates/portal/workflow/list.html:163
+msgid "待验证"
+msgstr "À valider"
+
+#: portal/services/order_portal_service.py:115
+#: portal/services/order_portal_service.py:184
+#: portal/services/order_portal_service.py:1064
+#: portal/services/workflow_portal_service.py:73
+#: portal/services/workflow_portal_service.py:74
+#: portal/services/workflow_portal_service.py:75
+#: portal/services/workflow_portal_service.py:97
+msgid "有问题"
+msgstr "Problèmes détectés"
+
+#: portal/services/order_portal_service.py:119
+#: portal/services/order_portal_service.py:1077
+msgid "有提醒"
+msgstr "Avertissements"
+
+#: portal/services/order_portal_service.py:120
+#: portal/services/order_portal_service.py:181
+#: portal/services/workflow_portal_service.py:66
+#: portal/services/workflow_portal_service.py:67
+#: portal/services/workflow_portal_service.py:68
+#: portal/services/workflow_portal_service.py:69
+msgid "已验证"
+msgstr "Validé"
+
+#: portal/services/order_portal_service.py:142
+#, python-format
+msgid "%(value1)s 行 / %(value2)s 件"
+msgstr "%(value1)s lignes / %(value2)s unités"
+
+#: portal/services/order_portal_service.py:145
+#, python-format
+msgid "%(value1)s 行"
+msgstr "%(value1)s lignes"
+
+#: portal/services/order_portal_service.py:155
+msgid "提取订单"
+msgstr "Extraire la commande"
+
+#: portal/services/order_portal_service.py:158
+msgid "检查提取错误"
+msgstr "Examiner les erreurs d’extraction"
+
+#: portal/services/order_portal_service.py:161
+msgid "处理异常"
+msgstr "Résoudre les problèmes"
+
+#: portal/services/order_portal_service.py:166
+msgid "请核对产品编码"
+msgstr "Veuillez vérifier les références produits"
+
+#: portal/services/order_portal_service.py:171
+msgid "等待工厂确认"
+msgstr "En attente de confirmation de l’usine"
+
+#: portal/services/order_portal_service.py:178
+msgid "草稿"
+msgstr "Brouillon"
+
+#: portal/services/order_portal_service.py:182
+#: portal/templates/portal/workflow/detail.html:441
+msgid "已确认"
+msgstr "Confirmé"
+
+#: portal/services/order_portal_service.py:412
+#, python-format
+msgid "已进入 (%(value1)s)"
+msgstr "Dans le workflow (%(value1)s)"
+
+#: portal/services/order_portal_service.py:563
+msgid "待核对"
+msgstr "À vérifier"
+
+#: portal/services/order_portal_service.py:612
+msgid "产品库默认价格"
+msgstr "Prix par défaut du catalogue"
+
+#: portal/services/order_portal_service.py:616
+msgid "价格待处理"
+msgstr "Tarification en attente"
+
+#: portal/services/order_portal_service.py:1007
+#, python-format
+msgid "自动重新应用医院 PricePolicy 失败：%(value1)s"
+msgstr ""
+"Échec de la réapplication automatique de PricePolicy hospitalière : "
+"%(value1)s"
+
+#: portal/services/order_portal_service.py:1071
+msgid "产品编码待核对"
+msgstr "Références produits à vérifier"
+
+#: portal/services/price_policy_portal_service.py:45
+#: portal/templates/portal/library/prices/list.html:170
+msgid "已停用"
+msgstr "Désactivé"
+
+#: portal/services/price_policy_portal_service.py:55
+#: portal/templates/portal/library/prices/list.html:59
+#: portal/templates/portal/library/prices/list.html:160
+msgid "未来生效"
+msgstr "À venir"
+
+#: portal/services/price_policy_portal_service.py:65
+#: portal/templates/portal/library/prices/list.html:165
+msgid "已过期"
+msgstr "Expiré"
+
+#: portal/services/price_policy_portal_service.py:71
+msgid "生效中"
+msgstr "En vigueur"
+
+#: portal/services/price_policy_portal_service.py:145
+#: portal/templates/portal/library/factories/list.html:40
+#: portal/templates/portal/library/prices/list.html:99
+msgid "全部工厂"
+msgstr "Toutes les usines"
+
+#: portal/services/price_policy_portal_service.py:151
+#: portal/templates/portal/library/prices/detail.html:143
+msgid "全部产品分类"
+msgstr "Toutes les catégories de produits"
+
+#: portal/services/settlement_portal_service.py:36
+msgid "待付款优先"
+msgstr "Paiements en attente en premier"
+
+#: portal/services/settlement_portal_service.py:37
+msgid "预计到货：早 → 晚"
+msgstr "Arrivée prévue : de la plus proche à la plus lointaine"
+
+#: portal/services/settlement_portal_service.py:38
+msgid "文件生成：新 → 旧"
+msgstr "Génération : de la plus récente à la plus ancienne"
+
+#: portal/services/settlement_portal_service.py:39
+msgid "开立日期：新 → 旧"
+msgstr "Date d’émission : de la plus récente à la plus ancienne"
+
+#: portal/services/settlement_portal_service.py:40
+msgid "待付金额：高 → 低"
+msgstr "Solde à payer : du plus élevé au plus faible"
+
+#: portal/services/settlement_portal_service.py:223
+msgid "数据异常"
+msgstr "Anomalie de données"
+
+#: portal/services/settlement_portal_service.py:226
+#: portal/services/workflow_portal_service.py:82
+msgid "待生成"
+msgstr "À générer"
+
+#: portal/services/settlement_portal_service.py:229
+#: portal/services/workflow_portal_service.py:81
+#: portal/templates/portal/workflow/list.html:159
+msgid "已生成"
+msgstr "Généré"
+
+#: portal/services/settlement_portal_service.py:669
+msgid "查看医院发票、到期日期、已收金额和待收余额。"
+msgstr ""
+"Consulter les factures hospitalières, les échéances, les encaissements et "
+"les soldes à recevoir."
+
+#: portal/services/settlement_portal_service.py:680
+#: portal/settlement_views.py:143
+msgid "待收余额"
+msgstr "Solde à recevoir"
+
+#: portal/services/settlement_portal_service.py:691
+msgid "查看工厂 PO、应付金额、已付金额和待付余额。"
+msgstr ""
+"Consulter les Factory PO, les montants dus, les paiements et les soldes à "
+"payer."
+
+#: portal/services/settlement_portal_service.py:702
+#: portal/settlement_views.py:145
+msgid "待付余额"
+msgstr "Solde à payer"
+
+#: portal/services/settlement_portal_service.py:710
+#: portal/templates/portal/settlements/transactions.html:23
+#: portal/templates/portal/settlements/transactions.html:30
+msgid "收付款流水"
+msgstr "Transactions de paiement"
+
+#: portal/services/settlement_portal_service.py:713
+msgid "查看全部有效流水和已冲销的收付款记录。"
+msgstr ""
+"Consulter toutes les transactions de paiement valides et contrepassées."
+
+#: portal/services/settlement_portal_service.py:722
+#: portal/templates/portal/settlements/home.html:62
+#: portal/templates/portal/settlements/transactions.html:52
+msgid "有效流水"
+msgstr "Transactions valides"
+
+#: portal/services/settlement_portal_service.py:1033
+#: portal/settlement_views.py:128 portal/settlement_views.py:259
+msgid "收款"
+msgstr "Encaissement"
+
+#: portal/services/settlement_portal_service.py:1035
+#: portal/settlement_views.py:130 portal/settlement_views.py:264
+msgid "付款"
+msgstr "Paiement"
+
+#: portal/services/shipment_portal_service.py:15
+#: portal/templates/portal/factory/detail.html:13
+msgid "工厂文件"
+msgstr "Document d’usine"
+
+#: portal/services/shipment_portal_service.py:16
+#: portal/services/shipment_portal_service.py:93
+msgid "库存补发"
+msgstr "Livraison depuis le stock"
+
+#: portal/services/shipment_portal_service.py:23
+#: portal/services/workflow_portal_service.py:92
+#: portal/services/workflow_portal_service.py:93
+msgid "可生成文件"
+msgstr "Prêt à générer les documents"
+
+#: portal/services/shipment_portal_service.py:25
+msgid "禁止生成"
+msgstr "Génération bloquée"
+
+#: portal/services/workflow_portal_service.py:77
+#: portal/services/workflow_portal_service.py:99
+msgid "未知"
+msgstr "Inconnu"
+
+#: portal/services/workflow_portal_service.py:83
+#: portal/services/workflow_portal_service.py:84
+#: portal/services/workflow_portal_service.py:87
+#: portal/templates/portal/settlements/_comparison_table.html:45
+#: portal/templates/portal/settlements/_comparison_table.html:65
+msgid "未生成"
+msgstr "Non généré"
+
+#: portal/services/workflow_portal_service.py:85
+msgid "生成失败"
+msgstr "Échec de génération"
+
+#: portal/services/workflow_portal_service.py:91
+#: portal/templates/portal/workflow/detail.html:149
+msgid "文件已生成"
+msgstr "Documents générés"
+
+#: portal/services/workflow_portal_service.py:95
+msgid "阻塞"
+msgstr "Bloqué"
+
+#: portal/services/workflow_portal_service.py:109
+msgid "工厂确认"
+msgstr "Confirmation de l’usine"
+
+#: portal/services/workflow_portal_service.py:126
+msgid "检查验证结果"
+msgstr "Examiner les résultats de validation"
+
+#: portal/services/workflow_portal_service.py:129
+msgid "生成发票和采购订单"
+msgstr "Générer Invoice et PO"
+
+#: portal/services/workflow_portal_service.py:132
+msgid "生成发票"
+msgstr "Générer l’Invoice"
+
+#: portal/services/workflow_portal_service.py:135
+msgid "生成采购订单"
+msgstr "Générer la PO"
+
+#: portal/services/workflow_portal_service.py:284
+msgid "没有 PricePolicy"
+msgstr "Aucune PricePolicy"
+
+#: portal/settlement_views.py:133
+msgid "登记收款"
+msgstr "Enregistrer un encaissement"
+
+#: portal/settlement_views.py:135
+msgid "登记付款"
+msgstr "Enregistrer un paiement"
+
+#: portal/settlement_views.py:138
+msgid "已收金额"
+msgstr "Montant reçu"
+
+#: portal/settlement_views.py:140
+msgid "已付金额"
+msgstr "Montant payé"
+
+#: portal/settlement_views.py:270
+#, python-format
+msgid "%(value1)s登记成功：%(value2)s %(value3)s"
+msgstr "%(value1)s enregistré : %(value2)s %(value3)s"
+
+#: portal/settlement_views.py:336
+#, python-format
+msgid "付款截止日期已更新为 %(value1)s。"
+msgstr "Échéance de paiement mise à jour au %(value1)s."
+
+#: portal/settlement_views.py:340
+msgid "付款截止日期已清除。"
+msgstr "Échéance de paiement supprimée."
+
+#: portal/settlement_views.py:377
+msgid "冲销时必须填写冲销原因。"
+msgstr "Un motif est obligatoire pour contrepasser une transaction."
+
+#: portal/settlement_views.py:407
+msgid "收付款流水已冲销。"
+msgstr "Transaction de paiement contrepassée."
+
+#: portal/templates/portal/backorders/detail.html:4
+#, python-format
+msgid "待补发详情 %(value1)s / %(value2)s"
+msgstr "Détail du reliquat %(value1)s / %(value2)s"
+
+#: portal/templates/portal/backorders/detail.html:19
+msgid "待补发详情"
+msgstr "Détail du reliquat"
+
+#: portal/templates/portal/backorders/detail.html:23
+msgid "返回待补发库"
+msgstr "Retour aux reliquats"
+
+#: portal/templates/portal/backorders/detail.html:24
+#: portal/templates/portal/settlements/account_detail.html:67
+#: portal/templates/portal/shipments/detail.html:24
+msgid "查看订单"
+msgstr "Voir la commande"
+
+#: portal/templates/portal/backorders/detail.html:25
+msgid "上传工厂补发文件"
+msgstr "Importer un document de livraison de reliquat"
+
+#: portal/templates/portal/backorders/detail.html:32
+#: portal/templates/portal/backorders/list.html:49
+#: portal/templates/portal/orders/detail.html:144
+#: portal/templates/portal/orders/detail.html:185
+#: portal/templates/portal/shipments/detail.html:65
+#: portal/templates/portal/workflow/detail.html:440
+msgid "订单数量"
+msgstr "Quantité commandée"
+
+#: portal/templates/portal/backorders/detail.html:33
+#: portal/templates/portal/backorders/list.html:50
+#: portal/templates/portal/orders/detail.html:61
+msgid "已发数量"
+msgstr "Quantité expédiée"
+
+#: portal/templates/portal/backorders/detail.html:34
+#: portal/templates/portal/backorders/list.html:51
+#: portal/templates/portal/orders/detail.html:69
+#: portal/templates/portal/workflow/detail.html:443
+msgid "待补发"
+msgstr "Reliquat"
+
+#: portal/templates/portal/backorders/detail.html:35
+#: portal/templates/portal/backorders/list.html:52
+msgid "预计发货"
+msgstr "Expédition prévue"
+
+#: portal/templates/portal/backorders/detail.html:36
+msgid "可用库存"
+msgstr "Stock disponible"
+
+#: portal/templates/portal/backorders/detail.html:37
+#: portal/templates/portal/backorders/detail.html:58
+#: portal/templates/portal/backorders/list.html:53
+#: portal/templates/portal/factory/detail.html:347
+#: portal/templates/portal/factory/list.html:54
+#: portal/templates/portal/library/factories/detail.html:124
+#: portal/templates/portal/library/factories/list.html:72
+#: portal/templates/portal/library/hospitals/list.html:72
+#: portal/templates/portal/library/hospitals/list.html:128
+#: portal/templates/portal/library/prices/list.html:141
+#: portal/templates/portal/library/prices/list.html:215
+#: portal/templates/portal/library/products/category_detail.html:82
+#: portal/templates/portal/library/products/product_detail.html:69
+#: portal/templates/portal/settlements/_comparison_table.html:11
+#: portal/templates/portal/settlements/account_detail.html:105
+#: portal/templates/portal/settlements/account_detail.html:280
+#: portal/templates/portal/settlements/account_list.html:92
+#: portal/templates/portal/settlements/account_list.html:221
+#: portal/templates/portal/settlements/transactions.html:138
+#: portal/templates/portal/settlements/transactions.html:218
+#: portal/templates/portal/shipments/detail.html:39
+msgid "状态"
+msgstr "Statut"
+
+#: portal/templates/portal/backorders/detail.html:42
+msgid "从库存分配"
+msgstr "Affecter du stock"
+
+#: portal/templates/portal/backorders/detail.html:46
+#: portal/templates/portal/documents/detail.html:273
+#: portal/templates/portal/shipments/detail.html:49
+msgid "数量"
+msgstr "Quantité"
+
+#: portal/templates/portal/backorders/detail.html:49
+msgid "预留库存"
+msgstr "Réserver du stock"
+
+#: portal/templates/portal/backorders/detail.html:55
+msgid "相关库存预留"
+msgstr "Réservations de stock associées"
+
+#: portal/templates/portal/backorders/detail.html:58
+msgid "申请数量"
+msgstr "Quantité demandée"
+
+#: portal/templates/portal/backorders/detail.html:58
+msgid "预留数量"
+msgstr "Quantité réservée"
+
+#: portal/templates/portal/backorders/detail.html:58
+#: portal/templates/portal/factory/list.html:56
+#: portal/templates/portal/orders/detail.html:339
+#: portal/templates/portal/orders/list.html:93
+#: portal/templates/portal/settlements/account_detail.html:282
+#: portal/templates/portal/workflow/list.html:90
+msgid "操作"
+msgstr "Actions"
+
+#: portal/templates/portal/backorders/detail.html:72
+msgid "创建发货批次"
+msgstr "Créer un lot d’expédition"
+
+#: portal/templates/portal/backorders/detail.html:80
+msgid "暂无库存预留记录。"
+msgstr "Aucune réservation de stock."
+
+#: portal/templates/portal/backorders/detail.html:88
+msgid "相关发货批次"
+msgstr "Lots d’expédition associés"
+
+#: portal/templates/portal/backorders/detail.html:93
+#, python-format
+msgid "批次 %(value1)s / %(value2)s"
+msgstr "Lot %(value1)s / %(value2)s"
+
+#: portal/templates/portal/backorders/detail.html:97
+msgid "暂无关联发货批次。"
+msgstr "Aucun lot d’expédition associé."
+
+#: portal/templates/portal/backorders/list.html:18
+msgid "查看当前待补发行，并进入工厂补发或库存补发。"
+msgstr ""
+"Consultez les reliquats et organisez leur livraison depuis l’usine ou le "
+"stock."
+
+#: portal/templates/portal/backorders/list.html:23
+#: portal/templates/portal/shipments/list.html:22
+msgid "返回资料库"
+msgstr "Retour à la bibliothèque"
+
+#: portal/templates/portal/backorders/list.html:29
+msgid "搜索订单号或产品号"
+msgstr "Rechercher une commande ou une référence produit"
+
+#: portal/templates/portal/backorders/list.html:31
+msgid "仅显示待补发"
+msgstr "Reliquats en attente uniquement"
+
+#: portal/templates/portal/backorders/list.html:32
+#: portal/templates/portal/documents/list.html:161
+#: portal/templates/portal/library/factories/list.html:76
+#: portal/templates/portal/library/factories/list.html:96
+#: portal/templates/portal/library/hospitals/list.html:76
+#: portal/templates/portal/library/hospitals/list.html:94
+#: portal/templates/portal/settlements/account_list.html:121
+#: portal/templates/portal/settlements/transactions.html:102
+#: portal/templates/portal/settlements/transactions.html:123
+#: portal/templates/portal/settlements/transactions.html:144
+msgid "全部"
+msgstr "Tous"
+
+#: portal/templates/portal/backorders/list.html:48
+#: portal/templates/portal/documents/detail.html:271
+#: portal/templates/portal/factory/detail.html:343
+#: portal/templates/portal/factory/detail.html:394
+#: portal/templates/portal/shipments/detail.html:49
+#: portal/templates/portal/shipments/detail.html:65
+#: portal/templates/portal/workflow/detail.html:306
+#: portal/templates/portal/workflow/detail.html:410
+#: portal/templates/portal/workflow/detail.html:439
+msgid "产品号"
+msgstr "Référence produit"
+
+#: portal/templates/portal/backorders/list.html:54
+msgid "是否有效"
+msgstr "Actif"
+
+#: portal/templates/portal/backorders/list.html:70
+#: portal/templates/portal/shipments/list.html:83
+msgid "详情"
+msgstr "Détail"
+
+#: portal/templates/portal/backorders/list.html:73
+msgid "暂无待发行。"
+msgstr "Aucune ligne en attente d’expédition."
+
+#: portal/templates/portal/base.html:23
+msgid "搜索菜单、功能或数据..."
+msgstr "Rechercher un menu, une fonction ou des données…"
+
+#: portal/templates/portal/base.html:28
+msgid "界面语言"
+msgstr "Langue de l’interface"
+
+#: portal/templates/portal/base.html:59
+msgid "操作员 · Acoeur"
+msgstr "Opérateur · Acoeur"
+
+#: portal/templates/portal/documents/detail.html:5
+#: portal/templates/portal/documents/list.html:4
+#, python-format
+msgid "%(value1)s | 文档中心"
+msgstr "%(value1)s | Centre de documents"
+
+#: portal/templates/portal/documents/detail.html:39
+#, python-format
+msgid "生成于 %(value1)s"
+msgstr "Généré le %(value1)s"
+
+#: portal/templates/portal/documents/detail.html:50
+#: portal/templates/portal/workflow/detail.html:184
+#: portal/templates/portal/workflow/detail.html:195
+msgid "打开 PDF"
+msgstr "Ouvrir le PDF"
+
+#: portal/templates/portal/documents/detail.html:59
+msgid "打开 HTML"
+msgstr "Ouvrir le HTML"
+
+#: portal/templates/portal/documents/detail.html:67
+msgid "文档金额"
+msgstr "Montant du document"
+
+#: portal/templates/portal/documents/detail.html:78
+#: portal/templates/portal/orders/detail.html:140
+msgid "产品行数"
+msgstr "Lignes de produits"
+
+#: portal/templates/portal/documents/detail.html:83
+msgid "总数量"
+msgstr "Quantité totale"
+
+#: portal/templates/portal/documents/detail.html:94
+#: portal/templates/portal/settlements/account_detail.html:213
+#: settlements/forms.py:89
+msgid "付款截止日期"
+msgstr "Échéance de paiement"
+
+#: portal/templates/portal/documents/detail.html:104
+msgid "文档资料"
+msgstr "Informations du document"
+
+#: portal/templates/portal/documents/detail.html:109
+#: portal/templates/portal/documents/list.html:100
+msgid "文档类型"
+msgstr "Type de document"
+
+#: portal/templates/portal/documents/detail.html:116
+#: portal/templates/portal/documents/list.html:234
+msgid "文档编号"
+msgstr "Numéro du document"
+
+#: portal/templates/portal/documents/detail.html:123
+#: portal/templates/portal/documents/list.html:243
+msgid "生成人"
+msgstr "Généré par"
+
+#: portal/templates/portal/documents/detail.html:130
+#: portal/templates/portal/documents/list.html:242
+msgid "生成时间"
+msgstr "Date de génération"
+
+#: portal/templates/portal/documents/detail.html:140
+msgid "业务来源"
+msgstr "Origine"
+
+#: portal/templates/portal/documents/detail.html:168
+msgid "发货批次"
+msgstr "Lot d’expédition"
+
+#: portal/templates/portal/documents/detail.html:184
+msgid "打开 Workflow"
+msgstr "Ouvrir le workflow"
+
+#: portal/templates/portal/documents/detail.html:191
+msgid "打开工厂确认"
+msgstr "Ouvrir la confirmation de l’usine"
+
+#: portal/templates/portal/documents/detail.html:199
+msgid "PDF 文件"
+msgstr "Fichier PDF"
+
+#: portal/templates/portal/documents/detail.html:209
+#: portal/templates/portal/documents/detail.html:241
+msgid "大小未知"
+msgstr "Taille inconnue"
+
+#: portal/templates/portal/documents/detail.html:214
+#: portal/templates/portal/documents/detail.html:246
+msgid "文件存在"
+msgstr "Fichier disponible"
+
+#: portal/templates/portal/documents/detail.html:218
+#: portal/templates/portal/documents/detail.html:250
+msgid "数据库有记录，但文件不存在"
+msgstr "Enregistrement présent, mais fichier introuvable"
+
+#: portal/templates/portal/documents/detail.html:224
+msgid "没有 PDF 文件记录。"
+msgstr "Aucun fichier PDF enregistré."
+
+#: portal/templates/portal/documents/detail.html:231
+msgid "HTML 文件"
+msgstr "Fichier HTML"
+
+#: portal/templates/portal/documents/detail.html:256
+msgid "没有 HTML 文件记录。"
+msgstr "Aucun fichier HTML enregistré."
+
+#: portal/templates/portal/documents/detail.html:264
+msgid "产品明细快照"
+msgstr "Données figées des lignes de produits"
+
+#: portal/templates/portal/documents/detail.html:272
+#: portal/templates/portal/library/products/category_detail.html:78
+#: portal/templates/portal/library/products/home.html:62
+#: portal/templates/portal/orders/detail.html:184
+msgid "描述"
+msgstr "Description"
+
+#: portal/templates/portal/documents/detail.html:274
+msgid "单价"
+msgstr "Prix unitaire"
+
+#: portal/templates/portal/documents/detail.html:275
+msgid "折扣"
+msgstr "Remise"
+
+#: portal/templates/portal/documents/detail.html:276
+#: portal/templates/portal/documents/list.html:239
+#: portal/templates/portal/settlements/account_detail.html:276
+#: portal/templates/portal/settlements/transactions.html:215
+#: settlements/forms.py:25
+msgid "金额"
+msgstr "Montant"
+
+#: portal/templates/portal/documents/detail.html:317
+msgid "查看完整生成快照"
+msgstr "Voir toutes les données figées à la génération"
+
+#: portal/templates/portal/documents/home.html:4
+msgid "文档中心 | Acoeurs France"
+msgstr "Centre de documents | Acoeurs France"
+
+#: portal/templates/portal/documents/home.html:27
+msgid ""
+"按文档类型查看系统生成的正式业务文件。 文档中心仅用于查看、下载和业务追溯。"
+msgstr ""
+"Consultez les documents officiels par type. Le centre de documents permet "
+"leur consultation, leur téléchargement et leur traçabilité."
+
+#: portal/templates/portal/documents/home.html:34
+msgid "查看全部文档"
+msgstr "Voir tous les documents"
+
+#: portal/templates/portal/documents/home.html:40
+msgid "当前共归档"
+msgstr "Documents archivés :"
+
+#: portal/templates/portal/documents/home.html:42
+msgid "份业务文档。"
+msgstr "documents commerciaux."
+
+#: portal/templates/portal/documents/home.html:72
+msgid "最新文档"
+msgstr "Dernier document"
+
+#: portal/templates/portal/documents/home.html:84
+msgid "当前还没有此类文档"
+msgstr "Aucun document de ce type"
+
+#: portal/templates/portal/documents/list.html:40
+msgid "返回文档分类"
+msgstr "Retour aux catégories de documents"
+
+#: portal/templates/portal/documents/list.html:46
+msgid "查看全部"
+msgstr "Voir tout"
+
+#: portal/templates/portal/documents/list.html:74
+msgid "本月生成"
+msgstr "Générés ce mois-ci"
+
+#: portal/templates/portal/documents/list.html:85
+#: portal/templates/portal/library/prices/list.html:77
+#: portal/templates/portal/library/products/category_detail.html:62
+#: portal/templates/portal/library/products/home.html:37
+#: portal/templates/portal/orders/list.html:53
+#: portal/templates/portal/orders/list.html:63
+#: portal/templates/portal/settlements/account_list.html:80
+#: portal/templates/portal/settlements/comparison.html:81
+#: portal/templates/portal/settlements/transactions.html:82
+#: portal/templates/portal/workflow/list.html:50
+#: portal/templates/portal/workflow/list.html:60
+msgid "搜索"
+msgstr "Rechercher"
+
+#: portal/templates/portal/documents/list.html:93
+msgid "文档编号、订单号、医院或工厂"
+msgstr "Numéro de document, commande, hôpital ou usine"
+
+#: portal/templates/portal/documents/list.html:109
+msgid "全部类型"
+msgstr "Tous les types"
+
+#: portal/templates/portal/documents/list.html:135
+msgid "全部月份"
+msgstr "Tous les mois"
+
+#: portal/templates/portal/documents/list.html:166
+msgid "有 PDF 记录"
+msgstr "Avec PDF enregistré"
+
+#: portal/templates/portal/documents/list.html:171
+msgid "无 PDF 记录"
+msgstr "Sans PDF enregistré"
+
+#: portal/templates/portal/documents/list.html:206
+#: portal/templates/portal/library/factories/list.html:113
+#: portal/templates/portal/library/hospitals/list.html:109
+#: portal/templates/portal/library/prices/list.html:192
+#: portal/templates/portal/settlements/account_list.html:184
+#: portal/templates/portal/settlements/transactions.html:182
+msgid "查询"
+msgstr "Rechercher"
+
+#: portal/templates/portal/documents/list.html:211
+#: portal/templates/portal/library/factories/list.html:118
+#: portal/templates/portal/library/hospitals/list.html:114
+#: portal/templates/portal/library/prices/list.html:197
+#: portal/templates/portal/settlements/account_list.html:189
+#: portal/templates/portal/settlements/transactions.html:187
+msgid "重置"
+msgstr "Réinitialiser"
+
+#: portal/templates/portal/documents/list.html:236
+#: portal/templates/portal/settlements/transactions.html:213
+msgid "医院 / 工厂"
+msgstr "Hôpital / Usine"
+
+#: portal/templates/portal/documents/list.html:237
+#: portal/templates/portal/factory/detail.html:157
+#: portal/templates/portal/orders/detail.html:76
+#: portal/templates/portal/orders/detail.html:333
+#: portal/templates/portal/orders/detail.html:348
+#: portal/templates/portal/settlements/_comparison_table.html:8
+#: portal/templates/portal/settlements/account_list.html:215
+#: portal/templates/portal/shipments/list.html:55
+#: portal/templates/portal/workflow/detail.html:44
+#: portal/templates/portal/workflow/detail.html:47
+#: portal/templates/portal/workflow/list.html:100
+msgid "批次"
+msgstr "Lot"
+
+#: portal/templates/portal/documents/list.html:241
+msgid "文件"
+msgstr "Fichiers"
+
+#: portal/templates/portal/documents/list.html:304
+msgid "PDF 缺失"
+msgstr "PDF introuvable"
+
+#: portal/templates/portal/documents/list.html:308
+msgid "无 PDF"
+msgstr "Sans PDF"
+
+#: portal/templates/portal/documents/list.html:321
+msgid "HTML 缺失"
+msgstr "HTML introuvable"
+
+#: portal/templates/portal/documents/list.html:340
+msgid "没有找到符合条件的文档。"
+msgstr "Aucun document ne correspond à vos critères."
+
+#: portal/templates/portal/documents/list.html:352
+#: portal/templates/portal/library/factories/list.html:184
+#: portal/templates/portal/library/hospitals/list.html:185
+#: portal/templates/portal/library/prices/list.html:293
+#: portal/templates/portal/settlements/account_list.html:309
+#: portal/templates/portal/settlements/comparison.html:102
+#: portal/templates/portal/settlements/transactions.html:292
+msgid "上一页"
+msgstr "Précédent"
+
+#: portal/templates/portal/documents/list.html:357
+#: portal/templates/portal/library/factories/list.html:189
+#: portal/templates/portal/library/hospitals/list.html:190
+#: portal/templates/portal/library/prices/list.html:298
+#: portal/templates/portal/settlements/account_list.html:314
+#: portal/templates/portal/settlements/comparison.html:107
+#: portal/templates/portal/settlements/transactions.html:297
+#, python-format
+msgid "第 %(value1)s 页， 共 %(value2)s 页"
+msgstr "Page %(value1)s sur %(value2)s"
+
+#: portal/templates/portal/documents/list.html:363
+#: portal/templates/portal/library/factories/list.html:195
+#: portal/templates/portal/library/hospitals/list.html:196
+#: portal/templates/portal/library/prices/list.html:304
+#: portal/templates/portal/settlements/account_list.html:320
+#: portal/templates/portal/settlements/comparison.html:113
+#: portal/templates/portal/settlements/transactions.html:303
+msgid "下一页"
+msgstr "Suivant"
+
+#: portal/templates/portal/factory/detail.html:4
+#, python-format
+msgid "工厂采购 FC #%(value1)s"
+msgstr "Achat fournisseur FC n° %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:21
+#, python-format
+msgid "工厂文件 FC #%(value1)s"
+msgstr "Document d’usine FC n° %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:22
+#, python-format
+msgid "订单号：%(value1)s"
+msgstr "Numéro de commande : %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:26
+msgid "返回列表"
+msgstr "Retour à la liste"
+
+#: portal/templates/portal/factory/detail.html:29
+#: portal/templates/portal/shipments/detail.html:104
+msgid "查看 PDF"
+msgstr "Voir le PDF"
+
+#: portal/templates/portal/factory/detail.html:40
+#: portal/templates/portal/orders/detail.html:33
+msgid "重新提取"
+msgstr "Réextraire"
+
+#: portal/templates/portal/factory/detail.html:48
+msgid ""
+"确认删除这份工厂采购文件吗？系统会删除相关 Serial、ShipmentBatch、Workflow，"
+"并重新计算订单发货状态。"
+msgstr ""
+"Supprimer ce document d’usine ? Les enregistrements Serial, ShipmentBatch et "
+"Workflow associés seront supprimés et l’état de livraison sera recalculé."
+
+#: portal/templates/portal/factory/detail.html:53
+msgid "删除"
+msgstr "Supprimer"
+
+#: portal/templates/portal/factory/detail.html:63
+msgid "基础信息"
+msgstr "Informations générales"
+
+#: portal/templates/portal/factory/detail.html:64
+msgid "工厂采购文件的提取与匹配状态"
+msgstr "État d’extraction et de rapprochement du document d’usine"
+
+#: portal/templates/portal/factory/detail.html:75
+msgid "关联 Hospital Order"
+msgstr "Hospital Order associée"
+
+#: portal/templates/portal/factory/detail.html:93
+#: portal/templates/portal/factory/list.html:52
+#: portal/templates/portal/shipments/detail.html:37
+#: portal/templates/portal/shipments/list.html:56
+msgid "发货日期"
+msgstr "Date d’expédition"
+
+#: portal/templates/portal/factory/detail.html:104
+#: portal/templates/portal/orders/detail.html:114
+msgid "提取状态"
+msgstr "État de l’extraction"
+
+#: portal/templates/portal/factory/detail.html:109
+msgid "订单匹配"
+msgstr "Rapprochement de la commande"
+
+#: portal/templates/portal/factory/detail.html:114
+#: portal/templates/portal/orders/list.html:90
+msgid "后续流程"
+msgstr "Étapes suivantes"
+
+#: portal/templates/portal/factory/detail.html:119
+msgid "发货类型"
+msgstr "Type de livraison"
+
+#: portal/templates/portal/factory/detail.html:135
+#: portal/templates/portal/library/prices/list.html:214
+msgid "产品数"
+msgstr "Produits"
+
+#: portal/templates/portal/factory/detail.html:140
+msgid "Serial 数"
+msgstr "Nombre de numéros de série"
+
+#: portal/templates/portal/factory/detail.html:149
+msgid "系统识别信息"
+msgstr "Informations détectées"
+
+#: portal/templates/portal/factory/detail.html:150
+msgid "用于检查 bon de commande 自动匹配"
+msgstr "Vérifier le rapprochement automatique du bon de commande"
+
+#: portal/templates/portal/factory/detail.html:156
+msgid "识别批次"
+msgstr "Lot détecté"
+
+#: portal/templates/portal/factory/detail.html:157
+msgid "待人工确认"
+msgstr "À confirmer manuellement"
+
+#: portal/templates/portal/factory/detail.html:160
+msgid "识别来源 / Order"
+msgstr "Source détectée / Commande"
+
+#: portal/templates/portal/factory/detail.html:161
+msgid "人工选择"
+msgstr "Sélection manuelle"
+
+#: portal/templates/portal/factory/detail.html:164
+msgid "识别到的 bon de commande"
+msgstr "Bon de commande détecté"
+
+#: portal/templates/portal/factory/detail.html:169
+msgid "人工说明"
+msgstr "Notes manuelles"
+
+#: portal/templates/portal/factory/detail.html:174
+msgid "匹配状态"
+msgstr "État du rapprochement"
+
+#: portal/templates/portal/factory/detail.html:207
+msgid "继续处理"
+msgstr "Poursuivre le traitement"
+
+#: portal/templates/portal/factory/detail.html:208
+msgid "OCR 结果已保留。可在这里关联订单并继续生成 ShipmentBatch / Workflow。"
+msgstr ""
+"Les résultats OCR sont conservés. Associez une commande pour poursuivre la "
+"création de ShipmentBatch / Workflow."
+
+#: portal/templates/portal/factory/detail.html:220
+msgid "旧格式文件：请人工确认发货类型"
+msgstr "Ancien format : confirmez manuellement le type de livraison"
+
+#: portal/templates/portal/factory/detail.html:222
+msgid "请选择"
+msgstr "Sélectionnez une option"
+
+#: portal/templates/portal/factory/detail.html:246
+msgid "关联订单并继续后处理"
+msgstr "Associer la commande et poursuivre"
+
+#: portal/templates/portal/factory/detail.html:257
+msgid "人工确认审计"
+msgstr "Historique de confirmation manuelle"
+
+#: portal/templates/portal/factory/detail.html:258
+msgid "系统记录了最终使用的医院订单及人工确认信息。"
+msgstr ""
+"La commande hospitalière retenue et les détails de confirmation manuelle ont "
+"été enregistrés."
+
+#: portal/templates/portal/factory/detail.html:267
+#, python-format
+msgid "系统最终使用的医院订单：%(value1)s"
+msgstr "Commande hospitalière retenue : %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:270
+#, python-format
+msgid "操作者：%(value1)s"
+msgstr "Opérateur : %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:270
+#, python-format
+msgid "，时间：%(value1)s"
+msgstr ", le %(value1)s"
+
+#: portal/templates/portal/factory/detail.html:283
+#: portal/templates/portal/orders/detail.html:287
+msgid "提取错误"
+msgstr "Erreurs d’extraction"
+
+#: portal/templates/portal/factory/detail.html:284
+msgid "系统在处理这份工厂采购文件时遇到的问题"
+msgstr "Problèmes rencontrés lors du traitement du document d’usine"
+
+#: portal/templates/portal/factory/detail.html:296
+#: portal/templates/portal/orders/detail.html:308
+#: portal/templates/portal/workflow/detail.html:220
+msgid "提醒"
+msgstr "Avertissements"
+
+#: portal/templates/portal/factory/detail.html:297
+msgid "这些内容需要人工检查"
+msgstr "Ces éléments nécessitent une vérification manuelle"
+
+#: portal/templates/portal/factory/detail.html:313
+#: portal/templates/portal/shipments/detail.html:98
+msgid "已生成文件"
+msgstr "Documents générés"
+
+#: portal/templates/portal/factory/detail.html:314
+msgid "当前批次关联的 GeneratedDocument"
+msgstr "Documents GeneratedDocument associés à ce lot"
+
+#: portal/templates/portal/factory/detail.html:334
+msgid "产品汇总"
+msgstr "Récapitulatif des produits"
+
+#: portal/templates/portal/factory/detail.html:335
+msgid "按产品号比较医院订单数量与工厂采购数量"
+msgstr ""
+"Comparer les quantités commandées par l’hôpital et achetées à l’usine par "
+"référence produit"
+
+#: portal/templates/portal/factory/detail.html:344
+msgid "医院订单数量"
+msgstr "Quantité commandée par l’hôpital"
+
+#: portal/templates/portal/factory/detail.html:345
+msgid "工厂采购数量"
+msgstr "Quantité achetée à l’usine"
+
+#: portal/templates/portal/factory/detail.html:346
+msgid "差异"
+msgstr "Écart"
+
+#: portal/templates/portal/factory/detail.html:366
+msgid "暂无产品汇总。"
+msgstr "Aucun récapitulatif de produits."
+
+#: portal/templates/portal/factory/detail.html:377
+msgid "Serial 明细"
+msgstr "Détail des numéros de série"
+
+#: portal/templates/portal/factory/detail.html:378
+msgid "对照源文件截图，人工检查并修正产品号、Serial Number 和 Expiry Date。"
+msgstr ""
+"Comparez avec l’image source et corrigez manuellement les références "
+"produits, Serial Number et Expiry Date."
+
+#: portal/templates/portal/factory/detail.html:395
+msgid "源文件截图"
+msgstr "Image source"
+
+#: portal/templates/portal/factory/detail.html:397
+#: portal/templates/portal/library/prices/list.html:210
+msgid "有效期"
+msgstr "Validité"
+
+#: portal/templates/portal/factory/detail.html:398
+msgid "预估折扣"
+msgstr "Remise estimée"
+
+#: portal/templates/portal/factory/detail.html:458
+msgid "暂无 Serial 明细。"
+msgstr "Aucun numéro de série."
+
+#: portal/templates/portal/factory/detail.html:467
+msgid "保存 Serial 修改"
+msgstr "Enregistrer les modifications des numéros de série"
+
+#: portal/templates/portal/factory/detail.html:471
+msgid "保存后系统会重新同步 ShipmentBatch / Workflow, 并重新验证。"
+msgstr ""
+"L’enregistrement resynchronise ShipmentBatch / Workflow et relance la "
+"validation."
+
+#: portal/templates/portal/factory/list.html:20
+msgid "管理工厂采购 PDF、serial number、发货批次与后续流程。"
+msgstr ""
+"Gérer les PDF d’achat, les numéros de série, les lots d’expédition et les "
+"étapes suivantes."
+
+#: portal/templates/portal/factory/list.html:24
+#: portal/templates/portal/factory/upload.html:4
+msgid "上传工厂采购"
+msgstr "Importer un achat fournisseur"
+
+#: portal/templates/portal/factory/list.html:31
+msgid "采购文件列表"
+msgstr "Documents d’achat"
+
+#: portal/templates/portal/factory/list.html:32
+#, python-format
+msgid "共 %(value1)s 份采购文件"
+msgstr "%(value1)s documents d’achat"
+
+#: portal/templates/portal/factory/list.html:53
+msgid "产品 / Serial"
+msgstr "Produits / Numéros de série"
+
+#: portal/templates/portal/factory/list.html:55
+#: portal/templates/portal/orders/list.html:91
+#: portal/templates/portal/workflow/detail.html:60
+#: portal/templates/portal/workflow/list.html:88
+msgid "下一步"
+msgstr "Étape suivante"
+
+#: portal/templates/portal/factory/list.html:81
+#, python-format
+msgid "%(value1)s 产品 / %(value2)s SN"
+msgstr "%(value1)s produits / %(value2)s SN"
+
+#: portal/templates/portal/factory/list.html:99
+#: portal/templates/portal/orders/detail.html:369
+#: portal/templates/portal/orders/list.html:136
+#: portal/templates/portal/workflow/list.html:167
+msgid "查看"
+msgstr "Voir"
+
+#: portal/templates/portal/factory/list.html:106
+msgid "还没有工厂采购文件。"
+msgstr "Aucun document d’achat fournisseur."
+
+#: portal/templates/portal/factory/upload.html:15
+msgid "上传"
+msgstr "Importer"
+
+#: portal/templates/portal/factory/upload.html:21
+msgid "上传工厂文件"
+msgstr "Importer un document d’usine"
+
+#: portal/templates/portal/factory/upload.html:22
+msgid "上传工厂确认 PDF 后，系统会自动提取发货信息，并进入后续处理流程。"
+msgstr ""
+"Importez un PDF de confirmation de l’usine pour extraire les informations de "
+"livraison et poursuivre le traitement."
+
+#: portal/templates/portal/factory/upload.html:26
+msgid "返回工厂文件列表"
+msgstr "Retour aux documents d’usine"
+
+#: portal/templates/portal/factory/upload.html:45
+msgid "自动匹配"
+msgstr "Rapprochement automatique"
+
+#: portal/templates/portal/factory/upload.html:59
+msgid "批次类型（旧格式可人工选择）"
+msgstr "Type de lot (sélection manuelle pour les anciens formats)"
+
+#: portal/templates/portal/factory/upload.html:75
+msgid "选择工厂文件 PDF"
+msgstr "Sélectionner le PDF de l’usine"
+
+#: portal/templates/portal/factory/upload.html:76
+msgid ""
+"上传后系统会自动识别 bon de commande、提取 serial number、有效期和发货日期，"
+"并继续同步后续流程。"
+msgstr ""
+"Après import, le système détecte le bon de commande, extrait les numéros de "
+"série, les dates de péremption et d’expédition, puis synchronise les étapes "
+"suivantes."
+
+#: portal/templates/portal/factory/upload.html:89
+#: portal/templates/portal/orders/upload.html:43
+msgid "提示："
+msgstr "Conseil :"
+
+#: portal/templates/portal/factory/upload.html:90
+#: portal/templates/portal/orders/upload.html:44
+msgid "自动提取可能需要一些时间。请不要在上传过程中关闭页面。"
+msgstr ""
+"L’extraction automatique peut prendre du temps. Gardez cette page ouverte "
+"pendant l’import."
+
+#: portal/templates/portal/factory/upload.html:95
+msgid "上传并提取"
+msgstr "Importer et extraire"
+
+#: portal/templates/portal/factory/upload.html:99
+#: portal/templates/portal/library/master_data_form.html:78
+#: portal/templates/portal/library/prices/form.html:241
+#: portal/templates/portal/library/products/form.html:75
+#: portal/templates/portal/orders/upload.html:53
+msgid "取消"
+msgstr "Annuler"
+
+#: portal/templates/portal/home.html:4
+msgid "工作台 |Acoeurs France"
+msgstr "Tableau de bord | Acoeurs France"
+
+#: portal/templates/portal/home.html:13
+msgid "工作台"
+msgstr "Tableau de bord"
+
+#: portal/templates/portal/home.html:14
+msgid "请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。"
+msgstr ""
+"Sélectionnez un module pour gérer les commandes hospitalières, les achats "
+"fournisseurs, les documents ou le suivi financier."
+
+#: portal/templates/portal/library/coming_soon.html:24
+msgid "这个页面下一步接入列表和搜索功能。"
+msgstr ""
+"Les fonctions de liste et de recherche seront ajoutées à cette page "
+"prochainement."
+
+#: portal/templates/portal/library/factories/detail.html:4
+#, python-format
+msgid "%(value1)s | 工厂库"
+msgstr "%(value1)s | Répertoire des usines"
+
+#: portal/templates/portal/library/factories/detail.html:35
+#: portal/templates/portal/library/factories/detail.html:129
+#: portal/templates/portal/library/factories/list.html:86
+#: portal/templates/portal/library/factories/list.html:137
+#: portal/templates/portal/library/hospitals/detail.html:32
+#: portal/templates/portal/library/hospitals/list.html:84
+#: portal/templates/portal/library/hospitals/list.html:165
+#: portal/templates/portal/library/prices/detail.html:241
+#: portal/templates/portal/library/products/category_detail.html:103
+#: portal/templates/portal/library/products/product_detail.html:74
+msgid "停用"
+msgstr "Désactivé"
+
+#: portal/templates/portal/library/factories/detail.html:47 portal/views.py:945
+msgid "编辑工厂"
+msgstr "Modifier l’usine"
+
+#: portal/templates/portal/library/factories/detail.html:57
+msgid "停用工厂"
+msgstr "Désactiver l’usine"
+
+#: portal/templates/portal/library/factories/detail.html:62
+#: portal/templates/portal/library/hospitals/detail.html:61
+#: portal/templates/portal/library/prices/detail.html:72
+msgid "重新启用"
+msgstr "Réactiver"
+
+#: portal/templates/portal/library/factories/detail.html:72
+#: portal/templates/portal/library/hospitals/detail.html:71
+msgid "资料需要补充："
+msgstr "Informations à compléter :"
+
+#: portal/templates/portal/library/factories/detail.html:79
+msgid "关联科室"
+msgstr "Services associés"
+
+#: portal/templates/portal/library/factories/detail.html:89
+msgid "启用产品"
+msgstr "Produits actifs"
+
+#: portal/templates/portal/library/factories/detail.html:94
+msgid "停用产品"
+msgstr "Produits désactivés"
+
+#: portal/templates/portal/library/factories/detail.html:101
+#: portal/templates/portal/library/hospitals/detail.html:78
+msgid "基本资料"
+msgstr "Informations générales"
+
+#: portal/templates/portal/library/factories/detail.html:105
+msgid "正式名称"
+msgstr "Nom officiel"
+
+#: portal/templates/portal/library/factories/detail.html:117
+msgid "简称"
+msgstr "Nom abrégé"
+
+#: portal/templates/portal/library/factories/detail.html:137
+msgid "采购资料"
+msgstr "Informations d’achat"
+
+#: portal/templates/portal/library/factories/detail.html:155
+#: portal/templates/portal/library/hospitals/detail.html:94
+#: portal/templates/portal/library/prices/detail.html:247
+#: portal/templates/portal/library/products/product_detail.html:120
+#: portal/templates/portal/orders/detail.html:124
+msgid "创建时间"
+msgstr "Date de création"
+
+#: portal/templates/portal/library/factories/detail.html:162
+#: portal/templates/portal/library/hospitals/detail.html:101
+#: portal/templates/portal/library/prices/detail.html:254
+#: portal/templates/portal/library/products/product_detail.html:125
+#: portal/templates/portal/orders/detail.html:129
+#: portal/templates/portal/orders/list.html:92
+#: portal/templates/portal/workflow/list.html:89
+msgid "更新时间"
+msgstr "Dernière modification"
+
+#: portal/templates/portal/library/factories/detail.html:193
+msgid "暂未设置自动匹配关键词。"
+msgstr "Aucun mot-clé de rapprochement automatique configuré."
+
+#: portal/templates/portal/library/factories/detail.html:202
+msgid "关联产品结构"
+msgstr "Structure de produits associée"
+
+#: portal/templates/portal/library/factories/detail.html:206
+msgid "显示该真实工厂在产品库中的科室入口和产品分类。"
+msgstr ""
+"Services et catégories de produits associés à cette usine dans le catalogue."
+
+#: portal/templates/portal/library/factories/detail.html:216
+#: portal/templates/portal/library/products/home.html:106
+#: portal/templates/portal/library/products/product_detail.html:80
+msgid "科室"
+msgstr "Service"
+
+#: portal/templates/portal/library/factories/detail.html:221
+msgid "未关联科室"
+msgstr "Aucun service associé"
+
+#: portal/templates/portal/library/factories/detail.html:228
+msgid "打开产品库"
+msgstr "Ouvrir le catalogue produits"
+
+#: portal/templates/portal/library/factories/detail.html:237
+#: portal/templates/portal/library/factories/list.html:158
+#: portal/templates/portal/library/products/department_detail.html:46
+#: portal/templates/portal/library/products/factory_detail.html:62
+#: portal/templates/portal/library/products/home.html:123
+#, python-format
+msgid "%(value1)s 个产品"
+msgstr "%(value1)s produits"
+
+#: portal/templates/portal/library/factories/detail.html:243
+msgid "当前工厂入口下没有产品分类。"
+msgstr "Aucune catégorie de produits pour cette entrée d’usine."
+
+#: portal/templates/portal/library/factories/detail.html:250
+msgid "该工厂尚未关联产品库中的任何科室入口。"
+msgstr "Cette usine n’est associée à aucun service du catalogue produits."
+
+#: portal/templates/portal/library/factories/list.html:4
+msgid "工厂库 | Acoeurs France"
+msgstr "Répertoire des usines | Acoeurs France"
+
+#: portal/templates/portal/library/factories/list.html:25
+msgid "查询和维护供应工厂、采购信息及产品关联。"
+msgstr ""
+"Rechercher et gérer les usines, les informations d’achat et les associations "
+"de produits."
+
+#: portal/templates/portal/library/factories/list.html:32
+msgid "＋ 新增工厂"
+msgstr "＋ Ajouter une usine"
+
+#: portal/templates/portal/library/factories/list.html:45
+msgid "启用工厂"
+msgstr "Usines actives"
+
+#: portal/templates/portal/library/factories/list.html:50
+msgid "已有产品"
+msgstr "Avec produits"
+
+#: portal/templates/portal/library/factories/list.html:55
+#: portal/templates/portal/library/hospitals/list.html:55
+msgid "资料不完整"
+msgstr "Informations incomplètes"
+
+#: portal/templates/portal/library/factories/list.html:67
+msgid "搜索工厂名称、简称、地址、Buyer 或匹配关键词"
+msgstr "Rechercher par nom, nom abrégé, adresse, Buyer ou mots-clés"
+
+#: portal/templates/portal/library/factories/list.html:92
+#: portal/templates/portal/library/hospitals/list.html:90
+msgid "资料"
+msgstr "Informations"
+
+#: portal/templates/portal/library/factories/list.html:101
+#: portal/templates/portal/library/hospitals/list.html:98
+msgid "信息完整"
+msgstr "Informations complètes"
+
+#: portal/templates/portal/library/factories/list.html:106
+#: portal/templates/portal/library/hospitals/list.html:102
+msgid "资料缺失"
+msgstr "Informations manquantes"
+
+#: portal/templates/portal/library/factories/list.html:153
+msgid "尚未填写工厂地址"
+msgstr "Adresse de l’usine non renseignée"
+
+#: portal/templates/portal/library/factories/list.html:162
+#, python-format
+msgid "%(value1)s 个科室入口"
+msgstr "%(value1)s entrées de service"
+
+#: portal/templates/portal/library/factories/list.html:175
+msgid "没有找到符合条件的工厂。"
+msgstr "Aucune usine ne correspond à vos critères."
+
+#: portal/templates/portal/library/home.html:4
+msgid "资料库 | Acoeurs France"
+msgstr "Bibliothèque | Acoeurs France"
+
+#: portal/templates/portal/library/home.html:20
+msgid "维护产品、医院、工厂、价格、发货批次和待补发等资料信息。"
+msgstr ""
+"Gérer les produits, hôpitaux, usines, tarifs, lots d’expédition et reliquats."
+
+#: portal/templates/portal/library/home.html:51
+msgid "资料库模块暂未配置。"
+msgstr "Les modules de la bibliothèque ne sont pas encore configurés."
+
+#: portal/templates/portal/library/hospitals/detail.html:4
+#, python-format
+msgid "%(value1)s | 医院库"
+msgstr "%(value1)s | Répertoire des hôpitaux"
+
+#: portal/templates/portal/library/hospitals/detail.html:37
+#, python-format
+msgid "标准化名称： %(value1)s"
+msgstr "Nom normalisé : %(value1)s"
+
+#: portal/templates/portal/library/hospitals/detail.html:46 portal/views.py:739
+msgid "编辑医院"
+msgstr "Modifier l’hôpital"
+
+#: portal/templates/portal/library/hospitals/detail.html:56
+msgid "停用医院"
+msgstr "Désactiver l’hôpital"
+
+#: portal/templates/portal/library/hospitals/detail.html:87
+msgid "标准化名称"
+msgstr "Nom normalisé"
+
+#: portal/templates/portal/library/hospitals/detail.html:144
+msgid "地址资料"
+msgstr "Adresses"
+
+#: portal/templates/portal/library/hospitals/list.html:4
+msgid "医院库 | Acoeurs France"
+msgstr "Répertoire des hôpitaux | Acoeurs France"
+
+#: portal/templates/portal/library/hospitals/list.html:25
+msgid "查询和维护医院名称、地址及联系方式。"
+msgstr ""
+"Rechercher et gérer les noms des hôpitaux, leurs adresses et leurs "
+"coordonnées."
+
+#: portal/templates/portal/library/hospitals/list.html:32
+msgid "＋ 新增医院"
+msgstr "＋ Ajouter un hôpital"
+
+#: portal/templates/portal/library/hospitals/list.html:40
+msgid "全部医院"
+msgstr "Tous les hôpitaux"
+
+#: portal/templates/portal/library/hospitals/list.html:45
+msgid "启用医院"
+msgstr "Hôpitaux actifs"
+
+#: portal/templates/portal/library/hospitals/list.html:50
+msgid "缺少账单地址"
+msgstr "Adresse de facturation manquante"
+
+#: portal/templates/portal/library/hospitals/list.html:67
+msgid "搜索医院名称、地址、联系人、电话或邮箱"
+msgstr "Rechercher par hôpital, adresse, contact, téléphone ou e-mail"
+
+#: portal/templates/portal/library/hospitals/list.html:173
+msgid "没有找到符合条件的医院。"
+msgstr "Aucun hôpital ne correspond à vos critères."
+
+#: portal/templates/portal/library/prices/detail.html:5
+#: portal/templates/portal/library/prices/form.html:5
+#, python-format
+msgid "%(value1)s | 价格规则"
+msgstr "%(value1)s | Règles tarifaires"
+
+#: portal/templates/portal/library/prices/detail.html:26
+#: portal/templates/portal/library/prices/list.html:225
+#: portal/templates/portal/library/prices/simulator.html:129
+msgid "未命名规则"
+msgstr "Règle sans nom"
+
+#: portal/templates/portal/library/prices/detail.html:36
+msgid "未命名价格规则"
+msgstr "Règle tarifaire sans nom"
+
+#: portal/templates/portal/library/prices/detail.html:45
+#, python-format
+msgid "规则编号 #%(value1)s · 当前状态基准日期： %(value2)s"
+msgstr "Règle n° %(value1)s · Date de référence du statut : %(value2)s"
+
+#: portal/templates/portal/library/prices/detail.html:55
+msgid "编辑规则"
+msgstr "Modifier la règle"
+
+#: portal/templates/portal/library/prices/detail.html:66
+msgid "停用规则"
+msgstr "Désactiver la règle"
+
+#: portal/templates/portal/library/prices/detail.html:96
+msgid "基础单件毛利"
+msgstr "Marge unitaire de base"
+
+#: portal/templates/portal/library/prices/detail.html:101
+#, python-format
+msgid "毛利率 %(value1)s%%"
+msgstr "Taux de marge %(value1)s%%"
+
+#: portal/templates/portal/library/prices/detail.html:106
+msgid "受影响启用产品"
+msgstr "Produits actifs concernés"
+
+#: portal/templates/portal/library/prices/detail.html:116
+#: portal/templates/portal/library/prices/form.html:91
+msgid "适用范围"
+msgstr "Périmètre d’application"
+
+#: portal/templates/portal/library/prices/detail.html:129
+msgid "全部工厂 / 全局回退"
+msgstr "Toutes les usines / Repli global"
+
+#: portal/templates/portal/library/prices/detail.html:151
+#: portal/templates/portal/library/prices/list.html:244
+msgid "无下限"
+msgstr "Sans limite de début"
+
+#: portal/templates/portal/library/prices/detail.html:158
+msgid "长期有效"
+msgstr "Durée illimitée"
+
+#: portal/templates/portal/library/prices/detail.html:166
+#: portal/templates/portal/library/prices/form.html:191
+msgid "临期折扣"
+msgstr "Remise pour péremption proche"
+
+#: portal/templates/portal/library/prices/detail.html:171
+msgid "临期门槛"
+msgstr "Seuil de péremption"
+
+#: portal/templates/portal/library/prices/detail.html:173
+#, python-format
+msgid "%(value1)s 天"
+msgstr "%(value1)s jours"
+
+#: portal/templates/portal/library/prices/detail.html:179
+msgid "折扣率"
+msgstr "Taux de remise"
+
+#: portal/templates/portal/library/prices/detail.html:186
+msgid "临期折后采购价"
+msgstr "Prix d’achat après remise"
+
+#: portal/templates/portal/library/prices/detail.html:193
+msgid "临期折后单件毛利"
+msgstr "Marge unitaire après remise"
+
+#: portal/templates/portal/library/prices/detail.html:203
+msgid "受影响产品"
+msgstr "Produits concernés"
+
+#: portal/templates/portal/library/prices/detail.html:207
+#, python-format
+msgid "这里只显示前 20 个启用产品， 当前规则共影响 %(value1)s 个产品。"
+msgstr ""
+"Les 20 premiers produits actifs sont affichés. Cette règle concerne "
+"%(value1)s produits au total."
+
+#: portal/templates/portal/library/prices/detail.html:223
+msgid "当前规则没有匹配到启用产品。"
+msgstr "Aucun produit actif ne correspond à cette règle."
+
+#: portal/templates/portal/library/prices/detail.html:231
+msgid "系统信息"
+msgstr "Informations système"
+
+#: portal/templates/portal/library/prices/detail.html:236
+msgid "启用状态"
+msgstr "État d’activation"
+
+#: portal/templates/portal/library/prices/form.html:40
+msgid "规则优先级："
+msgstr "Priorité des règles :"
+
+#: portal/templates/portal/library/prices/form.html:41
+msgid ""
+"具体工厂和具体分类规则优先于工厂通用规则， 工厂通用规则优先于全局回退规则。"
+msgstr ""
+"Les règles par usine et catégorie priment sur les règles générales de "
+"l’usine, qui priment sur les règles de repli globales."
+
+#: portal/templates/portal/library/prices/form.html:56
+msgid "规则识别"
+msgstr "Identification de la règle"
+
+#: portal/templates/portal/library/prices/form.html:127
+msgid "生效时间"
+msgstr "Période de validité"
+
+#: portal/templates/portal/library/prices/form.html:163
+msgid "价格"
+msgstr "Prix"
+
+#: portal/templates/portal/library/prices/list.html:4
+msgid "价格规则 | Acoeurs France"
+msgstr "Règles tarifaires | Acoeurs France"
+
+#: portal/templates/portal/library/prices/list.html:28
+msgid "根据工厂、产品分类和医院订单日期， 管理医院售价、工厂采购价及临期折扣。"
+msgstr ""
+"Gérer les prix de vente hospitaliers, les prix d’achat et les remises pour "
+"péremption proche par usine, catégorie et date de commande."
+
+#: portal/templates/portal/library/prices/list.html:35
+msgid "测试价格匹配"
+msgstr "Tester le rapprochement tarifaire"
+
+#: portal/templates/portal/library/prices/list.html:41
+msgid "＋ 新增价格规则"
+msgstr "＋ Ajouter une règle tarifaire"
+
+#: portal/templates/portal/library/prices/list.html:49
+msgid "全部规则"
+msgstr "Toutes les règles"
+
+#: portal/templates/portal/library/prices/list.html:54
+#: portal/templates/portal/library/prices/list.html:155
+msgid "当前生效"
+msgstr "En vigueur"
+
+#: portal/templates/portal/library/prices/list.html:64
+msgid "已过期 / 已停用"
+msgstr "Expirées / Désactivées"
+
+#: portal/templates/portal/library/prices/list.html:85
+msgid "规则名称、工厂、分类或备注"
+msgstr "Nom de règle, usine, catégorie ou notes"
+
+#: portal/templates/portal/library/prices/list.html:124
+msgid "全部分类"
+msgstr "Toutes les catégories"
+
+#: portal/templates/portal/library/prices/list.html:177
+msgid "基准日期"
+msgstr "Date de référence"
+
+#: portal/templates/portal/library/prices/list.html:211
+msgid "医院价"
+msgstr "Prix hospitalier"
+
+#: portal/templates/portal/library/prices/list.html:212
+msgid "工厂价"
+msgstr "Prix usine"
+
+#: portal/templates/portal/library/prices/list.html:213
+#: portal/templates/portal/library/prices/simulator.html:162
+msgid "临期规则"
+msgstr "Règle de péremption"
+
+#: portal/templates/portal/library/prices/list.html:248
+msgid "长期"
+msgstr "Illimitée"
+
+#: portal/templates/portal/library/prices/list.html:262
+#: portal/templates/portal/library/prices/simulator.html:164
+#, python-format
+msgid "%(value1)s 天 / %(value2)s%%"
+msgstr "%(value1)s jours / %(value2)s%%"
+
+#: portal/templates/portal/library/prices/list.html:281
+msgid "没有找到符合条件的价格规则。"
+msgstr "Aucune règle tarifaire ne correspond à vos critères."
+
+#: portal/templates/portal/library/prices/simulator.html:5
+msgid "价格匹配模拟器 | 价格规则"
+msgstr "Simulateur tarifaire | Règles tarifaires"
+
+#: portal/templates/portal/library/prices/simulator.html:25
+#: portal/templates/portal/library/prices/simulator.html:32
+msgid "价格匹配模拟器"
+msgstr "Simulateur tarifaire"
+
+#: portal/templates/portal/library/prices/simulator.html:34
+msgid "选择产品和医院订单日期， 查看系统会命中哪条价格规则。"
+msgstr ""
+"Sélectionnez un produit et une date de commande pour voir la règle tarifaire "
+"applicable."
+
+#: portal/templates/portal/library/prices/simulator.html:41
+msgid "返回价格规则"
+msgstr "Retour aux règles tarifaires"
+
+#: portal/templates/portal/library/prices/simulator.html:76
+msgid "运行模拟"
+msgstr "Lancer la simulation"
+
+#: portal/templates/portal/library/prices/simulator.html:86
+msgid "产品信息"
+msgstr "Informations produit"
+
+#: portal/templates/portal/library/prices/simulator.html:125
+msgid "匹配成功"
+msgstr "Correspondance trouvée"
+
+#: portal/templates/portal/library/prices/simulator.html:135
+msgid "查看规则详情"
+msgstr "Voir le détail de la règle"
+
+#: portal/templates/portal/library/prices/simulator.html:141
+msgid "医院销售价"
+msgstr "Prix de vente à l’hôpital"
+
+#: portal/templates/portal/library/prices/simulator.html:148
+msgid "工厂采购价"
+msgstr "Prix d’achat à l’usine"
+
+#: portal/templates/portal/library/prices/simulator.html:155
+msgid "基础毛利"
+msgstr "Marge de base"
+
+#: portal/templates/portal/library/prices/simulator.html:172
+msgid "匹配范围："
+msgstr "Périmètre retenu :"
+
+#: portal/templates/portal/library/prices/simulator.html:175
+msgid "匹配说明："
+msgstr "Détail du rapprochement :"
+
+#: portal/templates/portal/library/prices/simulator.html:183
+msgid "未找到规则"
+msgstr "Aucune règle trouvée"
+
+#: portal/templates/portal/library/prices/simulator.html:186
+msgid "该产品和日期没有匹配价格规则"
+msgstr "Aucune règle tarifaire ne correspond à ce produit et à cette date"
+
+#: portal/templates/portal/library/prices/simulator.html:194
+msgid "警告："
+msgstr "Avertissement :"
+
+#: portal/templates/portal/library/products/category_detail.html:4
+#: portal/templates/portal/library/products/department_detail.html:4
+#: portal/templates/portal/library/products/factory_detail.html:4
+#: portal/templates/portal/library/products/form.html:4
+#: portal/templates/portal/library/products/product_detail.html:4
+#, python-format
+msgid "%(value1)s | 产品库"
+msgstr "%(value1)s | Catalogue produits"
+
+#: portal/templates/portal/library/products/category_detail.html:41
+#, python-format
+msgid "%(value1)s 个启用产品。"
+msgstr "%(value1)s produits actifs."
+
+#: portal/templates/portal/library/products/category_detail.html:48
+msgid "＋ 新增产品"
+msgstr "＋ Ajouter un produit"
+
+#: portal/templates/portal/library/products/category_detail.html:60
+msgid "在当前分类中搜索产品编号或描述"
+msgstr "Rechercher une référence ou une description dans cette catégorie"
+
+#: portal/templates/portal/library/products/category_detail.html:80
+#: portal/templates/portal/library/products/home.html:65
+msgid "医院价格"
+msgstr "Prix hospitalier"
+
+#: portal/templates/portal/library/products/category_detail.html:81
+#: portal/templates/portal/library/products/home.html:66
+msgid "工厂价格"
+msgstr "Prix usine"
+
+#: portal/templates/portal/library/products/category_detail.html:110
+msgid "当前分类没有符合条件的产品。"
+msgstr "Aucun produit de cette catégorie ne correspond à vos critères."
+
+#: portal/templates/portal/library/products/department_detail.html:26
+msgid "选择该科室下的工厂。"
+msgstr "Sélectionnez une usine dans ce service."
+
+#: portal/templates/portal/library/products/department_detail.html:41
+msgid "尚未关联工厂资料"
+msgstr "Aucune fiche usine associée"
+
+#: portal/templates/portal/library/products/department_detail.html:45
+#: portal/templates/portal/library/products/home.html:119
+#, python-format
+msgid "%(value1)s 个分类"
+msgstr "%(value1)s catégories"
+
+#: portal/templates/portal/library/products/department_detail.html:53
+msgid "该科室暂时没有工厂。"
+msgstr "Aucune usine dans ce service."
+
+#: portal/templates/portal/library/products/department_detail.html:61
+#: portal/views.py:382
+msgid "新增或关联工厂"
+msgstr "Ajouter ou associer une usine"
+
+#: portal/templates/portal/library/products/department_detail.html:62
+msgid "选择已有工厂，或创建一个新工厂。"
+msgstr "Sélectionnez une usine existante ou créez-en une."
+
+#: portal/templates/portal/library/products/factory_detail.html:34
+msgid "该入口尚未关联真实工厂资料。"
+msgstr "Cette entrée n’est pas encore associée à une fiche usine."
+
+#: portal/templates/portal/library/products/factory_detail.html:43
+msgid "查看工厂资料"
+msgstr "Voir la fiche usine"
+
+#: portal/templates/portal/library/products/factory_detail.html:69
+msgid "该工厂暂时没有产品分类。"
+msgstr "Aucune catégorie de produits pour cette usine."
+
+#: portal/templates/portal/library/products/factory_detail.html:77
+#: portal/views.py:468 portal/views.py:509
+msgid "新增产品分类"
+msgstr "Ajouter une catégorie de produits"
+
+#: portal/templates/portal/library/products/factory_detail.html:78
+msgid "为当前工厂创建一个产品分类。"
+msgstr "Créer une catégorie de produits pour cette usine."
+
+#: portal/templates/portal/library/products/home.html:4
+msgid "产品库 | Acoeurs France"
+msgstr "Catalogue produits | Acoeurs France"
+
+#: portal/templates/portal/library/products/home.html:25
+msgid "按科室、工厂和产品分类浏览全部产品资料。"
+msgstr "Parcourir les produits par service, usine et catégorie."
+
+#: portal/templates/portal/library/products/home.html:35
+msgid "搜索产品编号、描述、工厂或产品分类"
+msgstr "Rechercher par référence, description, usine ou catégorie"
+
+#: portal/templates/portal/library/products/home.html:51
+msgid "搜索结果"
+msgstr "Résultats de recherche"
+
+#: portal/templates/portal/library/products/home.html:52
+#, python-format
+msgid "关键词：%(value1)s"
+msgstr "Recherche : %(value1)s"
+
+#: portal/templates/portal/library/products/home.html:63
+msgid "分类路径"
+msgstr "Chemin de catégorie"
+
+#: portal/templates/portal/library/products/home.html:93
+msgid "没有找到匹配的产品。"
+msgstr "Aucun produit correspondant."
+
+#: portal/templates/portal/library/products/home.html:107
+msgid "选择一个科室，继续浏览该科室下的工厂。"
+msgstr "Sélectionnez un service pour parcourir ses usines."
+
+#: portal/templates/portal/library/products/home.html:118
+#, python-format
+msgid "%(value1)s 个工厂"
+msgstr "%(value1)s usines"
+
+#: portal/templates/portal/library/products/home.html:130
+msgid "暂无科室记录。"
+msgstr "Aucun service enregistré."
+
+#: portal/templates/portal/library/products/home.html:138 portal/views.py:304
+#: portal/views.py:330
+msgid "新增科室"
+msgstr "Ajouter un service"
+
+#: portal/templates/portal/library/products/home.html:139
+msgid "创建新的产品科室。"
+msgstr "Créer un service de produits."
+
+#: portal/templates/portal/library/products/product_detail.html:48
+msgid "暂无产品描述"
+msgstr "Aucune description du produit"
+
+#: portal/templates/portal/library/products/product_detail.html:54
+msgid "在 Admin 中编辑"
+msgstr "Modifier dans Admin"
+
+#: portal/templates/portal/library/products/product_detail.html:60
+msgid "产品资料"
+msgstr "Fiche produit"
+
+#: portal/templates/portal/library/products/product_detail.html:85
+msgid "工厂入口"
+msgstr "Entrée d’usine"
+
+#: portal/templates/portal/library/products/product_detail.html:95
+msgid "真实工厂"
+msgstr "Fiche usine"
+
+#: portal/templates/portal/orders/detail.html:4
+#, python-format
+msgid "医院订单 %(value1)s | Acoeurs France"
+msgstr "Commande hospitalière %(value1)s | Acoeurs France"
+
+#: portal/templates/portal/orders/detail.html:13
+msgid "医院订单详情"
+msgstr "Détail de la commande hospitalière"
+
+#: portal/templates/portal/orders/detail.html:14
+#, python-format
+msgid "订单 %(value1)s 的基础信息、产品明细、地址信息与后续工作流。"
+msgstr ""
+"Commande %(value1)s : informations, lignes de produits, adresses et workflow "
+"associé."
+
+#: portal/templates/portal/orders/detail.html:18
+#: portal/templates/portal/orders/upload.html:18
+msgid "返回订单列表"
+msgstr "Retour aux commandes"
+
+#: portal/templates/portal/orders/detail.html:25
+msgid "订单操作"
+msgstr "Actions sur la commande"
+
+#: portal/templates/portal/orders/detail.html:26
+msgid "重新提取会覆盖当前 OCR 提取结果；保存人工修改不会重新 OCR。"
+msgstr ""
+"La réextraction remplace les résultats OCR actuels. L’enregistrement des "
+"corrections manuelles ne relance pas l’OCR."
+
+#: portal/templates/portal/orders/detail.html:39
+msgid "基础验证"
+msgstr "Validation de base"
+
+#: portal/templates/portal/orders/detail.html:46
+#: portal/templates/portal/orders/detail.html:278
+msgid "生成并下载 Factory Request"
+msgstr "Générer et télécharger la Factory Request"
+
+#: portal/templates/portal/orders/detail.html:53
+msgid "批次摘要"
+msgstr "Récapitulatif des lots"
+
+#: portal/templates/portal/orders/detail.html:57
+msgid "请求数量"
+msgstr "Quantité demandée"
+
+#: portal/templates/portal/orders/detail.html:65
+#: portal/templates/portal/shipments/detail.html:65
+msgid "剩余待发"
+msgstr "Reste à expédier"
+
+#: portal/templates/portal/orders/detail.html:73
+msgid "最近批次"
+msgstr "Dernier lot"
+
+#: portal/templates/portal/orders/detail.html:90
+#: portal/templates/portal/workflow/detail.html:25
+msgid "订单信息"
+msgstr "Informations de commande"
+
+#: portal/templates/portal/orders/detail.html:109
+#: portal/templates/portal/orders/list.html:89
+msgid "订单状态"
+msgstr "Statut de la commande"
+
+#: portal/templates/portal/orders/detail.html:119
+#: portal/templates/portal/orders/detail.html:148
+#: portal/templates/portal/workflow/detail.html:163
+msgid "验证状态"
+msgstr "État de validation"
+
+#: portal/templates/portal/orders/detail.html:136
+msgid "订单概览"
+msgstr "Vue d’ensemble de la commande"
+
+#: portal/templates/portal/orders/detail.html:155
+msgid "打开原始订单 PDF"
+msgstr "Ouvrir le PDF original de la commande"
+
+#: portal/templates/portal/orders/detail.html:163
+msgid "收货地址"
+msgstr "Adresse de livraison"
+
+#: portal/templates/portal/orders/detail.html:174
+msgid "产品明细"
+msgstr "Lignes de produits"
+
+#: portal/templates/portal/orders/detail.html:181
+msgid "原图"
+msgstr "Image source"
+
+#: portal/templates/portal/orders/detail.html:182
+msgid "OCR产品号"
+msgstr "Référence détectée par OCR"
+
+#: portal/templates/portal/orders/detail.html:183
+msgid "产品库编号"
+msgstr "Référence du catalogue"
+
+#: portal/templates/portal/orders/detail.html:186
+#: portal/templates/portal/workflow/detail.html:308
+msgid "医院单价"
+msgstr "Prix unitaire hospitalier"
+
+#: portal/templates/portal/orders/detail.html:187
+msgid "匹配"
+msgstr "Rapprochement"
+
+#: portal/templates/portal/orders/detail.html:259
+msgid "没有产品明细。"
+msgstr "Aucune ligne de produit."
+
+#: portal/templates/portal/orders/detail.html:270
+msgid "保存人工修改并基础验证"
+msgstr "Enregistrer les corrections et valider"
+
+#: portal/templates/portal/orders/detail.html:283
+msgid "提取与验证问题"
+msgstr "Problèmes d’extraction et de validation"
+
+#: portal/templates/portal/orders/detail.html:295
+#: portal/templates/portal/workflow/detail.html:207
+msgid "错误"
+msgstr "Erreurs"
+
+#: portal/templates/portal/orders/detail.html:303
+#: portal/templates/portal/workflow/detail.html:215
+msgid "没有 errors。"
+msgstr "Aucune erreur."
+
+#: portal/templates/portal/orders/detail.html:316
+#: portal/templates/portal/workflow/detail.html:228
+msgid "没有 warnings。"
+msgstr "Aucun avertissement."
+
+#: portal/templates/portal/orders/detail.html:321
+msgid "当前没有提取或验证问题。"
+msgstr "Aucun problème d’extraction ou de validation."
+
+#: portal/templates/portal/orders/detail.html:326
+msgid "关联工作流"
+msgstr "Workflows associés"
+
+#: portal/templates/portal/orders/detail.html:334
+#: portal/templates/portal/shipments/detail.html:36
+#: portal/templates/portal/shipments/list.html:59
+#: portal/templates/portal/workflow/detail.html:39
+msgid "来源"
+msgstr "Origine"
+
+#: portal/templates/portal/orders/detail.html:335
+msgid "流程"
+msgstr "Workflow"
+
+#: portal/templates/portal/orders/detail.html:336
+#: portal/templates/portal/workflow/list.html:85
+msgid "验证"
+msgstr "Validation"
+
+#: portal/templates/portal/orders/detail.html:377
+msgid "这个订单暂时没有关联工作流。"
+msgstr "Aucun workflow n’est encore associé à cette commande."
+
+#: portal/templates/portal/orders/list.html:4
+msgid "医院订单 | Acoeurs France"
+msgstr "Commandes hospitalières | Acoeurs France"
+
+#: portal/templates/portal/orders/list.html:14
+msgid "查看医院订单、提取状态、验证结果和后续工作流进度。"
+msgstr ""
+"Consulter les commandes hospitalières, l’extraction, les résultats de "
+"validation et l’avancement du workflow."
+
+#: portal/templates/portal/orders/list.html:19
+#: portal/templates/portal/orders/upload.html:13
+msgid "上传医院订单"
+msgstr "Importer une commande hospitalière"
+
+#: portal/templates/portal/orders/list.html:21
+#: portal/templates/portal/workflow/list.html:18
+msgid "返回首页"
+msgstr "Retour à l’accueil"
+
+#: portal/templates/portal/orders/list.html:28
+msgid "全部订单"
+msgstr "Toutes les commandes"
+
+#: portal/templates/portal/orders/list.html:43
+msgid "已进入工作流"
+msgstr "Dans le workflow"
+
+#: portal/templates/portal/orders/list.html:59
+#: portal/templates/portal/workflow/list.html:56
+msgid "输入订单号或医院名称"
+msgstr "Saisir un numéro de commande ou un nom d’hôpital"
+
+#: portal/templates/portal/orders/list.html:88
+msgid "产品"
+msgstr "Produits"
+
+#: portal/templates/portal/orders/list.html:142
+msgid "请求单"
+msgstr "Demande"
+
+#: portal/templates/portal/orders/list.html:151
+msgid "没有找到符合条件的医院订单。"
+msgstr "Aucune commande hospitalière ne correspond à vos critères."
+
+#: portal/templates/portal/orders/upload.html:4
+msgid "上传医院订单 | Acoeurs France"
+msgstr "Importer une commande hospitalière | Acoeurs France"
+
+#: portal/templates/portal/orders/upload.html:14
+msgid "上传医院订单 PDF 后，系统会自动执行 OCR、订单提取和订单验证。"
+msgstr ""
+"Importez le PDF d’une commande hospitalière pour lancer automatiquement "
+"l’OCR, l’extraction et la validation."
+
+#: portal/templates/portal/orders/upload.html:30
+msgid "选择医院订单 PDF"
+msgstr "Sélectionner le PDF de commande hospitalière"
+
+#: portal/templates/portal/orders/upload.html:31
+msgid ""
+"上传后系统会自动创建订单，并立即提取订单号、医院、地址和产品明细。提取成功后"
+"会继续自动验证。"
+msgstr ""
+"L’import crée une commande et extrait son numéro, l’hôpital, les adresses et "
+"les produits. Une extraction réussie est suivie d’une validation automatique."
+
+#: portal/templates/portal/orders/upload.html:49
+msgid "上传、提取并验证"
+msgstr "Importer, extraire et valider"
+
+#: portal/templates/portal/settlements/_comparison_table.html:7
+msgid "医院订单总额"
+msgstr "Montant total de la commande hospitalière"
+
+#: portal/templates/portal/settlements/_comparison_table.html:79
+msgid "暂无符合条件的发货批次。"
+msgstr "Aucun lot d’expédition correspondant."
+
+#: portal/templates/portal/settlements/account_detail.html:5
+#: portal/templates/portal/settlements/account_list.html:4
+#, python-format
+msgid "%(value1)s | 发票与结算"
+msgstr "%(value1)s | Factures et règlements"
+
+#: portal/templates/portal/settlements/account_detail.html:62
+msgid "查看正式文档"
+msgstr "Voir le document officiel"
+
+#: portal/templates/portal/settlements/account_detail.html:74
+#: portal/templates/portal/settlements/account_list.html:218
+msgid "原始金额"
+msgstr "Montant initial"
+
+#: portal/templates/portal/settlements/account_detail.html:98
+#: portal/templates/portal/settlements/account_list.html:216
+msgid "开立日期"
+msgstr "Date d’émission"
+
+#: portal/templates/portal/settlements/account_detail.html:123
+#, python-format
+msgid "登记银行实际发生的%(value1)s。 登记后将自动重新计算余额和状态。"
+msgstr ""
+"Enregistrer le mouvement bancaire réel : %(value1)s. Le solde et le statut "
+"seront recalculés automatiquement."
+
+#: portal/templates/portal/settlements/account_detail.html:203
+msgid "该结算账户已经取消，不能登记收付款。"
+msgstr ""
+"Ce compte de règlement est annulé. Aucun paiement ne peut être enregistré."
+
+#: portal/templates/portal/settlements/account_detail.html:205
+msgid "该结算账户已经结清。"
+msgstr "Ce compte de règlement est soldé."
+
+#: portal/templates/portal/settlements/account_detail.html:216
+msgid "Invoice 默认来自生成时的付款条件； Factory PO 可以在此手动设置。"
+msgstr ""
+"L’échéance d’une Invoice provient des conditions de paiement à sa "
+"génération. Celle d’une Factory PO peut être saisie ici."
+
+#: portal/templates/portal/settlements/account_detail.html:221
+msgid "当前截止日期"
+msgstr "Échéance actuelle"
+
+#: portal/templates/portal/settlements/account_detail.html:227
+msgid "未设置"
+msgstr "Non définie"
+
+#: portal/templates/portal/settlements/account_detail.html:255
+msgid "保存截止日期"
+msgstr "Enregistrer l’échéance"
+
+#: portal/templates/portal/settlements/account_detail.html:264
+#, python-format
+msgid "%(value1)s流水"
+msgstr "Transactions : %(value1)s"
+
+#: portal/templates/portal/settlements/account_detail.html:267
+msgid "有效流水参与金额累计； 已冲销流水只作为审计记录保留。"
+msgstr ""
+"Les transactions valides sont incluses dans les totaux. Les transactions "
+"contrepassées sont conservées uniquement pour l’audit."
+
+#: portal/templates/portal/settlements/account_detail.html:275
+#: portal/templates/portal/settlements/transactions.html:210
+msgid "日期"
+msgstr "Date"
+
+#: portal/templates/portal/settlements/account_detail.html:277
+#: portal/templates/portal/settlements/transactions.html:117
+#: portal/templates/portal/settlements/transactions.html:216
+msgid "方式"
+msgstr "Mode"
+
+#: portal/templates/portal/settlements/account_detail.html:278
+#: portal/templates/portal/settlements/transactions.html:217
+#: settlements/forms.py:38
+msgid "银行参考号"
+msgstr "Référence bancaire"
+
+#: portal/templates/portal/settlements/account_detail.html:279
+#: portal/templates/portal/settlements/transactions.html:219
+msgid "登记人"
+msgstr "Enregistré par"
+
+#: portal/templates/portal/settlements/account_detail.html:281
+msgid "备注 / 冲销原因"
+msgstr "Notes / Motif de contrepassation"
+
+#: portal/templates/portal/settlements/account_detail.html:318
+msgid "冲销："
+msgstr "Contrepassation :"
+
+#: portal/templates/portal/settlements/account_detail.html:323
+#, python-format
+msgid "操作人： %(value1)s"
+msgstr "Opérateur : %(value1)s"
+
+#: portal/templates/portal/settlements/account_detail.html:344
+#: settlements/forms.py:137
+msgid "冲销原因"
+msgstr "Motif de contrepassation"
+
+#: portal/templates/portal/settlements/account_detail.html:349
+msgid "冲销"
+msgstr "Contrepasser"
+
+#: portal/templates/portal/settlements/account_detail.html:361
+#, python-format
+msgid "当前没有%(value1)s流水。"
+msgstr "Aucune transaction de type %(value1)s."
+
+#: portal/templates/portal/settlements/account_list.html:37
+#: portal/templates/portal/settlements/transactions.html:40
+msgid "返回结算首页"
+msgstr "Retour à l’accueil des règlements"
+
+#: portal/templates/portal/settlements/account_list.html:44
+msgid "账户数量"
+msgstr "Nombre de comptes"
+
+#: portal/templates/portal/settlements/account_list.html:49
+msgid "原始总额"
+msgstr "Montant initial total"
+
+#: portal/templates/portal/settlements/account_list.html:56
+#, python-format
+msgid "%(value1)s总额"
+msgstr "Total : %(value1)s"
+
+#: portal/templates/portal/settlements/account_list.html:63
+#, python-format
+msgid "%(value1)s余额"
+msgstr "Solde : %(value1)s"
+
+#: portal/templates/portal/settlements/account_list.html:70
+msgid "逾期账户"
+msgstr "Comptes en retard"
+
+#: portal/templates/portal/settlements/account_list.html:86
+#, python-format
+msgid "文档编号、订单号或%(value1)s"
+msgstr "Numéro de document, de commande ou %(value1)s"
+
+#: portal/templates/portal/settlements/account_list.html:114
+msgid "到期情况"
+msgstr "Situation des échéances"
+
+#: portal/templates/portal/settlements/account_list.html:136
+msgid "未设置截止日"
+msgstr "Sans échéance"
+
+#: portal/templates/portal/settlements/account_list.html:143
+msgid "排序方式"
+msgstr "Trier par"
+
+#: portal/templates/portal/settlements/account_list.html:212
+#: portal/templates/portal/settlements/transactions.html:212
+msgid "正式文档"
+msgstr "Document officiel"
+
+#: portal/templates/portal/settlements/account_list.html:217
+msgid "预计到货"
+msgstr "Arrivée prévue"
+
+#: portal/templates/portal/settlements/account_list.html:236
+msgid "结算详情"
+msgstr "Détail du règlement"
+
+#: portal/templates/portal/settlements/account_list.html:297
+msgid "没有找到符合条件的结算账户。"
+msgstr "Aucun compte de règlement ne correspond à vos critères."
+
+#: portal/templates/portal/settlements/comparison.html:4
+msgid "订单 / 批次金额对照 | 发票与结算"
+msgstr "Comparatif des montants par commande / lot | Factures et règlements"
+
+#: portal/templates/portal/settlements/comparison.html:19
+msgid "金额对照"
+msgstr "Comparatif des montants"
+
+#: portal/templates/portal/settlements/comparison.html:26
+#: portal/templates/portal/settlements/home.html:113
+msgid "订单 / 批次金额对照"
+msgstr "Comparatif des montants par commande / lot"
+
+#: portal/templates/portal/settlements/comparison.html:28
+msgid "查看全部医院订单及各发货批次对应的 Hospital Invoice 与 Factory PO。"
+msgstr ""
+"Consultez toutes les commandes hospitalières et les Hospital Invoice et "
+"Factory PO de chaque lot d’expédition."
+
+#: portal/templates/portal/settlements/comparison.html:35
+msgid "返回发票与结算"
+msgstr "Retour aux factures et règlements"
+
+#: portal/templates/portal/settlements/comparison.html:42
+msgid "订单总数"
+msgstr "Nombre de commandes"
+
+#: portal/templates/portal/settlements/comparison.html:47
+msgid "ShipmentBatch 数量"
+msgstr "Nombre de ShipmentBatch"
+
+#: portal/templates/portal/settlements/comparison.html:52
+msgid "已生成 Invoice"
+msgstr "Invoice générées"
+
+#: portal/templates/portal/settlements/comparison.html:57
+msgid "已生成 PO"
+msgstr "PO générées"
+
+#: portal/templates/portal/settlements/comparison.html:67
+msgid "医院订单号 / BON"
+msgstr "Numéro de commande hospitalière / BON"
+
+#: portal/templates/portal/settlements/comparison.html:74
+msgid "输入完整或部分 BON"
+msgstr "Saisir tout ou partie d’un BON"
+
+#: portal/templates/portal/settlements/home.html:4
+msgid "发票与结算 | Acoeurs France"
+msgstr "Factures et règlements | Acoeurs France"
+
+#: portal/templates/portal/settlements/home.html:27
+msgid "管理医院应收、工厂应付及实际收付款流水。 正式文件仍在文档中心只读归档。"
+msgstr ""
+"Gérer les créances hospitalières, les dettes fournisseurs et les paiements "
+"réels. Les documents officiels restent archivés en lecture seule dans le "
+"centre de documents."
+
+#: portal/templates/portal/settlements/home.html:34
+msgid "医院待收"
+msgstr "Solde à recevoir des hôpitaux"
+
+#: portal/templates/portal/settlements/home.html:39
+#, python-format
+msgid "%(value1)s 个应收账户"
+msgstr "%(value1)s comptes clients"
+
+#: portal/templates/portal/settlements/home.html:44
+msgid "工厂待付"
+msgstr "Solde à payer aux usines"
+
+#: portal/templates/portal/settlements/home.html:49
+#, python-format
+msgid "%(value1)s 个应付账户"
+msgstr "%(value1)s comptes fournisseurs"
+
+#: portal/templates/portal/settlements/home.html:58
+msgid "需要优先跟进"
+msgstr "Suivi prioritaire requis"
+
+#: portal/templates/portal/settlements/home.html:65
+#, python-format
+msgid "全部流水 %(value1)s"
+msgstr "Toutes les transactions %(value1)s"
+
+#: portal/templates/portal/settlements/home.html:115
+msgid "医院订单金额及各发货批次对应的 Hospital Invoice 与 Factory PO。"
+msgstr ""
+"Montants des commandes hospitalières et Hospital Invoice et Factory PO de "
+"chaque lot d’expédition."
+
+#: portal/templates/portal/settlements/home.html:120
+msgid "查看全部金额对照 →"
+msgstr "Voir le comparatif complet →"
+
+#: portal/templates/portal/settlements/transactions.html:4
+msgid "收付款流水 | 发票与结算"
+msgstr "Transactions de paiement | Factures et règlements"
+
+#: portal/templates/portal/settlements/transactions.html:33
+msgid "查看医院收款、工厂付款和已冲销流水。"
+msgstr ""
+"Consulter les encaissements hospitaliers, les paiements fournisseurs et les "
+"transactions contrepassées."
+
+#: portal/templates/portal/settlements/transactions.html:47
+msgid "流水数量"
+msgstr "Nombre de transactions"
+
+#: portal/templates/portal/settlements/transactions.html:62
+msgid "有效收款"
+msgstr "Encaissements valides"
+
+#: portal/templates/portal/settlements/transactions.html:69
+msgid "有效付款"
+msgstr "Paiements valides"
+
+#: portal/templates/portal/settlements/transactions.html:90
+msgid "文档、订单、对方或银行参考号"
+msgstr "Document, commande, contrepartie ou référence bancaire"
+
+#: portal/templates/portal/settlements/transactions.html:96
+#: portal/templates/portal/settlements/transactions.html:211
+msgid "方向"
+msgstr "Sens"
+
+#: portal/templates/portal/settlements/transactions.html:159
+msgid "日期从"
+msgstr "À partir du"
+
+#: portal/templates/portal/settlements/transactions.html:170
+msgid "日期至"
+msgstr "Jusqu’au"
+
+#: portal/templates/portal/settlements/transactions.html:280
+msgid "当前没有收付款流水。"
+msgstr "Aucune transaction de paiement."
+
+#: portal/templates/portal/shipments/detail.html:4
+#: portal/templates/portal/shipments/detail.html:19
+#, python-format
+msgid "发货批次 %(value1)s"
+msgstr "Lot d’expédition %(value1)s"
+
+#: portal/templates/portal/shipments/detail.html:13
+#, python-format
+msgid "批次 %(value1)s"
+msgstr "Lot %(value1)s"
+
+#: portal/templates/portal/shipments/detail.html:23
+msgid "返回批次列表"
+msgstr "Retour aux lots"
+
+#: portal/templates/portal/shipments/detail.html:26
+msgid "查看工厂文件"
+msgstr "Voir le document d’usine"
+
+#: portal/templates/portal/shipments/detail.html:38
+#: portal/templates/portal/shipments/list.html:63
+msgid "校验状态"
+msgstr "État de validation"
+
+#: portal/templates/portal/shipments/detail.html:40
+#: portal/templates/portal/shipments/list.html:61
+msgid "本批发货数量"
+msgstr "Quantité expédiée dans ce lot"
+
+#: portal/templates/portal/shipments/detail.html:41
+#: portal/templates/portal/shipments/list.html:62
+msgid "批次后待发数量"
+msgstr "Quantité restante après ce lot"
+
+#: portal/templates/portal/shipments/detail.html:46
+msgid "本批发货明细"
+msgstr "Lignes expédiées dans ce lot"
+
+#: portal/templates/portal/shipments/detail.html:54
+msgid "暂无产品。"
+msgstr "Aucun produit."
+
+#: portal/templates/portal/shipments/detail.html:62
+msgid "待补发快照"
+msgstr "État figé des reliquats"
+
+#: portal/templates/portal/shipments/detail.html:65
+msgid "本批前已发"
+msgstr "Expédié avant ce lot"
+
+#: portal/templates/portal/shipments/detail.html:65
+msgid "本批发货"
+msgstr "Expédié dans ce lot"
+
+#: portal/templates/portal/shipments/detail.html:65
+msgid "累计已发"
+msgstr "Total expédié"
+
+#: portal/templates/portal/shipments/detail.html:77
+msgid "暂无待发快照。"
+msgstr "Aucun état figé des quantités à expédier."
+
+#: portal/templates/portal/shipments/detail.html:85
+msgid "校验数据"
+msgstr "Données de validation"
+
+#: portal/templates/portal/shipments/list.html:18
+msgid "查看所有发货批次、数量快照和工作流状态。"
+msgstr ""
+"Consultez tous les lots d’expédition, les quantités figées et les états du "
+"workflow."
+
+#: portal/templates/portal/shipments/list.html:28
+msgid "搜索订单号或批次号"
+msgstr "Rechercher un numéro de commande ou de lot"
+
+#: portal/templates/portal/shipments/list.html:30
+msgid "全部来源"
+msgstr "Toutes les origines"
+
+#: portal/templates/portal/shipments/list.html:36
+msgid "全部校验"
+msgstr "Tous les états de validation"
+
+#: portal/templates/portal/shipments/list.html:60
+msgid "类型"
+msgstr "Type"
+
+#: portal/templates/portal/shipments/list.html:64
+msgid "批次状态"
+msgstr "Statut du lot"
+
+#: portal/templates/portal/shipments/list.html:86
+msgid "暂无发货批次。"
+msgstr "Aucun lot d’expédition."
+
+#: portal/templates/portal/workflow/detail.html:4
+#, python-format
+msgid "工作流详情 %(value1)s | Acoeurs France"
+msgstr "Détail du workflow %(value1)s | Acoeurs France"
+
+#: portal/templates/portal/workflow/detail.html:13
+msgid "工作流详情"
+msgstr "Détail du workflow"
+
+#: portal/templates/portal/workflow/detail.html:14
+#, python-format
+msgid "订单 %(value1)s 的验证结果、文件生成状态与批次明细。"
+msgstr ""
+"Commande %(value1)s : résultats de validation, génération des documents et "
+"détail des lots."
+
+#: portal/templates/portal/workflow/detail.html:18
+msgid "返回工作流"
+msgstr "Retour au workflow"
+
+#: portal/templates/portal/workflow/detail.html:55
+msgid "流程状态"
+msgstr "État du workflow"
+
+#: portal/templates/portal/workflow/detail.html:67
+msgid "快捷操作"
+msgstr "Actions rapides"
+
+#: portal/templates/portal/workflow/detail.html:90
+msgid ""
+"确定重新应用当前价格规则吗？系统会覆盖当前订单价格快照，并立即重新验证该工作"
+"流。"
+msgstr ""
+"Réappliquer les règles tarifaires actuelles ? Les prix figés de la commande "
+"seront remplacés et le workflow sera immédiatement revalidé."
+
+#: portal/templates/portal/workflow/detail.html:91
+msgid "重新应用价格规则并重新验证"
+msgstr "Réappliquer les règles tarifaires et revalider"
+
+#: portal/templates/portal/workflow/detail.html:96
+msgid "正式文件已生成，禁止重新计价"
+msgstr "Documents officiels générés ; recalcul des prix bloqué"
+
+#: portal/templates/portal/workflow/detail.html:119
+msgid "重新验证"
+msgstr "Revalider"
+
+#: portal/templates/portal/workflow/detail.html:143
+msgid "生成文件"
+msgstr "Générer les documents"
+
+#: portal/templates/portal/workflow/detail.html:154
+msgid "需先通过验证"
+msgstr "Validation préalable requise"
+
+#: portal/templates/portal/workflow/detail.html:168
+msgid "可生成文件："
+msgstr "Documents prêts à générer :"
+
+#: portal/templates/portal/workflow/detail.html:202
+msgid "验证问题"
+msgstr "Problèmes de validation"
+
+#: portal/templates/portal/workflow/detail.html:233
+msgid "当前没有验证问题。"
+msgstr "Aucun problème de validation."
+
+#: portal/templates/portal/workflow/detail.html:241
+msgid "当前批次价格快照"
+msgstr "Prix figés du lot actuel"
+
+#: portal/templates/portal/workflow/detail.html:245
+#, python-format
+msgid "临期判断基准日期： %(value1)s"
+msgstr "Date de référence pour la péremption : %(value1)s"
+
+#: portal/templates/portal/workflow/detail.html:252
+msgid "规则命中："
+msgstr "Règles retenues :"
+
+#: portal/templates/portal/workflow/detail.html:260
+msgid "医院金额："
+msgstr "Montant hospitalier :"
+
+#: portal/templates/portal/workflow/detail.html:267
+msgid "工厂基础金额："
+msgstr "Montant fournisseur de base :"
+
+#: portal/templates/portal/workflow/detail.html:274
+msgid "临期优惠："
+msgstr "Remise pour péremption proche :"
+
+#: portal/templates/portal/workflow/detail.html:281
+msgid "工厂实际金额："
+msgstr "Montant fournisseur final :"
+
+#: portal/templates/portal/workflow/detail.html:291
+msgid "价格需要检查"
+msgstr "Prix à vérifier"
+
+#: portal/templates/portal/workflow/detail.html:307
+msgid "本批数量"
+msgstr "Quantité du lot"
+
+#: portal/templates/portal/workflow/detail.html:309
+msgid "基础工厂价"
+msgstr "Prix usine de base"
+
+#: portal/templates/portal/workflow/detail.html:310
+msgid "正常数量"
+msgstr "Quantité standard"
+
+#: portal/templates/portal/workflow/detail.html:311
+msgid "临期数量"
+msgstr "Quantité à péremption proche"
+
+#: portal/templates/portal/workflow/detail.html:312
+msgid "临期折后价"
+msgstr "Prix remisé pour péremption proche"
+
+#: portal/templates/portal/workflow/detail.html:313
+msgid "工厂实际金额"
+msgstr "Montant fournisseur final"
+
+#: portal/templates/portal/workflow/detail.html:314
+msgid "价格来源"
+msgstr "Origine du prix"
+
+#: portal/templates/portal/workflow/detail.html:357
+#, python-format
+msgid "−%(value1)s%% / %(value2)s天"
+msgstr "−%(value1)s%% / %(value2)s jours"
+
+#: portal/templates/portal/workflow/detail.html:373
+#, python-format
+msgid "节省 €%(value1)s"
+msgstr "Économie de €%(value1)s"
+
+#: portal/templates/portal/workflow/detail.html:397
+msgid "当前工作流没有可显示的价格明细。"
+msgstr "Aucun détail tarifaire disponible pour ce workflow."
+
+#: portal/templates/portal/workflow/detail.html:403
+msgid "当前批次数量"
+msgstr "Quantités du lot actuel"
+
+#: portal/templates/portal/workflow/detail.html:411
+msgid "本批次数量"
+msgstr "Quantité dans ce lot"
+
+#: portal/templates/portal/workflow/detail.html:412
+msgid "Serial 数量"
+msgstr "Nombre de numéros de série"
+
+#: portal/templates/portal/workflow/detail.html:427
+msgid "没有当前批次数量数据。"
+msgstr "Aucune donnée de quantité pour le lot actuel."
+
+#: portal/templates/portal/workflow/detail.html:432
+msgid "订单累计明细"
+msgstr "Détail cumulé de la commande"
+
+#: portal/templates/portal/workflow/detail.html:442
+msgid "累计发货"
+msgstr "Expéditions cumulées"
+
+#: portal/templates/portal/workflow/detail.html:460
+msgid "没有订单累计明细。"
+msgstr "Aucun détail cumulé de commande."
+
+#: portal/templates/portal/workflow/list.html:4
+msgid "工作流 | Acoeurs France"
+msgstr "Workflow | Acoeurs France"
+
+#: portal/templates/portal/workflow/list.html:14
+msgid "跟踪订单状态、验证结果、发票与采购订单生成进度。"
+msgstr ""
+"Suivre l’état des commandes, les résultats de validation et la génération "
+"des Invoice et PO."
+
+#: portal/templates/portal/workflow/list.html:25
+msgid "全部流程项"
+msgstr "Tous les éléments du workflow"
+
+#: portal/templates/portal/workflow/list.html:35
+msgid "待生成文件"
+msgstr "Documents à générer"
+
+#: portal/templates/portal/workflow/list.html:155
+msgid "生成"
+msgstr "Générer"
+
+#: portal/templates/portal/workflow/list.html:175
+msgid "没有找到符合条件的工作流记录。"
+msgstr "Aucun workflow ne correspond à vos critères."
+
+#: portal/views.py:168
+msgid "工厂采购文件已上传、自动提取并进入工作流。"
+msgstr "Document d’achat importé, extrait et ajouté au workflow."
+
+#: portal/views.py:176
+#, python-format
+msgid ""
+"工厂采购文件已进入工作流，但验证发现需要检查的问题：错误 %(value1)s 个，提醒 "
+"%(value2)s 个。"
+msgstr ""
+"Document ajouté au workflow, mais la validation a relevé %(value1)s erreurs "
+"et %(value2)s avertissements à examiner."
+
+#: portal/views.py:184
+msgid "工厂采购文件已提取成功，但没有成功进入工作流，请检查详情。"
+msgstr ""
+"Extraction du document réussie, mais ajout au workflow impossible. Consultez "
+"le détail."
+
+#: portal/views.py:190
+#, python-format
+msgid "工厂采购文件已上传，但需要检查：%(value1)s"
+msgstr ""
+"Document d’achat importé, mais une vérification est requise : %(value1)s"
+
+#: portal/views.py:291
+#, python-format
+msgid "科室“%(value1)s”已创建。"
+msgstr "Service « %(value1)s » créé."
+
+#: portal/views.py:306
+msgid "创建产品库的一级科室入口。"
+msgstr "Créer un service de premier niveau dans le catalogue produits."
+
+#: portal/views.py:308
+msgid "创建科室"
+msgstr "Créer le service"
+
+#: portal/views.py:369
+#, python-format
+msgid "工厂“%(value1)s”已添加到“%(value2)s”。"
+msgstr "Usine « %(value1)s » ajoutée à « %(value2)s »."
+
+#: portal/views.py:384
+#, python-format
+msgid "将工厂添加到科室“%(value1)s”。"
+msgstr "Ajouter une usine au service « %(value1)s »."
+
+#: portal/views.py:386
+msgid "保存工厂"
+msgstr "Enregistrer l’usine"
+
+#: portal/views.py:416 portal/views.py:875 portal/views.py:901
+msgid "新增工厂"
+msgstr "Ajouter une usine"
+
+#: portal/views.py:455
+#, python-format
+msgid "产品分类“%(value1)s”已创建。"
+msgstr "Catégorie de produits « %(value1)s » créée."
+
+#: portal/views.py:470
+#, python-format
+msgid "为工厂“%(value1)s”创建一个产品分类。"
+msgstr "Créer une catégorie de produits pour l’usine « %(value1)s »."
+
+#: portal/views.py:472
+msgid "创建分类"
+msgstr "Créer la catégorie"
+
+#: portal/views.py:549
+#, python-format
+msgid "产品“%(value1)s”已创建。"
+msgstr "Produit « %(value1)s » créé."
+
+#: portal/views.py:562 portal/views.py:612
+msgid "新增产品"
+msgstr "Ajouter un produit"
+
+#: portal/views.py:564
+#, python-format
+msgid "在分类“%(value1)s”中新增产品。"
+msgstr "Ajouter un produit à la catégorie « %(value1)s »."
+
+#: portal/views.py:566
+msgid "创建产品"
+msgstr "Créer le produit"
+
+#: portal/views.py:656
+#, python-format
+msgid "医院“%(value1)s”已创建。"
+msgstr "Hôpital « %(value1)s » créé."
+
+#: portal/views.py:669 portal/views.py:695
+msgid "新增医院"
+msgstr "Ajouter un hôpital"
+
+#: portal/views.py:671
+msgid "创建新的医院主数据记录。"
+msgstr "Créer une fiche hôpital dans le référentiel."
+
+#: portal/views.py:673
+msgid "创建医院"
+msgstr "Créer l’hôpital"
+
+#: portal/views.py:726
+#, python-format
+msgid "医院“%(value1)s”已更新。"
+msgstr "Hôpital « %(value1)s » mis à jour."
+
+#: portal/views.py:741 portal/views.py:947 portal/views.py:1172
+msgid "保存修改"
+msgstr "Enregistrer les modifications"
+
+#: portal/views.py:771 portal/views.py:977 portal/views.py:1207
+msgid "编辑"
+msgstr "Modifier"
+
+#: portal/views.py:812
+#, python-format
+msgid "医院“%(value1)s”已重新启用。"
+msgstr "Hôpital « %(value1)s » réactivé."
+
+#: portal/views.py:817
+#, python-format
+msgid "医院“%(value1)s”已停用。历史订单不会被删除。"
+msgstr ""
+"Hôpital « %(value1)s » désactivé. Les commandes historiques sont conservées."
+
+#: portal/views.py:862
+#, python-format
+msgid "工厂“%(value1)s”已创建。"
+msgstr "Usine « %(value1)s » créée."
+
+#: portal/views.py:877
+msgid "创建新的工厂主数据记录。"
+msgstr "Créer une fiche usine dans le référentiel."
+
+#: portal/views.py:879
+msgid "创建工厂"
+msgstr "Créer l’usine"
+
+#: portal/views.py:932
+#, python-format
+msgid "工厂“%(value1)s”已更新。"
+msgstr "Usine « %(value1)s » mise à jour."
+
+#: portal/views.py:1018
+#, python-format
+msgid "工厂“%(value1)s”已重新启用。"
+msgstr "Usine « %(value1)s » réactivée."
+
+#: portal/views.py:1023
+#, python-format
+msgid "工厂“%(value1)s”已停用。已有产品和历史业务记录不会被删除。"
+msgstr ""
+"Usine « %(value1)s » désactivée. Les produits et les données historiques "
+"sont conservés."
+
+#: portal/views.py:1076
+#, python-format
+msgid "价格规则“%(value1)s”已创建。"
+msgstr "Règle tarifaire « %(value1)s » créée."
+
+#: portal/views.py:1089
+msgid "新增价格规则"
+msgstr "Ajouter une règle tarifaire"
+
+#: portal/views.py:1091
+msgid "按工厂、产品分类和医院订单日期定义价格。"
+msgstr ""
+"Définir les prix par usine, catégorie de produits et date de commande "
+"hospitalière."
+
+#: portal/views.py:1094
+msgid "创建规则"
+msgstr "Créer la règle"
+
+#: portal/views.py:1118
+msgid "新增规则"
+msgstr "Ajouter une règle"
+
+#: portal/views.py:1155
+#, python-format
+msgid "价格规则“%(value1)s”已更新。"
+msgstr "Règle tarifaire « %(value1)s » mise à jour."
+
+#: portal/views.py:1168
+msgid "编辑价格规则"
+msgstr "Modifier la règle tarifaire"
+
+#: portal/views.py:1199
+#, python-format
+msgid "规则 #%(value1)s"
+msgstr "Règle n° %(value1)s"
+
+#: portal/views.py:1249
+msgid "无法重新启用该规则："
+msgstr "Impossible de réactiver cette règle :"
+
+#: portal/views.py:1268
+#, python-format
+msgid "价格规则“%(value1)s”已重新启用。"
+msgstr "Règle tarifaire « %(value1)s » réactivée."
+
+#: portal/views.py:1273
+#, python-format
+msgid "价格规则“%(value1)s”已停用。历史订单价格快照不会改变。"
+msgstr ""
+"Règle tarifaire « %(value1)s » désactivée. Les prix figés des commandes "
+"historiques restent inchangés."
+
+#: portal/views.py:1524
+msgid "价格规则重新应用失败："
+msgstr "Échec de la réapplication des règles tarifaires :"
+
+#: portal/views.py:1534
+#, python-format
+msgid "已更新 %(value1)s 个产品价格，但重新验证仍存在错误，请检查工作流详情。"
+msgstr ""
+"Prix mis à jour pour %(value1)s produits, mais des erreurs de validation "
+"persistent. Consultez le détail du workflow."
+
+#: portal/views.py:1543
+#, python-format
+msgid "已更新 %(value1)s 个产品价格并完成重新验证，但仍有需要检查的提醒。"
+msgstr ""
+"Prix mis à jour pour %(value1)s produits et validation relancée, mais des "
+"avertissements restent à examiner."
+
+#: portal/views.py:1549
+#, python-format
+msgid "已重新应用价格规则，更新 %(value1)s 个产品价格，工作流验证已通过。"
+msgstr ""
+"Règles tarifaires réappliquées à %(value1)s produits. Validation du workflow "
+"réussie."
+
+#: portal/views.py:1555
+#, python-format
+msgid "重新应用价格规则失败：%(value1)s"
+msgstr "Échec de la réapplication des règles tarifaires : %(value1)s"
+
+#: portal/views.py:1568
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：比对验证失败：%(value3)s"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : échec de validation du "
+"rapprochement : %(value3)s"
+
+#: portal/views.py:1578
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：比对验证通过。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : validation du rapprochement réussie."
+
+#: portal/views.py:1584
+#, python-format
+msgid ""
+"Order %(value1)s / Batch %(value2)s：比对后发现阻塞问题。errors=%(value3)s, "
+"warnings=%(value4)s。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : problèmes bloquants détectés. "
+"Erreurs=%(value3)s, avertissements=%(value4)s."
+
+#: portal/views.py:1591
+#, python-format
+msgid ""
+"Order %(value1)s / Batch %(value2)s：需要人工检查。errors=%(value3)s, "
+"warnings=%(value4)s。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : vérification manuelle requise. "
+"Erreurs=%(value3)s, avertissements=%(value4)s."
+
+#: portal/views.py:1597
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：没有返回验证结果。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : aucun résultat de validation reçu."
+
+#: portal/views.py:1603
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：比对验证异常：%(value3)s"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : erreur de validation du "
+"rapprochement : %(value3)s"
+
+#: portal/views.py:1620
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：生成文件失败：%(value3)s"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : échec de génération des documents : "
+"%(value3)s"
+
+#: portal/views.py:1627
+#, python-format
+msgid ""
+"Order %(value1)s / Batch %(value2)s：文件已生成。Invoice=%(value3)s，"
+"PO=%(value4)s。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : documents générés. "
+"Invoice=%(value3)s, PO=%(value4)s."
+
+#: portal/views.py:1633
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：没有返回生成结果。"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : aucun résultat de génération reçu."
+
+#: portal/views.py:1639
+#, python-format
+msgid "Order %(value1)s / Batch %(value2)s：生成文件异常：%(value3)s"
+msgstr ""
+"Commande %(value1)s / Lot %(value2)s : erreur de génération des documents : "
+"%(value3)s"
+
+#: portal/views.py:1644 portal/views.py:1990 portal/views.py:2302
+msgid "未知操作。"
+msgstr "Action inconnue."
+
+#: portal/views.py:1710
+msgid "库存已预留。"
+msgstr "Stock réservé."
+
+#: portal/views.py:1712
+#, python-format
+msgid "库存预留失败：%(value1)s"
+msgstr "Échec de réservation du stock : %(value1)s"
+
+#: portal/views.py:1723
+msgid "库存补发 ShipmentBatch 已创建，并已进入 Workflow。"
+msgstr "ShipmentBatch de livraison depuis le stock créé et ajouté au Workflow."
+
+#: portal/views.py:1726
+#, python-format
+msgid "创建库存补发批次失败：%(value1)s"
+msgstr "Échec de création du lot de livraison depuis le stock : %(value1)s"
+
+#: portal/views.py:1752
+msgid "订单基础验证未通过，暂时不能生成 Factory Request。"
+msgstr ""
+"La validation de base de la commande a échoué. La Factory Request ne peut "
+"pas encore être générée."
+
+#: portal/views.py:1757
+msgid "Factory Request PDF 未成功生成。"
+msgstr "Échec de génération du PDF Factory Request."
+
+#: portal/views.py:1762
+msgid "Factory Request 已生成，但订单基础验证仍有提醒。"
+msgstr ""
+"Factory Request générée, mais la validation de base comporte encore des "
+"avertissements."
+
+#: portal/views.py:1801
+msgid "请选择一个医院订单 PDF 文件。"
+msgstr "Sélectionnez un fichier PDF de commande hospitalière."
+
+#: portal/views.py:1825
+msgid "医院订单已上传，但自动提取失败。请联系管理员并检查服务日志。"
+msgstr ""
+"Commande hospitalière importée, mais l’extraction automatique a échoué. "
+"Contactez un administrateur pour vérifier les journaux du service."
+
+#: portal/views.py:1834
+msgid "医院订单已上传，但提取结果存在错误。请在详情页检查。"
+msgstr ""
+"Commande hospitalière importée, mais les résultats d’extraction contiennent "
+"des erreurs. Consultez la page de détail."
+
+#: portal/views.py:1841
+msgid "医院订单已上传，但系统没有确认提取完成。请在详情页检查。"
+msgstr ""
+"Commande hospitalière importée, mais la fin de l’extraction n’a pas pu être "
+"confirmée. Consultez la page de détail."
+
+#: portal/views.py:1848
+#, python-format
+msgid "医院订单 %(value1)s 已成功提取，但订单基础验证存在问题。请检查详情页。"
+msgstr ""
+"Commande hospitalière %(value1)s extraite, mais la validation de base a "
+"relevé des problèmes. Consultez le détail."
+
+#: portal/views.py:1855
+#, python-format
+msgid "医院订单 %(value1)s 已成功提取，但有一些提醒。请检查详情页。"
+msgstr ""
+"Commande hospitalière %(value1)s extraite, avec des avertissements à "
+"examiner."
+
+#: portal/views.py:1861
+#, python-format
+msgid "医院订单 %(value1)s 已上传、自动提取并通过基础验证。"
+msgstr "Commande hospitalière %(value1)s importée, extraite et validée."
+
+#: portal/views.py:1893
+msgid "修改已保存，但订单基础验证仍存在问题，未生成 Factory Request。"
+msgstr ""
+"Modifications enregistrées, mais la validation de base présente encore des "
+"problèmes. La Factory Request n’a pas été générée."
+
+#: portal/views.py:1905 portal/views.py:1986
+#, python-format
+msgid "Factory Request 生成失败：%(value1)s"
+msgstr "Échec de génération de la Factory Request : %(value1)s"
+
+#: portal/views.py:1910
+msgid "修改已保存，但订单基础验证仍存在问题。"
+msgstr ""
+"Modifications enregistrées, mais la validation de base présente encore des "
+"problèmes."
+
+#: portal/views.py:1912
+msgid "修改已保存，但订单基础验证存在提醒。"
+msgstr ""
+"Modifications enregistrées, avec des avertissements de validation de base."
+
+#: portal/views.py:1914
+msgid "修改已保存，订单基础验证已通过。"
+msgstr "Modifications enregistrées. Validation de base réussie."
+
+#: portal/views.py:1942
+#, python-format
+msgid "订单 %(value1)s 已重新提取，但提取状态异常。"
+msgstr "Commande %(value1)s réextraite, mais l’état d’extraction est anormal."
+
+#: portal/views.py:1947
+#, python-format
+msgid "订单 %(value1)s 已重新提取，但基础验证存在问题。"
+msgstr ""
+"Commande %(value1)s réextraite, mais la validation de base a relevé des "
+"problèmes."
+
+#: portal/views.py:1952
+#, python-format
+msgid "订单 %(value1)s 已重新提取，但存在提醒。"
+msgstr "Commande %(value1)s réextraite, avec des avertissements."
+
+#: portal/views.py:1957
+#, python-format
+msgid "订单 %(value1)s 已重新提取并通过基础验证。"
+msgstr "Commande %(value1)s réextraite et validation de base réussie."
+
+#: portal/views.py:1961 portal/views.py:2226
+#, python-format
+msgid "重新提取失败：%(value1)s"
+msgstr "Échec de réextraction : %(value1)s"
+
+#: portal/views.py:1969
+msgid "订单基础验证存在问题，请检查详情页。"
+msgstr ""
+"La validation de base a relevé des problèmes. Consultez la page de détail."
+
+#: portal/views.py:1971
+msgid "订单基础验证存在提醒，请检查详情页。"
+msgstr ""
+"La validation de base comporte des avertissements. Consultez la page de "
+"détail."
+
+#: portal/views.py:1973
+msgid "订单基础验证已通过。"
+msgstr "Validation de base de la commande réussie."
+
+#: portal/views.py:2033 portal/views.py:2119
+msgid "请先选择工厂采购 PDF。"
+msgstr "Sélectionnez d’abord un PDF d’achat fournisseur."
+
+#: portal/views.py:2080 portal/views.py:2169
+msgid "工厂采购 PDF 已接收，但处理失败。请联系管理员并检查服务日志。"
+msgstr ""
+"PDF d’achat reçu, mais le traitement a échoué. Contactez un administrateur "
+"pour vérifier les journaux du service."
+
+#: portal/views.py:2222
+#, python-format
+msgid "工厂采购 FC #%(value1)s 已重新提取并进入工作流。"
+msgstr "Achat fournisseur FC n° %(value1)s réextrait et ajouté au workflow."
+
+#: portal/views.py:2240
+msgid "Serial 修改已保存失败，请检查错误："
+msgstr "Impossible d’enregistrer les numéros de série. Consultez les erreurs :"
+
+#: portal/views.py:2246
+msgid "Serial 修改已保存，并已重新同步后续流程，但存在提醒："
+msgstr ""
+"Modifications des numéros de série enregistrées et étapes suivantes "
+"resynchronisées, avec des avertissements :"
+
+#: portal/views.py:2253
+msgid "Serial 修改已保存，并已重新同步 ShipmentBatch / Workflow。"
+msgstr ""
+"Modifications des numéros de série enregistrées et ShipmentBatch / Workflow "
+"resynchronisés."
+
+#: portal/views.py:2259
+#, python-format
+msgid "保存 Serial 修改失败：%(value1)s"
+msgstr "Échec d’enregistrement des numéros de série : %(value1)s"
+
+#: portal/views.py:2274
+msgid "订单已关联，并已继续完成 ShipmentBatch / Workflow 同步。"
+msgstr ""
+"Commande associée et synchronisation ShipmentBatch / Workflow terminée."
+
+#: portal/views.py:2279
+#, python-format
+msgid "关联订单并继续处理失败：%(value1)s"
+msgstr ""
+"Échec de l’association de la commande et de la poursuite du traitement : "
+"%(value1)s"
+
+#: portal/views.py:2293
+#, python-format
+msgid ""
+"工厂采购 FC #%(value1)s 已删除。Serial 删除 %(value2)s 条，ShipmentBatch 删"
+"除 %(value3)s 条，Workflow 删除 %(value4)s 条。"
+msgstr ""
+"Achat fournisseur FC n° %(value1)s supprimé. Enregistrements supprimés : "
+"%(value2)s Serial, %(value3)s ShipmentBatch et %(value4)s Workflow."
+
+#: portal/views.py:2299
+#, python-format
+msgid "删除失败：%(value1)s"
+msgstr "Échec de suppression : %(value1)s"
+
+#: settlements/forms.py:14
+msgid "收付款日期"
+msgstr "Date d’encaissement ou de paiement"
+
+#: settlements/forms.py:32
+msgid "收付款方式"
+msgstr "Mode de paiement"
+
+#: settlements/forms.py:69
+#, python-format
+msgid "当前剩余金额：%(value1)s %(value2)s"
+msgstr "Solde restant dû : %(value1)s %(value2)s"
+
+#: settlements/forms.py:81
+msgid "本次金额不能超过当前剩余金额。"
+msgstr "Le montant ne peut pas dépasser le solde restant dû."
+
+#: settlements/forms.py:129
+msgid "付款截止日期不能早于开立日期。"
+msgstr ""
+"L’échéance de paiement ne peut pas être antérieure à la date d’émission."
+
+#~ msgid "Complete"
+#~ msgstr "Terminé"
+
+#~ msgid "Completed"
+#~ msgstr "Terminé"
+
+#~ msgid "Failed"
+#~ msgstr "Échec"
+
+#~ msgid "Manually confirmed"
+#~ msgstr "Confirmé manuellement"
+
+#~ msgid "Needs review"
+#~ msgstr "À vérifier"
+
+#~ msgid "Not checked"
+#~ msgstr "Non vérifié"
+
+#~ msgid "Not started"
+#~ msgstr "Non démarré"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "Open"
+#~ msgstr "Ouvert"
+
+#~ msgid "Over shipped"
+#~ msgstr "Quantité expédiée excessive"
+
+#~ msgid "Overdue"
+#~ msgstr "En retard"
+
+#~ msgid "Partial"
+#~ msgstr "Partiel"
+
+#~ msgid "Planned"
+#~ msgstr "Planifié"
+
+#~ msgid "Success"
+#~ msgstr "Réussi"
+
+#, python-format
+#~ msgid "%(value1)s"
+#~ msgstr "%(value1)s"

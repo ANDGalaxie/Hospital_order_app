@@ -1,3 +1,4 @@
+from django.utils.translation import get_language
 from decimal import Decimal, InvalidOperation
 
 from django.apps import apps
@@ -6,13 +7,13 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def get_portal_lang(request):
-    lang = request.GET.get("lang") or request.session.get("portal_lang") or "zh"
-
-    if lang not in ["zh", "en", "fr"]:
-        lang = "zh"
-
-    request.session["portal_lang"] = lang
-    return lang
+    """Return the legacy presentation code without maintaining language state."""
+    language = (get_language() or "zh-hans").lower()
+    if language.startswith("en"):
+        return "en"
+    if language.startswith("fr"):
+        return "fr"
+    return "zh"
 
 
 def get_user_display_name(user):

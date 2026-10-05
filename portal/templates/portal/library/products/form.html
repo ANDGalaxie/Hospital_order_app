@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ form_title }} | 产品库{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=form_title %}{{ value1 }} | 产品库{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -72,7 +72,7 @@
         <div class="library-form-actions">
             <a class="portal-button"
                href="{{ cancel_url }}">
-                取消
+                {% trans "取消" %}
             </a>
 
             <button class="portal-button primary"

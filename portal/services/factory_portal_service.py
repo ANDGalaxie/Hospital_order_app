@@ -1,3 +1,5 @@
+from portal.i18n import display_choice, display_choices
+from django.utils.translation import gettext as _
 from collections import Counter
 
 from django.shortcuts import get_object_or_404
@@ -69,28 +71,28 @@ def factory_status_label(value):
     value = str(value or "").lower()
 
     mapping = {
-        "success": ("已提取", "success"),
-        "failed": ("提取失败", "danger"),
-        "not_started": ("待提取", "warning"),
-        "pending": ("待提取", "warning"),
-        "processing": ("处理中", "info"),
+        "success": (_("已提取"), "success"),
+        "failed": (_("提取失败"), "danger"),
+        "not_started": (_("待提取"), "warning"),
+        "pending": (_("待提取"), "warning"),
+        "processing": (_("处理中"), "info"),
     }
 
-    return mapping.get(value, (value or "待提取", "warning"))
+    return mapping.get(value, (value or _("待提取"), "warning"))
 
 
 def order_match_label(confirmation):
     if confirmation.order_id:
-        return "已匹配", "success"
+        return _("已匹配"), "success"
 
     data = confirmation.extracted_confirmation_data or {}
     django_data = data.get("django") or {}
     detected_bon = django_data.get("detected_bon_de_commande")
 
     if detected_bon:
-        return f"识别到 {detected_bon}，未匹配", "warning"
+        return _('识别到 %(value1)s，未匹配') % {'value1': detected_bon}, "warning"
 
-    return "未匹配", "danger"
+    return _("未匹配"), "danger"
 
 
 def get_confirmation_order_number(confirmation):
@@ -162,30 +164,30 @@ def workflow_label(confirmation):
     item = get_workflow_item(confirmation)
 
     if item:
-        return "已进入", "success"
+        return _("已进入"), "success"
 
     if confirmation.order_id and confirmation.extraction_status == FactoryConfirmation.ExtractionStatus.SUCCESS:
-        return "未进入", "warning"
+        return _("未进入"), "warning"
 
-    return "未进入", "muted"
+    return _("未进入"), "muted"
 
 
 def next_action_label(confirmation):
     if not confirmation.order_id:
-        return "人工确认订单", "warning"
+        return _("人工确认订单"), "warning"
 
     if confirmation.extraction_status == FactoryConfirmation.ExtractionStatus.FAILED:
-        return "检查错误", "danger"
+        return _("检查错误"), "danger"
 
     if confirmation.extraction_status != FactoryConfirmation.ExtractionStatus.SUCCESS:
-        return "执行提取", "info"
+        return _("执行提取"), "info"
 
     item = get_workflow_item(confirmation)
 
     if item:
-        return "查看工作流", "success"
+        return _("查看工作流"), "success"
 
-    return "同步后续流程", "warning"
+    return _("同步后续流程"), "warning"
 
 
 def build_factory_list_context(request):
@@ -290,16 +292,16 @@ def build_factory_detail_context(request, confirmation_id):
         diff = confirmed_qty - requested_qty
 
         if not order_item:
-            status_text = "订单中没有该产品"
+            status_text = _("订单中没有该产品")
             status_class = "danger"
         elif diff == 0:
-            status_text = "数量一致"
+            status_text = _("数量一致")
             status_class = "success"
         elif diff < 0:
-            status_text = "部分发货"
+            status_text = _("部分发货")
             status_class = "warning"
         else:
-            status_text = "超发"
+            status_text = _("超发")
             status_class = "danger"
 
         summary_rows.append({
@@ -335,12 +337,11 @@ def build_factory_detail_context(request, confirmation_id):
     if confirmation.bon_de_commande_manual_confirmed and confirmation.order_id:
         if not detected_bon:
             audit_messages.append(
-                "PDF 中未识别到 bon de commande，系统按所选医院订单继续处理。"
+                _("PDF 中未识别到 bon de commande，系统按所选医院订单继续处理。")
             )
         elif detected_bon != confirmation.order.bon_de_commande:
             audit_messages.append(
-                f"PDF 识别编号为 {detected_bon}，系统最终按医院订单 "
-                f"{confirmation.order.bon_de_commande} 继续处理。"
+                _('PDF 识别编号为 %(value1)s，系统最终按医院订单 %(value2)s 继续处理。') % {'value1': detected_bon, 'value2': confirmation.order.bon_de_commande}
             )
     requires_manual_confirmation = bool(
         django_data.get("requires_manual_confirmation")
@@ -405,7 +406,7 @@ def build_factory_upload_context(
         )
 
     return {
-        "confirmation_type_choices": [("auto", "自动识别")] + list(FactoryConfirmation.ConfirmationType.choices),
+        "confirmation_type_choices": [("auto", _("自动识别"))] + list(display_choices(FactoryConfirmation.ConfirmationType.choices)),
         "order_choices": Order.objects.order_by("bon_de_commande"),
         "selected_order": selected_order,
         "selected_order_id": selected_order.id if selected_order else "",
@@ -443,18 +444,18 @@ def create_and_extract_factory_confirmation(
         )
 
         if order is None:
-            raise ValueError("未找到所选医院订单。")
+            raise ValueError(_("未找到所选医院订单。"))
 
         if not order.factory_id:
             raise ValueError(
-                "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。"
+                _("该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。")
             )
 
     factory = order.factory if order and order.factory_id else None
 
     selection_mode = confirmation_type or "auto"
     if selection_mode not in {"auto", *FactoryConfirmation.ConfirmationType.values}:
-        raise ValueError("无效的发货类型。")
+        raise ValueError(_("无效的发货类型。"))
     confirmation = FactoryConfirmation.objects.create(
         confirmation_type=(
             FactoryConfirmation.ConfirmationType.INITIAL
@@ -492,41 +493,41 @@ def create_and_extract_factory_confirmation(
             return (
                 confirmation,
                 False,
-                "工厂采购文件已提取，但识别编号与已选择订单不一致。请人工确认后继续。",
+                _("工厂采购文件已提取，但识别编号与已选择订单不一致。请人工确认后继续。"),
             )
 
         if confirmation.order_id and not workflow_item_id:
             return (
                 confirmation,
                 False,
-                "工厂采购文件已提取，但尚未完成后续处理。请在详情页继续。",
+                _("工厂采购文件已提取，但尚未完成后续处理。请在详情页继续。"),
             )
 
         if errors:
             return (
                 confirmation,
                 False,
-                f"已上传并进入工作流，但验证发现 {len(errors)} 个问题。请查看详情页或工作流页面。",
+                _('已上传并进入工作流，但验证发现 %(value1)s 个问题。请查看详情页或工作流页面。') % {'value1': len(errors)},
             )
 
         if warnings:
             return (
                 confirmation,
                 True,
-                f"已上传并进入工作流，但有 {len(warnings)} 个提醒需要检查。",
+                _('已上传并进入工作流，但有 %(value1)s 个提醒需要检查。') % {'value1': len(warnings)},
             )
 
         if workflow_item_id:
             return (
                 confirmation,
                 True,
-                "已上传、自动提取并进入工作流，验证通过。",
+                _("已上传、自动提取并进入工作流，验证通过。"),
             )
 
         return (
             confirmation,
             False,
-            "已上传并提取，但没有创建 WorkflowItem。请检查 ShipmentBatch / workflow sync。",
+            _("已上传并提取，但没有创建 WorkflowItem。请检查 ShipmentBatch / workflow sync。"),
         )
 
     except Exception as exc:
@@ -567,7 +568,7 @@ def associate_order_and_finalize_factory_confirmation(
 
     if confirmation_type:
         if confirmation_type not in FactoryConfirmation.ConfirmationType.values:
-            raise ValueError("请选择有效的人工发货类型。")
+            raise ValueError(_("请选择有效的人工发货类型。"))
         data = confirmation.extracted_confirmation_data or {}
         metadata = data.setdefault("django", {})
         metadata["batch_selection_mode"] = confirmation_type
@@ -584,13 +585,13 @@ def associate_order_and_finalize_factory_confirmation(
         and str(confirmation.order_id) != str(order_id)
     ):
         raise ValueError(
-            "这份工厂文件已经对应发货批次，不能直接改绑到其他医院订单，需要人工检查。"
+            _("这份工厂文件已经对应发货批次，不能直接改绑到其他医院订单，需要人工检查。")
         )
 
     order = Order.objects.get(id=order_id)
     if not order.factory_id:
         raise ValueError(
-            "该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。"
+            _("该医院订单尚未关联工厂，请先在医院订单中确认工厂信息。")
         )
 
     confirmation.order = order
@@ -662,7 +663,7 @@ def safely_delete_factory_confirmation_for_portal(confirmation_id):
     order_number = (
         order.bon_de_commande
         if order
-        else "未匹配订单"
+        else _("未匹配订单")
     )
 
     batches = list(
@@ -685,9 +686,9 @@ def safely_delete_factory_confirmation_for_portal(confirmation_id):
 
         if generated_workflow_exists:
             raise ValueError(
-                "这份工厂确认已经生成过 Invoice 或 PO。"
+                _("这份工厂确认已经生成过 Invoice 或 PO。"
                 "为了避免文件和发货数据不一致，请先人工检查相关 workflow / documents，"
-                "暂时不允许直接删除。"
+                "暂时不允许直接删除。")
             )
 
     workflow_deleted = 0
@@ -748,15 +749,15 @@ def factory_combined_status(confirmation):
     合并 extraction_status + order match。
     """
     if confirmation.extraction_status == FactoryConfirmation.ExtractionStatus.FAILED:
-        return "提取失败", "danger"
+        return _("提取失败"), "danger"
 
     if confirmation.extraction_status != FactoryConfirmation.ExtractionStatus.SUCCESS:
-        return "待提取", "warning"
+        return _("待提取"), "warning"
 
     if not confirmation.order_id:
-        return "待匹配", "warning"
+        return _("待匹配"), "warning"
 
-    return "已就绪", "success"
+    return _("已就绪"), "success"
 
 
 def parse_html_date(value):
@@ -797,7 +798,7 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
     warnings = []
 
     if not confirmation.order_id:
-        errors.append("这份工厂采购文件还没有匹配医院订单，不能保存 serial 修改。")
+        errors.append(_("这份工厂采购文件还没有匹配医院订单，不能保存 serial 修改。"))
         return errors, warnings, None
 
     serial_items = list(
@@ -822,16 +823,16 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
         )
 
         if not product_code:
-            errors.append(f"SerialItem #{serial.id}: 产品号不能为空。")
+            errors.append(_('SerialItem #%(value1)s: 产品号不能为空。') % {'value1': serial.id})
             continue
 
         if not serial_number:
-            errors.append(f"SerialItem #{serial.id}: Serial Number 不能为空。")
+            errors.append(_('SerialItem #%(value1)s: Serial Number 不能为空。') % {'value1': serial.id})
             continue
 
         if serial_number in seen_serial_numbers:
             errors.append(
-                f"Serial Number {serial_number} 在当前文件中重复。"
+                _('Serial Number %(value1)s 在当前文件中重复。') % {'value1': serial_number}
             )
             continue
 
@@ -847,9 +848,7 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
 
         if existing_serial:
             errors.append(
-                f"Serial Number {serial_number} 已经存在于 "
-                f"FactoryConfirmation #{existing_serial.factory_confirmation_id}，"
-                f"不能重复使用。"
+                _('Serial Number %(value1)s 已经存在于 FactoryConfirmation #%(value2)s，不能重复使用。') % {'value1': serial_number, 'value2': existing_serial.factory_confirmation_id}
             )
             continue
 
@@ -857,7 +856,7 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
 
         if not product:
             warnings.append(
-                f"产品 {product_code} 不在产品库中，已保存但需要人工检查。"
+                _('产品 %(value1)s 不在产品库中，已保存但需要人工检查。') % {'value1': product_code}
             )
 
         raw_data = serial.raw_data or {}
@@ -915,7 +914,7 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
         shipment_batch = shipment_sync_result
 
     if not shipment_batch:
-        errors.append("Serial 修改已保存，但同步 ShipmentBatch 失败。")
+        errors.append(_("Serial 修改已保存，但同步 ShipmentBatch 失败。"))
         return errors, warnings, None
 
     # 重新计算 OrderItem 的 confirmed/backordered。
@@ -938,7 +937,7 @@ def save_factory_serial_manual_edit(*, confirmation_id, post_data, user=None):
     )
 
     if not workflow_item:
-        errors.append("Serial 修改已保存，但同步 WorkflowItem 失败。")
+        errors.append(_("Serial 修改已保存，但同步 WorkflowItem 失败。"))
         return errors, warnings, None
 
     validation_result = validate_document_workflow_item(

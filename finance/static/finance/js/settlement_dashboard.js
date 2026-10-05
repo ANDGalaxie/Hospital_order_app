@@ -96,7 +96,7 @@
         context.textAlign = "center";
 
         context.fillText(
-            "暂无趋势数据",
+            chartData.ui.empty,
             width / 2,
             height / 2
         );
@@ -415,17 +415,17 @@
             [
                 {
                     key: "sales",
-                    label: "销售额",
+                    label: chartData.ui.sales,
                     color: "#2563eb",
                 },
                 {
                     key: "purchases",
-                    label: "采购额",
+                    label: chartData.ui.purchases,
                     color: "#f97316",
                 },
                 {
                     key: "gross_profit",
-                    label: "预计毛利润",
+                    label: chartData.ui.gross_profit,
                     color: "#16a34a",
                 },
             ]
@@ -437,17 +437,17 @@
             [
                 {
                     key: "receipts",
-                    label: "医院收款",
+                    label: chartData.ui.receipts,
                     color: "#0f766e",
                 },
                 {
                     key: "payments",
-                    label: "工厂付款",
+                    label: chartData.ui.payments,
                     color: "#dc2626",
                 },
                 {
                     key: "net_inflow",
-                    label: "现金净流入",
+                    label: chartData.ui.net_inflow,
                     color: "#7c3aed",
                 },
             ]

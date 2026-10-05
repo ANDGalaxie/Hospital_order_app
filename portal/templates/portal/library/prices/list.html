@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}价格规则 | Acoeurs France{% endblock %}
+{% block title %}{% trans "价格规则 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -10,36 +10,35 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
     <a href="{% url 'portal:library_home' %}">
-        资料库
+        {% trans "资料库" %}
     </a>
     <span>›</span>
-    <span>价格规则</span>
+    <span>{% trans "价格规则" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>价格规则</h1>
+        <h1>{% trans "价格规则" %}</h1>
         <p>
-            根据工厂、产品分类和医院订单日期，
-            管理医院售价、工厂采购价及临期折扣。
+            {% trans "根据工厂、产品分类和医院订单日期， 管理医院售价、工厂采购价及临期折扣。" %}
         </p>
     </div>
 
     <div class="portal-header-actions">
         <a class="portal-button"
            href="{% url 'portal:library_price_policy_simulator' %}">
-            测试价格匹配
+            {% trans "测试价格匹配" %}
         </a>
 
         {% if can_add_price_policy %}
             <a class="portal-button primary"
                href="{% url 'portal:library_price_policy_add' %}">
-                ＋ 新增价格规则
+                {% trans "＋ 新增价格规则" %}
             </a>
         {% endif %}
     </div>
@@ -47,22 +46,22 @@
 
 <section class="master-stat-grid">
     <div class="master-stat-card">
-        <span>全部规则</span>
+        <span>{% trans "全部规则" %}</span>
         <strong>{{ total_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>当前生效</span>
+        <span>{% trans "当前生效" %}</span>
         <strong>{{ current_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>未来生效</span>
+        <span>{% trans "未来生效" %}</span>
         <strong>{{ future_count }}</strong>
     </div>
 
     <div class="master-stat-card">
-        <span>已过期 / 已停用</span>
+        <span>{% trans "已过期 / 已停用" %}</span>
         <strong>
             {{ expired_count }} / {{ inactive_count }}
         </strong>
@@ -75,7 +74,7 @@
 
         <div class="price-filter-search">
             <label for="price-search">
-                搜索
+                {% trans "搜索" %}
             </label>
 
             <input
@@ -83,13 +82,13 @@
                 type="search"
                 name="q"
                 value="{{ query }}"
-                placeholder="规则名称、工厂、分类或备注"
+                placeholder="{% trans "规则名称、工厂、分类或备注" %}"
             >
         </div>
 
         <div class="price-filter-item">
             <label for="factory-filter">
-                工厂
+                {% trans "工厂" %}
             </label>
 
             <select
@@ -97,7 +96,7 @@
                 name="factory">
 
                 <option value="">
-                    全部工厂
+                    {% trans "全部工厂" %}
                 </option>
 
                 {% for factory in factories %}
@@ -114,7 +113,7 @@
 
         <div class="price-filter-item">
             <label for="category-filter">
-                产品分类
+                {% trans "产品分类" %}
             </label>
 
             <select
@@ -122,7 +121,7 @@
                 name="category">
 
                 <option value="">
-                    全部分类
+                    {% trans "全部分类" %}
                 </option>
 
                 {% for category in categories %}
@@ -139,7 +138,7 @@
 
         <div class="price-filter-item">
             <label for="status-filter">
-                状态
+                {% trans "状态" %}
             </label>
 
             <select
@@ -148,34 +147,34 @@
 
                 <option value="all"
                         {% if status_filter == "all" %}selected{% endif %}>
-                    全部状态
+                    {% trans "全部状态" %}
                 </option>
 
                 <option value="current"
                         {% if status_filter == "current" %}selected{% endif %}>
-                    当前生效
+                    {% trans "当前生效" %}
                 </option>
 
                 <option value="future"
                         {% if status_filter == "future" %}selected{% endif %}>
-                    未来生效
+                    {% trans "未来生效" %}
                 </option>
 
                 <option value="expired"
                         {% if status_filter == "expired" %}selected{% endif %}>
-                    已过期
+                    {% trans "已过期" %}
                 </option>
 
                 <option value="inactive"
                         {% if status_filter == "inactive" %}selected{% endif %}>
-                    已停用
+                    {% trans "已停用" %}
                 </option>
             </select>
         </div>
 
         <div class="price-filter-item">
             <label for="date-filter">
-                基准日期
+                {% trans "基准日期" %}
             </label>
 
             <input
@@ -190,12 +189,12 @@
             <button
                 class="portal-button primary"
                 type="submit">
-                查询
+                {% trans "查询" %}
             </button>
 
             <a class="portal-button"
                href="{% url 'portal:library_prices' %}">
-                重置
+                {% trans "重置" %}
             </a>
         </div>
     </form>
@@ -205,15 +204,15 @@
     <table class="portal-table price-policy-table">
         <thead>
             <tr>
-                <th>规则名称</th>
-                <th>工厂</th>
-                <th>产品分类</th>
-                <th>有效期</th>
-                <th>医院价</th>
-                <th>工厂价</th>
-                <th>临期规则</th>
-                <th>产品数</th>
-                <th>状态</th>
+                <th>{% trans "规则名称" %}</th>
+                <th>{% trans "工厂" %}</th>
+                <th>{% trans "产品分类" %}</th>
+                <th>{% trans "有效期" %}</th>
+                <th>{% trans "医院价" %}</th>
+                <th>{% trans "工厂价" %}</th>
+                <th>{% trans "临期规则" %}</th>
+                <th>{% trans "产品数" %}</th>
+                <th>{% trans "状态" %}</th>
             </tr>
         </thead>
 
@@ -223,7 +222,7 @@
                     <td>
                         <a class="master-record-link"
                            href="{% url 'portal:library_price_policy_detail' policy.id %}">
-                            {{ policy.name|default:"未命名规则" }}
+                            {{ policy.name|default:_("未命名规则") }}
                         </a>
 
                         <div class="price-policy-id">
@@ -242,27 +241,27 @@
                     <td>
                         <div class="price-date-range">
                             <span>
-                                {{ policy.start_date|date:"Y-m-d"|default:"无下限" }}
+                                {{ policy.start_date|date:"Y-m-d"|default:_("无下限") }}
                             </span>
                             <span>→</span>
                             <span>
-                                {{ policy.end_date|date:"Y-m-d"|default:"长期" }}
+                                {{ policy.end_date|date:"Y-m-d"|default:_("长期") }}
                             </span>
                         </div>
                     </td>
 
                     <td class="price-number">
-                        €{{ policy.hospital_unit_price|floatformat:2 }}
+                        €{{ policy.hospital_unit_price|floatformat:"2u" }}
                     </td>
 
                     <td class="price-number">
-                        €{{ policy.factory_unit_price|floatformat:2 }}
+                        €{{ policy.factory_unit_price|floatformat:"2u" }}
                     </td>
 
                     <td>
-                        {{ policy.expiration_threshold_days }} 天
+                        {% blocktrans trimmed with value1=policy.expiration_threshold_days value2=policy.discount_percent_display|floatformat:"2u" %}{{ value1 }} 天
                         /
-                        {{ policy.discount_percent_display|floatformat:2 }}%
+                        {{ value2 }}%{% endblocktrans %}
                     </td>
 
                     <td>
@@ -279,7 +278,7 @@
                 <tr>
                     <td colspan="9"
                         class="portal-empty">
-                        没有找到符合条件的价格规则。
+                        {% trans "没有找到符合条件的价格规则。" %}
                     </td>
                 </tr>
             {% endfor %}
@@ -291,18 +290,18 @@
 <nav class="master-pagination">
     {% if page_obj.has_previous %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
-            上一页
+            {% trans "上一页" %}
         </a>
     {% endif %}
 
     <span>
-        第 {{ page_obj.number }} 页，
-        共 {{ page_obj.paginator.num_pages }} 页
+        {% blocktrans trimmed with value1=page_obj.number value2=page_obj.paginator.num_pages %}第 {{ value1 }} 页，
+        共 {{ value2 }} 页{% endblocktrans %}
     </span>
 
     {% if page_obj.has_next %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
-            下一页
+            {% trans "下一页" %}
         </a>
     {% endif %}
 </nav>

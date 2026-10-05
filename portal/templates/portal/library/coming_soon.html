@@ -1,11 +1,12 @@
 {% extends "portal/base.html" %}
+{% load i18n %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block breadcrumb %}
-<a href="{% url 'portal:home' %}">首页</a>
+<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
 <span>/</span>
-<a href="{% url 'portal:library_home' %}">资料库</a>
+<a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
 <span>/</span>
 <span>{{ title }}</span>
 {% endblock %}
@@ -20,7 +21,7 @@
 
 <div class="portal-panel">
     <div class="empty-cell">
-        这个页面下一步接入列表和搜索功能。
+        {% trans "这个页面下一步接入列表和搜索功能。" %}
     </div>
 </div>
 {% endblock %}

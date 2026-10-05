@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -111,10 +112,10 @@ def build_hospital_detail_context(request, hospital_id):
     missing_fields = []
 
     if not hospital.billing_address.strip():
-        missing_fields.append("账单地址")
+        missing_fields.append(_("账单地址"))
 
     if not hospital.default_shipping_address.strip():
-        missing_fields.append("默认收货地址")
+        missing_fields.append(_("默认收货地址"))
 
     if not any(
         [
@@ -123,7 +124,7 @@ def build_hospital_detail_context(request, hospital_id):
             hospital.email.strip(),
         ]
     ):
-        missing_fields.append("联系方式")
+        missing_fields.append(_("联系方式"))
 
     return {
         "hospital": hospital,

@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ page_title }} | 发票与结算{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=page_title %}{{ value1 }} | 发票与结算{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -11,12 +11,12 @@
 {% block breadcrumb %}
 <nav class="settlement-breadcrumb">
     <a href="{% url 'portal:home' %}">
-        首页
+        {% trans "首页" %}
     </a>
     <span>›</span>
 
     <a href="{% url 'portal:settlement_home' %}">
-        发票与结算
+        {% trans "发票与结算" %}
     </a>
 
     <span>›</span>
@@ -34,40 +34,40 @@
     <div class="portal-header-actions">
         <a class="portal-button"
            href="{% url 'portal:settlement_home' %}">
-            返回结算首页
+            {% trans "返回结算首页" %}
         </a>
     </div>
 </section>
 
 <section class="settlement-kpi-grid account-kpis">
     <article class="settlement-kpi">
-        <span>账户数量</span>
+        <span>{% trans "账户数量" %}</span>
         <strong>{{ summary.count }}</strong>
     </article>
 
     <article class="settlement-kpi">
-        <span>原始总额</span>
+        <span>{% trans "原始总额" %}</span>
         <strong>
-            €{{ summary.original_total|floatformat:2 }}
+            €{{ summary.original_total|floatformat:"2u" }}
         </strong>
     </article>
 
     <article class="settlement-kpi">
-        <span>{{ posted_label }}总额</span>
+        <span>{% blocktrans trimmed with value1=posted_label %}{{ value1 }}总额{% endblocktrans %}</span>
         <strong>
-            €{{ summary.posted_total|floatformat:2 }}
+            €{{ summary.posted_total|floatformat:"2u" }}
         </strong>
     </article>
 
     <article class="settlement-kpi">
-        <span>{{ remaining_label }}余额</span>
+        <span>{% blocktrans trimmed with value1=remaining_label %}{{ value1 }}余额{% endblocktrans %}</span>
         <strong>
-            €{{ summary.remaining_total|floatformat:2 }}
+            €{{ summary.remaining_total|floatformat:"2u" }}
         </strong>
     </article>
 
     <article class="settlement-kpi overdue">
-        <span>逾期账户</span>
+        <span>{% trans "逾期账户" %}</span>
         <strong>{{ summary.overdue_count }}</strong>
     </article>
 </section>
@@ -77,25 +77,25 @@
           class="settlement-filter-form">
 
         <div class="settlement-filter-search">
-            <label for="settlement-search">搜索</label>
+            <label for="settlement-search">{% trans "搜索" %}</label>
             <input
                 id="settlement-search"
                 type="search"
                 name="q"
                 value="{{ query }}"
-                placeholder="文档编号、订单号或{{ counterparty_label }}"
+                placeholder="{% blocktrans trimmed with value1=counterparty_label %}文档编号、订单号或{{ value1 }}{% endblocktrans %}"
             >
         </div>
 
         <div>
             <label for="settlement-status">
-                状态
+                {% trans "状态" %}
             </label>
 
             <select id="settlement-status"
                     name="status">
                 <option value="all">
-                    全部状态
+                    {% trans "全部状态" %}
                 </option>
 
                 {% for value, label in status_choices %}
@@ -111,36 +111,36 @@
         {% if is_receivable %}
         <div>
             <label for="settlement-due">
-                到期情况
+                {% trans "到期情况" %}
             </label>
 
             <select id="settlement-due"
                     name="due">
                 <option value="all"
                         {% if due_scope == "all" %}selected{% endif %}>
-                    全部
+                    {% trans "全部" %}
                 </option>
 
                 <option value="overdue"
                         {% if due_scope == "overdue" %}selected{% endif %}>
-                    已逾期
+                    {% trans "已逾期" %}
                 </option>
 
                 <option value="due_30"
                         {% if due_scope == "due_30" %}selected{% endif %}>
-                    30 天内到期
+                    {% trans "30 天内到期" %}
                 </option>
 
                 <option value="no_due"
                         {% if due_scope == "no_due" %}selected{% endif %}>
-                    未设置截止日
+                    {% trans "未设置截止日" %}
                 </option>
             </select>
         </div>
 
         {% else %}
         <div>
-            <label for="settlement-sort">排序方式</label>
+            <label for="settlement-sort">{% trans "排序方式" %}</label>
             <select id="settlement-sort" name="sort">
                 {% for value, label in sort_choices %}
                     <option value="{{ value }}"
@@ -154,7 +154,7 @@
 
         <div>
             <label for="issue-from">
-                开立日期从
+                {% trans "开立日期从" %}
             </label>
 
             <input
@@ -167,7 +167,7 @@
 
         <div>
             <label for="issue-to">
-                开立日期至
+                {% trans "开立日期至" %}
             </label>
 
             <input
@@ -181,12 +181,12 @@
         <div class="settlement-filter-actions">
             <button class="portal-button primary"
                     type="submit">
-                查询
+                {% trans "查询" %}
             </button>
 
             <a class="portal-button"
                href="{{ list_url }}">
-                重置
+                {% trans "重置" %}
             </a>
         </div>
     </form>
@@ -209,16 +209,16 @@
 
         <thead>
             <tr>
-                <th>正式文档</th>
+                <th>{% trans "正式文档" %}</th>
                 <th>{{ counterparty_label }}</th>
-                <th>订单号</th>
-                <th>批次</th>
-                <th>开立日期</th>
-                <th>{% if is_receivable %}截止日期{% else %}预计到货{% endif %}</th>
-                <th>原始金额</th>
+                <th>{% trans "订单号" %}</th>
+                <th>{% trans "批次" %}</th>
+                <th>{% trans "开立日期" %}</th>
+                <th>{% if is_receivable %}{% trans "截止日期" %}{% else %}{% trans "预计到货" %}{% endif %}</th>
+                <th>{% trans "原始金额" %}</th>
                 <th>{{ posted_label }}</th>
                 <th>{{ remaining_label }}</th>
-                <th>状态</th>
+                <th>{% trans "状态" %}</th>
             </tr>
         </thead>
 
@@ -233,7 +233,7 @@
 
                         <a class="settlement-detail-link"
                            href="{{ account.portal_detail_url }}">
-                            结算详情
+                            {% trans "结算详情" %}
                         </a>
                     </td>
 
@@ -267,17 +267,17 @@
 
                     <td class="settlement-money">
                         {{ account.currency }}
-                        {{ account.original_amount|floatformat:2 }}
+                        {{ account.original_amount|floatformat:"2u" }}
                     </td>
 
                     <td class="settlement-money">
                         {{ account.currency }}
-                        {{ account.portal_posted_amount|floatformat:2 }}
+                        {{ account.portal_posted_amount|floatformat:"2u" }}
                     </td>
 
                     <td class="settlement-money-strong">
                         {{ account.currency }}
-                        {{ account.portal_remaining_amount|floatformat:2 }}
+                        {{ account.portal_remaining_amount|floatformat:"2u" }}
                     </td>
 
                     <td>
@@ -294,7 +294,7 @@
                 <tr>
                     <td colspan="10"
                         class="portal-empty">
-                        没有找到符合条件的结算账户。
+                        {% trans "没有找到符合条件的结算账户。" %}
                     </td>
                 </tr>
             {% endfor %}
@@ -306,18 +306,18 @@
 <nav class="settlement-pagination">
     {% if page_obj.has_previous %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">
-            上一页
+            {% trans "上一页" %}
         </a>
     {% endif %}
 
     <span>
-        第 {{ page_obj.number }} 页，
-        共 {{ page_obj.paginator.num_pages }} 页
+        {% blocktrans trimmed with value1=page_obj.number value2=page_obj.paginator.num_pages %}第 {{ value1 }} 页，
+        共 {{ value2 }} 页{% endblocktrans %}
     </span>
 
     {% if page_obj.has_next %}
         <a href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">
-            下一页
+            {% trans "下一页" %}
         </a>
     {% endif %}
 </nav>

@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}工作流 | Acoeurs France{% endblock %}
+{% block title %}{% trans "工作流 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">
@@ -10,34 +10,34 @@
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>工作流</h1>
-        <p>跟踪订单状态、验证结果、发票与采购订单生成进度。</p>
+        <h1>{% trans "工作流" %}</h1>
+        <p>{% trans "跟踪订单状态、验证结果、发票与采购订单生成进度。" %}</p>
     </div>
 
     <div class="portal-header-actions">
-        <a class="portal-button" href="{% url 'portal:home' %}">返回首页</a>
+        <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
         <a class="portal-button" href="/admin/workflow/documentworkflowitem/">Admin</a>
     </div>
 </section>
 
 <section class="workflow-stats">
     <a class="stat-card {% if status_filter == 'all' %}active{% endif %}" href="?status=all{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">全部流程项</span>
+        <span class="stat-label">{% trans "全部流程项" %}</span>
         <strong>{{ stats.all }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'pending' %}active{% endif %}" href="?status=pending{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">待验证</span>
+        <span class="stat-label">{% trans "待验证" %}</span>
         <strong>{{ stats.pending }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'docs' %}active{% endif %}" href="?status=docs{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">待生成文件</span>
+        <span class="stat-label">{% trans "待生成文件" %}</span>
         <strong>{{ stats.docs }}</strong>
     </a>
 
     <a class="stat-card {% if status_filter == 'done' %}active{% endif %}" href="?status=done{% if query %}&q={{ query }}{% endif %}">
-        <span class="stat-label">已完成</span>
+        <span class="stat-label">{% trans "已完成" %}</span>
         <strong>{{ stats.done }}</strong>
     </a>
 </section>
@@ -47,20 +47,20 @@
         <input type="hidden" name="status" value="{{ status_filter }}">
 
         <div class="filter-search">
-            <label for="workflow-search">搜索</label>
+            <label for="workflow-search">{% trans "搜索" %}</label>
             <input
                 id="workflow-search"
                 type="text"
                 name="q"
                 value="{{ query }}"
-                placeholder="输入订单号或医院名称"
+                placeholder="{% trans "输入订单号或医院名称" %}"
             >
         </div>
 
-        <button class="portal-button primary" type="submit">搜索</button>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
 
         {% if query %}
-            <a class="portal-button" href="?status={{ status_filter }}">清除</a>
+            <a class="portal-button" href="?status={{ status_filter }}">{% trans "清除" %}</a>
         {% endif %}
     </form>
 </section>
@@ -80,14 +80,14 @@
 
         <thead>
             <tr>
-                <th>订单号</th>
-                <th>医院</th>
-                <th>验证</th>
+                <th>{% trans "订单号" %}</th>
+                <th>{% trans "医院" %}</th>
+                <th>{% trans "验证" %}</th>
                 <th>Invoice</th>
                 <th>PO</th>
-                <th>下一步</th>
-                <th>更新时间</th>
-                <th>操作</th>
+                <th>{% trans "下一步" %}</th>
+                <th>{% trans "更新时间" %}</th>
+                <th>{% trans "操作" %}</th>
             </tr>
         </thead>
 
@@ -97,7 +97,7 @@
                     <td>
                         <div class="order-number">{{ row.order_number }}</div>
                         {% if row.batch_number %}
-                            <div class="sub-text">Batch {{ row.batch_number }}</div>
+                            <div class="sub-text">{% trans "批次" %} {{ row.batch_number }}</div>
                         {% endif %}
                     </td>
 
@@ -152,19 +152,19 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="generate">
                                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button class="mini-button" type="submit">生成</button>
+                                    <button class="mini-button" type="submit">{% trans "生成" %}</button>
                                 </form>
                             {% elif row.documents_generated %}
                                 <span class="mini-button disabled">
-                                    已生成
+                                    {% trans "已生成" %}
                                 </span>
                             {% else %}
                                 <span class="mini-button disabled">
-                                    待验证
+                                    {% trans "待验证" %}
                                 </span>
                             {% endif %}
 
-                            <a class="mini-button ghost" href="{{ row.detail_url }}">查看</a>
+                            <a class="mini-button ghost" href="{{ row.detail_url }}">{% trans "查看" %}</a>
                         </div>
                     </td>
                 </tr>
@@ -172,7 +172,7 @@
                 <tr>
                     <td colspan="8">
                         <div class="portal-empty">
-                            没有找到符合条件的工作流记录。
+                            {% trans "没有找到符合条件的工作流记录。" %}
                         </div>
                     </td>
                 </tr>

@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}上传医院订单 | Acoeurs France{% endblock %}
+{% block title %}{% trans "上传医院订单 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/orders.css' %}">
@@ -10,12 +10,12 @@
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>上传医院订单</h1>
-        <p>上传医院订单 PDF 后，系统会自动执行 OCR、订单提取和订单验证。</p>
+        <h1>{% trans "上传医院订单" %}</h1>
+        <p>{% trans "上传医院订单 PDF 后，系统会自动执行 OCR、订单提取和订单验证。" %}</p>
     </div>
 
     <div class="portal-header-actions">
-        <a class="portal-button" href="{% url 'portal:order_list' %}">返回订单列表</a>
+        <a class="portal-button" href="{% url 'portal:order_list' %}">{% trans "返回订单列表" %}</a>
     </div>
 </section>
 
@@ -27,8 +27,8 @@
             <div class="upload-icon">PDF</div>
 
             <div class="upload-text">
-                <h2>选择医院订单 PDF</h2>
-                <p>上传后系统会自动创建订单，并立即提取订单号、医院、地址和产品明细。提取成功后会继续自动验证。</p>
+                <h2>{% trans "选择医院订单 PDF" %}</h2>
+                <p>{% trans "上传后系统会自动创建订单，并立即提取订单号、医院、地址和产品明细。提取成功后会继续自动验证。" %}</p>
             </div>
 
             <input
@@ -40,17 +40,17 @@
         </div>
 
         <div class="upload-warning">
-            <strong>提示：</strong>
-            自动提取可能需要一些时间。请不要在上传过程中关闭页面。
+            <strong>{% trans "提示：" %}</strong>
+            {% trans "自动提取可能需要一些时间。请不要在上传过程中关闭页面。" %}
         </div>
 
         <div class="upload-actions">
             <button class="portal-button primary" type="submit">
-                上传、提取并验证
+                {% trans "上传、提取并验证" %}
             </button>
 
             <a class="portal-button" href="{% url 'portal:order_list' %}">
-                取消
+                {% trans "取消" %}
             </a>
         </div>
     </form>

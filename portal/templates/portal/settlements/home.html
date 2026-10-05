@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}发票与结算 | Acoeurs France{% endblock %}
+{% block title %}{% trans "发票与结算 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -11,59 +11,58 @@
 {% block breadcrumb %}
 <nav class="settlement-breadcrumb">
     <a href="{% url 'portal:home' %}">
-        首页
+        {% trans "首页" %}
     </a>
     <span>›</span>
-    <span>发票与结算</span>
+    <span>{% trans "发票与结算" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>发票与结算</h1>
+        <h1>{% trans "发票与结算" %}</h1>
 
         <p>
-            管理医院应收、工厂应付及实际收付款流水。
-            正式文件仍在文档中心只读归档。
+            {% trans "管理医院应收、工厂应付及实际收付款流水。 正式文件仍在文档中心只读归档。" %}
         </p>
     </div>
 </section>
 
 <section class="settlement-kpi-grid">
     <article class="settlement-kpi">
-        <span>医院待收</span>
+        <span>{% trans "医院待收" %}</span>
         <strong>
-            €{{ receivable_summary.remaining_total|floatformat:2 }}
+            €{{ receivable_summary.remaining_total|floatformat:"2u" }}
         </strong>
         <small>
-            {{ receivable_summary.count }} 个应收账户
+            {% blocktrans trimmed with value1=receivable_summary.count %}{{ value1 }} 个应收账户{% endblocktrans %}
         </small>
     </article>
 
     <article class="settlement-kpi">
-        <span>工厂待付</span>
+        <span>{% trans "工厂待付" %}</span>
         <strong>
-            €{{ payable_summary.remaining_total|floatformat:2 }}
+            €{{ payable_summary.remaining_total|floatformat:"2u" }}
         </strong>
         <small>
-            {{ payable_summary.count }} 个应付账户
+            {% blocktrans trimmed with value1=payable_summary.count %}{{ value1 }} 个应付账户{% endblocktrans %}
         </small>
     </article>
 
     <article class="settlement-kpi overdue">
-        <span>逾期应收</span>
+        <span>{% trans "逾期应收" %}</span>
         <strong>
             {{ receivable_summary.overdue_count }}
         </strong>
-        <small>需要优先跟进</small>
+        <small>{% trans "需要优先跟进" %}</small>
     </article>
 
     <article class="settlement-kpi">
-        <span>有效流水</span>
+        <span>{% trans "有效流水" %}</span>
         <strong>{{ posted_transaction_count }}</strong>
         <small>
-            全部流水 {{ transaction_count }}
+            {% blocktrans trimmed with value1=transaction_count %}全部流水 {{ value1 }}{% endblocktrans %}
         </small>
     </article>
 </section>
@@ -98,7 +97,7 @@
                     {% if card.amount_is_money == False %}
                         {{ card.amount }}
                     {% else %}
-                        €{{ card.amount|floatformat:2 }}
+                        €{{ card.amount|floatformat:"2u" }}
                     {% endif %}
                 </strong>
             </div>
@@ -108,71 +107,20 @@
     {% endfor %}
 </section>
 
-{% if recent_accounts %}
-<section class="portal-panel settlement-recent-panel">
+<section class="portal-panel settlement-comparison-panel">
     <div class="settlement-section-heading">
         <div>
-            <h2>最近结算账户</h2>
-            <p>最近开立的医院应收和工厂应付。</p>
+            <h2>{% trans "订单 / 批次金额对照" %}</h2>
+            <p>
+                {% trans "医院订单金额及各发货批次对应的 Hospital Invoice 与 Factory PO。" %}
+            </p>
         </div>
+        <a class="portal-button settlement-section-action"
+           href="{% url 'portal:settlement_comparison' %}">
+            {% trans "查看全部金额对照 →" %}
+        </a>
     </div>
 
-    <div class="portal-table-wrap">
-        <table class="portal-table settlement-recent-table">
-            <thead>
-                <tr>
-                    <th>文档</th>
-                    <th>方向</th>
-                    <th>医院 / 工厂</th>
-                    <th>原始金额</th>
-                    <th>剩余金额</th>
-                    <th>状态</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for account in recent_accounts %}
-                    <tr>
-                        <td>
-                            <a class="settlement-document-link"
-                               href="{{ account.portal_document_url }}">
-                                {{ account.document.document_number }}
-                            </a>
-
-                            <a class="settlement-detail-link"
-                               href="{{ account.portal_detail_url }}">
-                                查看结算
-                            </a>
-                        </td>
-
-                        <td>
-                            {{ account.portal_direction_label }}
-                        </td>
-
-                        <td>
-                            {{ account.counterparty_name }}
-                        </td>
-
-                        <td>
-                            {{ account.currency }}
-                            {{ account.original_amount|floatformat:2 }}
-                        </td>
-
-                        <td class="settlement-money-strong">
-                            {{ account.currency }}
-                            {{ account.portal_remaining_amount|floatformat:2 }}
-                        </td>
-
-                        <td>
-                            <span class="settlement-status {{ account.portal_status_class }}">
-                                {{ account.portal_status_label }}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% include "portal/settlements/_comparison_table.html" with rows=order_batch_amount_rows %}
 </section>
-{% endif %}
 {% endblock %}

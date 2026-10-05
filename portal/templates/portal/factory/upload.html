@@ -1,29 +1,29 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}上传工厂采购{% endblock %}
+{% block title %}{% trans "上传工厂采购" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/orders.css' %}">
 {% endblock %}
 
 {% block breadcrumb %}
-<a href="{% url 'portal:home' %}">首页</a>
+<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
 <span>/</span>
-<a href="{% url 'portal:factory_list' %}">工厂采购</a>
+<a href="{% url 'portal:factory_list' %}">{% trans "工厂采购" %}</a>
 <span>/</span>
-<span>上传</span>
+<span>{% trans "上传" %}</span>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>上传工厂文件</h1>
-        <p>上传工厂确认 PDF 后，系统会自动提取发货信息，并进入后续处理流程。</p>
+        <h1>{% trans "上传工厂文件" %}</h1>
+        <p>{% trans "上传工厂确认 PDF 后，系统会自动提取发货信息，并进入后续处理流程。" %}</p>
     </div>
 
     <div class="portal-header-actions">
-        <a class="portal-button" href="{% url 'portal:factory_list' %}">返回工厂文件列表</a>
+        <a class="portal-button" href="{% url 'portal:factory_list' %}">{% trans "返回工厂文件列表" %}</a>
     </div>
 </section>
 
@@ -34,7 +34,7 @@
         <div class="portal-panel detail-section">
             <div class="detail-info-grid">
                 <div>
-                    <label class="detail-label" for="order_id">医院订单</label>
+                    <label class="detail-label" for="order_id">{% trans "医院订单" %}</label>
                     {% if order_locked and selected_order %}
                         <input type="hidden" name="order_id" value="{{ selected_order.id }}">
                         <div class="portal-input" aria-readonly="true">
@@ -42,7 +42,7 @@
                         </div>
                     {% else %}
                         <select id="order_id" name="order_id" class="portal-input">
-                            <option value="">自动匹配</option>
+                            <option value="">{% trans "自动匹配" %}</option>
                             {% for order in order_choices %}
                                 <option
                                     value="{{ order.id }}"
@@ -56,7 +56,7 @@
                 </div>
 
                 <div>
-                    <label class="detail-label" for="confirmation_type">批次类型（旧格式可人工选择）</label>
+                    <label class="detail-label" for="confirmation_type">{% trans "批次类型（旧格式可人工选择）" %}</label>
                     <select id="confirmation_type" name="confirmation_type" class="portal-input">
                         {% for value, label in confirmation_type_choices %}
                             <option value="{{ value }}" {% if value == default_confirmation_type %}selected{% endif %}>
@@ -72,8 +72,8 @@
             <div class="upload-icon">PDF</div>
 
             <div class="upload-text">
-                <h2>选择工厂文件 PDF</h2>
-                <p>上传后系统会自动识别 bon de commande、提取 serial number、有效期和发货日期，并继续同步后续流程。</p>
+                <h2>{% trans "选择工厂文件 PDF" %}</h2>
+                <p>{% trans "上传后系统会自动识别 bon de commande、提取 serial number、有效期和发货日期，并继续同步后续流程。" %}</p>
             </div>
 
             <input
@@ -86,17 +86,17 @@
         </div>
 
         <div class="upload-warning">
-            <strong>提示：</strong>
-            自动提取可能需要一些时间。请不要在上传过程中关闭页面。
+            <strong>{% trans "提示：" %}</strong>
+            {% trans "自动提取可能需要一些时间。请不要在上传过程中关闭页面。" %}
         </div>
 
         <div class="upload-actions">
             <button class="portal-button primary" type="submit">
-                上传并提取
+                {% trans "上传并提取" %}
             </button>
 
             <a class="portal-button" href="{% url 'portal:factory_list' %}">
-                取消
+                {% trans "取消" %}
             </a>
         </div>
     </form>

@@ -1,6 +1,8 @@
-{% load static %}
+{% load static i18n l10n %}
+{% get_current_language as current_language %}
+{% localize off %}
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{% if current_language == 'zh-hans' %}zh-CN{% else %}{{ current_language }}{% endif %}">
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Acoeurs France{% endblock %}</title>
@@ -10,7 +12,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% with current_lang=lang|default:"zh" %}
     <header class="topbar">
         <a class="brand" href="{% url 'portal:home' %}">
             <img class="brand-logo-img" src="{% static 'portal/img/acoeur_logo.png' %}" alt="Acoeur">
@@ -19,16 +20,34 @@
 
         <div class="search-box">
             <span class="search-icon">⌕</span>
-            <input type="text" placeholder="搜索菜单、功能或数据..." disabled>
+            <input type="text" placeholder="{% trans "搜索菜单、功能或数据..." %}" disabled>
             <span class="shortcut">⌘ K</span>
         </div>
 
         <div class="user-area">
-            <nav class="lang-switch">
-                <a class="{% if current_lang == 'zh' %}active{% endif %}" href="?lang=zh">中文</a>
-                <a class="{% if current_lang == 'en' %}active{% endif %}" href="?lang=en">EN</a>
-                <a class="{% if current_lang == 'fr' %}active{% endif %}" href="?lang=fr">FR</a>
-            </nav>
+            <div class="lang-switch">
+                <button class="lang-switch-trigger" type="button" aria-expanded="false" aria-controls="portal-language-menu">
+                    Language
+                    <span class="lang-switch-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="lang-switch-menu" id="portal-language-menu" role="group" aria-label="{% trans '界面语言' %}">
+                <form method="post" action="{% url 'set_language' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" name="language" value="zh-hans" class="lang-switch-option{% if current_language == 'zh-hans' %} is-active{% endif %}"{% if current_language == 'zh-hans' %} aria-current="true"{% endif %}>中文</button>
+                </form>
+                <form method="post" action="{% url 'set_language' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" name="language" value="en" class="lang-switch-option{% if current_language == 'en' %} is-active{% endif %}"{% if current_language == 'en' %} aria-current="true"{% endif %}>EN</button>
+                </form>
+                <form method="post" action="{% url 'set_language' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" name="language" value="fr" class="lang-switch-option{% if current_language == 'fr' %} is-active{% endif %}"{% if current_language == 'fr' %} aria-current="true"{% endif %}>FR</button>
+                </form>
+                </div>
+            </div>
 
             <div class="notification">
                 🔔
@@ -43,13 +62,12 @@
                 <div class="user-name">
                     {% firstof user_display_name request.user.get_full_name request.user.username "Acoeur" %}
                 </div>
-                <div class="user-role">操作员 · Acoeur</div>
+                <div class="user-role">{% trans "操作员 · Acoeur" %}</div>
             </div>
 
             <a class="admin-link" href="/admin/">Admin</a>
         </div>
     </header>
-    {% endwith %}
 
     <main class="page">
         {% if messages %}
@@ -68,5 +86,64 @@
     </main>
 
     {% block extra_js %}{% endblock %}
+    <script>
+        (() => {
+            const switcher = document.querySelector('.lang-switch');
+            if (!switcher) return;
+            const trigger = switcher.querySelector('.lang-switch-trigger');
+            const setOpen = (open) => {
+                switcher.classList.toggle('is-open', open);
+                trigger.setAttribute('aria-expanded', String(open));
+            };
+
+            switcher.addEventListener('mouseenter', () => {
+                if (window.matchMedia('(hover: hover)').matches && !switcher.classList.contains('is-dismissed')) {
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+            switcher.addEventListener('mouseleave', () => {
+                if (switcher.classList.contains('is-dismissed') && !trigger.matches(':focus-visible')) {
+                    trigger.blur();
+                    switcher.classList.remove('is-dismissed');
+                }
+                if (!switcher.classList.contains('is-open') && !switcher.contains(document.activeElement)) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            });
+            switcher.addEventListener('focusin', () => {
+                if (!switcher.classList.contains('is-dismissed')) {
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+            trigger.addEventListener('click', () => {
+                const open = !switcher.classList.contains('is-open');
+                switcher.classList.toggle('is-dismissed', !open);
+                setOpen(open);
+            });
+            switcher.addEventListener('focusout', (event) => {
+                if (!switcher.contains(event.relatedTarget)) {
+                    setOpen(false);
+                    switcher.classList.remove('is-dismissed');
+                    if (window.matchMedia('(hover: hover)').matches && switcher.matches(':hover')) {
+                        trigger.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            });
+            switcher.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    setOpen(false);
+                    switcher.classList.add('is-dismissed');
+                    trigger.focus();
+                }
+            });
+            document.addEventListener('pointerdown', (event) => {
+                if (!switcher.contains(event.target)) {
+                    setOpen(false);
+                    switcher.classList.remove('is-dismissed');
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
+{% endlocalize %}

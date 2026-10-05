@@ -1,8 +1,8 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}
-价格匹配模拟器 | 价格规则
+{% trans "价格匹配模拟器 | 价格规则" %}
 {% endblock %}
 
 {% block extra_css %}
@@ -12,34 +12,33 @@
 
 {% block breadcrumb %}
 <nav class="master-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
     <a href="{% url 'portal:library_home' %}">
-        资料库
+        {% trans "资料库" %}
     </a>
     <span>›</span>
     <a href="{% url 'portal:library_prices' %}">
-        价格规则
+        {% trans "价格规则" %}
     </a>
     <span>›</span>
-    <span>价格匹配模拟器</span>
+    <span>{% trans "价格匹配模拟器" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>价格匹配模拟器</h1>
+        <h1>{% trans "价格匹配模拟器" %}</h1>
         <p>
-            选择产品和医院订单日期，
-            查看系统会命中哪条价格规则。
+            {% trans "选择产品和医院订单日期， 查看系统会命中哪条价格规则。" %}
         </p>
     </div>
 
     <div class="portal-header-actions">
         <a class="portal-button"
            href="{% url 'portal:library_prices' %}">
-            返回价格规则
+            {% trans "返回价格规则" %}
         </a>
     </div>
 </section>
@@ -74,7 +73,7 @@
             <button
                 class="portal-button primary"
                 type="submit">
-                运行模拟
+                {% trans "运行模拟" %}
             </button>
         </div>
     </form>
@@ -84,33 +83,33 @@
     <section class="price-simulation-result">
         <article class="portal-panel">
             <h2 class="portal-panel-title">
-                产品信息
+                {% trans "产品信息" %}
             </h2>
 
             <div class="master-detail-list">
                 <div>
-                    <span>产品编号</span>
+                    <span>{% trans "产品编号" %}</span>
                     <strong>
                         {{ simulation.product.code }}
                     </strong>
                 </div>
 
                 <div>
-                    <span>工厂</span>
+                    <span>{% trans "工厂" %}</span>
                     <strong>
                         {{ simulation.product.factory|default:"-" }}
                     </strong>
                 </div>
 
                 <div>
-                    <span>产品分类</span>
+                    <span>{% trans "产品分类" %}</span>
                     <strong>
                         {{ simulation.product.category|default:"-" }}
                     </strong>
                 </div>
 
                 <div>
-                    <span>医院订单日期</span>
+                    <span>{% trans "医院订单日期" %}</span>
                     <strong>
                         {{ simulation.target_date|date:"Y-m-d" }}
                     </strong>
@@ -123,57 +122,57 @@
                 <div class="price-simulation-heading">
                     <div>
                         <span class="status-pill success">
-                            匹配成功
+                            {% trans "匹配成功" %}
                         </span>
 
                         <h2>
-                            {{ simulation.policy.name|default:"未命名规则" }}
+                            {{ simulation.policy.name|default:_("未命名规则") }}
                         </h2>
                     </div>
 
                     <a class="portal-button"
                        href="{% url 'portal:library_price_policy_detail' simulation.policy.id %}">
-                        查看规则详情
+                        {% trans "查看规则详情" %}
                     </a>
                 </div>
 
                 <div class="price-simulation-numbers">
                     <div>
-                        <span>医院销售价</span>
+                        <span>{% trans "医院销售价" %}</span>
                         <strong>
-                            €{{ simulation.policy.hospital_unit_price|floatformat:2 }}
+                            €{{ simulation.policy.hospital_unit_price|floatformat:"2u" }}
                         </strong>
                     </div>
 
                     <div>
-                        <span>工厂采购价</span>
+                        <span>{% trans "工厂采购价" %}</span>
                         <strong>
-                            €{{ simulation.policy.factory_unit_price|floatformat:2 }}
+                            €{{ simulation.policy.factory_unit_price|floatformat:"2u" }}
                         </strong>
                     </div>
 
                     <div>
-                        <span>基础毛利</span>
+                        <span>{% trans "基础毛利" %}</span>
                         <strong>
-                            €{{ simulation.base_margin|floatformat:2 }}
+                            €{{ simulation.base_margin|floatformat:"2u" }}
                         </strong>
                     </div>
 
                     <div>
-                        <span>临期规则</span>
+                        <span>{% trans "临期规则" %}</span>
                         <strong>
-                            {{ simulation.policy.expiration_threshold_days }}
+                            {% blocktrans trimmed with value1=simulation.policy.expiration_threshold_days value2=simulation.discount_percent|floatformat:"2u" %}{{ value1 }}
                             天 /
-                            {{ simulation.discount_percent|floatformat:2 }}%
+                            {{ value2 }}%{% endblocktrans %}
                         </strong>
                     </div>
                 </div>
 
                 <div class="price-match-explanation">
-                    <strong>匹配范围：</strong>
+                    <strong>{% trans "匹配范围：" %}</strong>
                     {{ simulation.scope|default:"-" }}
                     <br>
-                    <strong>匹配说明：</strong>
+                    <strong>{% trans "匹配说明：" %}</strong>
                     {{ simulation.message }}
                 </div>
             </article>
@@ -181,10 +180,10 @@
             <article class="portal-panel
                             price-simulation-failed">
                 <span class="status-pill danger">
-                    未找到规则
+                    {% trans "未找到规则" %}
                 </span>
 
-                <h2>该产品和日期没有匹配价格规则</h2>
+                <h2>{% trans "该产品和日期没有匹配价格规则" %}</h2>
 
                 <p>{{ simulation.message }}</p>
             </article>
@@ -192,7 +191,7 @@
 
         {% if simulation.warnings %}
             <article class="master-warning-panel">
-                <strong>警告：</strong>
+                <strong>{% trans "警告：" %}</strong>
 
                 <ul>
                     {% for warning in simulation.warnings %}

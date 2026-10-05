@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}文档中心 | Acoeurs France{% endblock %}
+{% block title %}{% trans "文档中心 | Acoeurs France" %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -11,36 +11,35 @@
 {% block breadcrumb %}
 <nav class="document-breadcrumb">
     <a href="{% url 'portal:home' %}">
-        首页
+        {% trans "首页" %}
     </a>
     <span>›</span>
-    <span>文档中心</span>
+    <span>{% trans "文档中心" %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
 <section class="portal-page-header">
     <div>
-        <h1>文档中心</h1>
+        <h1>{% trans "文档中心" %}</h1>
 
         <p>
-            按文档类型查看系统生成的正式业务文件。
-            文档中心仅用于查看、下载和业务追溯。
+            {% trans "按文档类型查看系统生成的正式业务文件。 文档中心仅用于查看、下载和业务追溯。" %}
         </p>
     </div>
 
     <div class="portal-header-actions">
         <a class="portal-button"
            href="{{ all_documents_url }}">
-            查看全部文档
+            {% trans "查看全部文档" %}
         </a>
     </div>
 </section>
 
 <section class="document-category-summary">
-    当前共归档
+    {% trans "当前共归档" %}
     <strong>{{ total_count }}</strong>
-    份业务文档。
+    {% trans "份业务文档。" %}
 </section>
 
 <section class="document-category-grid">
@@ -70,7 +69,7 @@
 
             {% if card.latest_document %}
                 <div class="document-category-latest">
-                    <span>最新文档</span>
+                    <span>{% trans "最新文档" %}</span>
 
                     <strong>
                         {{ card.latest_document.document_number }}
@@ -82,7 +81,7 @@
                 </div>
             {% else %}
                 <div class="document-category-latest empty">
-                    当前还没有此类文档
+                    {% trans "当前还没有此类文档" %}
                 </div>
             {% endif %}
 

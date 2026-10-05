@@ -1,7 +1,7 @@
 {% extends "portal/base.html" %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{{ factory_node.name }} | 产品库{% endblock %}
+{% block title %}{% blocktrans trimmed with value1=factory_node.name %}{{ value1 }} | 产品库{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'portal/css/product_library.css' %}">
@@ -9,11 +9,11 @@
 
 {% block breadcrumb %}
 <nav class="library-breadcrumb">
-    <a href="{% url 'portal:home' %}">首页</a>
+    <a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_home' %}">资料库</a>
+    <a href="{% url 'portal:library_home' %}">{% trans "资料库" %}</a>
     <span>›</span>
-    <a href="{% url 'portal:library_products' %}">产品库</a>
+    <a href="{% url 'portal:library_products' %}">{% trans "产品库" %}</a>
     <span>›</span>
     <a href="{% url 'portal:library_product_department' department.id %}">
         {{ department.name }}
@@ -31,7 +31,7 @@
             {% if factory_node.factory %}
                 {{ factory_node.factory.legal_name|default:factory_node.factory.name }}
             {% else %}
-                该入口尚未关联真实工厂资料。
+                {% trans "该入口尚未关联真实工厂资料。" %}
             {% endif %}
         </p>
     </div>
@@ -40,7 +40,7 @@
         <div class="portal-header-actions">
             <a class="portal-button"
                href="{% url 'portal:library_factory_detail' factory_node.factory.id %}">
-                查看工厂资料
+                {% trans "查看工厂资料" %}
             </a>
         </div>
     {% endif %}
@@ -59,14 +59,14 @@
             {% endif %}
 
             <div class="node-product-count">
-                {{ category.product_count }} 个产品
+                {% blocktrans trimmed with value1=category.product_count %}{{ value1 }} 个产品{% endblocktrans %}
             </div>
 
             <div class="node-arrow">›</div>
         </a>
     {% empty %}
         <div class="portal-panel">
-            该工厂暂时没有产品分类。
+            {% trans "该工厂暂时没有产品分类。" %}
         </div>
     {% endfor %}
 
@@ -74,8 +74,8 @@
         <a class="product-node-card add-node-card"
         href="{% url 'portal:library_product_category_add' factory_node.id %}">
             <div class="node-icon add-icon">＋</div>
-            <h3>新增产品分类</h3>
-            <p>为当前工厂创建一个产品分类。</p>
+            <h3>{% trans "新增产品分类" %}</h3>
+            <p>{% trans "为当前工厂创建一个产品分类。" %}</p>
             <div class="node-arrow">›</div>
         </a>
     {% endif %}

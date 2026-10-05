@@ -1,3 +1,5 @@
+from portal.i18n import display_choice, display_choices
+from django.utils.translation import gettext as _, gettext_lazy
 import json
 import re
 from datetime import datetime
@@ -435,7 +437,7 @@ def decorate_document(document):
     document.portal_type_label = (
         DOCUMENT_TYPE_LABELS.get(
             document.document_type,
-            document.get_document_type_display(),
+            display_choice(document.get_document_type_display()),
         )
     )
 
@@ -512,28 +514,28 @@ def build_document_month_options():
 
 DOCUMENT_LIST_PAGE_META = {
     "all": {
-        "title": "全部文档",
+        "title": gettext_lazy("全部文档"),
         "description": (
-            "查看全部 Invoice、Factory PO "
-            "和 Factory Request。"
+            gettext_lazy("查看全部 Invoice、Factory PO "
+            "和 Factory Request。")
         ),
     },
     GeneratedDocument.DocumentType.HOSPITAL_INVOICE: {
         "title": "Hospital Invoice",
         "description": (
-            "查看发送给医院的正式销售发票。"
+            gettext_lazy("查看发送给医院的正式销售发票。")
         ),
     },
     GeneratedDocument.DocumentType.FACTORY_PO: {
         "title": "Factory Purchase Order",
         "description": (
-            "查看发送给工厂的正式采购订单。"
+            gettext_lazy("查看发送给工厂的正式采购订单。")
         ),
     },
     GeneratedDocument.DocumentType.FACTORY_ORDER_REQUEST: {
         "title": "Factory Order Request",
         "description": (
-            "查看医院订单提取后生成的工厂需求文件。"
+            gettext_lazy("查看医院订单提取后生成的工厂需求文件。")
         ),
     },
 }
@@ -564,10 +566,10 @@ def build_document_center_home_context(
                 .HOSPITAL_INVOICE
             ),
             "title": "Hospital Invoice",
-            "subtitle": "医院销售发票",
+            "subtitle": _("医院销售发票"),
             "description": (
-                "查看发送给医院的正式发票、"
-                "金额、付款截止日期和生成快照。"
+                _("查看发送给医院的正式发票、"
+                "金额、付款截止日期和生成快照。")
             ),
             "theme": "invoice",
             "symbol": "INV",
@@ -582,10 +584,10 @@ def build_document_center_home_context(
                 .FACTORY_PO
             ),
             "title": "Factory Purchase Order",
-            "subtitle": "工厂采购订单",
+            "subtitle": _("工厂采购订单"),
             "description": (
-                "查看发送给工厂的正式 PO、"
-                "采购金额和临期折扣结果。"
+                _("查看发送给工厂的正式 PO、"
+                "采购金额和临期折扣结果。")
             ),
             "theme": "po",
             "symbol": "PO",
@@ -600,10 +602,10 @@ def build_document_center_home_context(
                 .FACTORY_ORDER_REQUEST
             ),
             "title": "Factory Order Request",
-            "subtitle": "工厂需求文件",
+            "subtitle": _("工厂需求文件"),
             "description": (
-                "查看医院订单提取后生成的"
-                "工厂需求文件。"
+                _("查看医院订单提取后生成的"
+                "工厂需求文件。")
             ),
             "theme": "request",
             "symbol": "REQ",
@@ -754,9 +756,9 @@ def build_document_list_context(request, forced_document_type=None):
     valid_types = {
         value
         for value, label
-        in GeneratedDocument
+        in display_choices(GeneratedDocument
         .DocumentType
-        .choices
+        .choices)
     }
 
     if document_type in valid_types:
@@ -865,9 +867,9 @@ def build_document_list_context(request, forced_document_type=None):
             build_document_month_options()
         ),
         "document_type_choices": (
-            GeneratedDocument
+            display_choices(GeneratedDocument
             .DocumentType
-            .choices
+            .choices)
         ),
         "total_count": (
             all_documents.count()
