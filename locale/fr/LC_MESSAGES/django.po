@@ -5015,3 +5015,523 @@ msgstr ""
 #, python-format
 #~ msgid "%(value1)s"
 #~ msgstr "%(value1)s"
+
+#. Hospital Engagement V1
+msgid "A · 高"
+msgstr "A · Haute"
+
+#. Hospital Engagement V1
+msgid "B · 中"
+msgstr "B · Moyenne"
+
+#. Hospital Engagement V1
+msgid "C · 低"
+msgstr "C · Basse"
+
+#. Hospital Engagement V1
+msgid "Email"
+msgstr "E-mail"
+
+#. Hospital Engagement V1
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+#. Hospital Engagement V1
+msgid "下次跟进日期"
+msgstr "Date du prochain suivi"
+
+#. Hospital Engagement V1
+msgid "主要联系人"
+msgstr "Contact principal"
+
+#. Hospital Engagement V1
+msgid "产品需求"
+msgstr "Besoins en produits"
+
+#. Hospital Engagement V1
+msgid "优先级"
+msgstr "Priorité"
+
+#. Hospital Engagement V1
+msgid "会议"
+msgstr "Réunion"
+
+#. Hospital Engagement V1
+msgid "保存"
+msgstr "Enregistrer"
+
+#. Hospital Engagement V1
+msgid "保存沟通记录"
+msgstr "Enregistrer l’échange"
+
+#. Hospital Engagement V1
+msgid "其他联系人"
+msgstr "Autre contact"
+
+#. Hospital Engagement V1
+msgid "分页"
+msgstr "Pagination"
+
+#. Hospital Engagement V1
+msgid "医生"
+msgstr "Médecin"
+
+#. Hospital Engagement V1
+msgid "医生 / 联系人"
+msgstr "Médecins / contacts"
+
+#. Hospital Engagement V1
+msgid "医院商务跟进"
+msgstr "Suivi commercial des hôpitaux"
+
+#. Hospital Engagement V1
+msgid "医院基础资料"
+msgstr "Informations de l’hôpital"
+
+#. Hospital Engagement V1
+msgid "医院沟通进度"
+msgstr "Suivi des hôpitaux"
+
+#. Hospital Engagement V1
+msgid "商务信息"
+msgstr "Informations commerciales"
+
+#. Hospital Engagement V1
+msgid "姓名"
+msgstr "Nom"
+
+#. Hospital Engagement V1
+msgid "家医院"
+msgstr "hôpitaux"
+
+#. Hospital Engagement V1
+msgid "导航"
+msgstr "Navigation"
+
+#. Hospital Engagement V1
+msgid "已保存。"
+msgstr "Enregistré."
+
+#. Hospital Engagement V1
+msgid "批量移动"
+msgstr "Déplacer la sélection"
+
+#. Hospital Engagement V1
+msgid "批量移动至"
+msgstr "Déplacer la sélection vers"
+
+#. Hospital Engagement V1
+msgid "护士"
+msgstr "Personnel infirmier"
+
+#. Hospital Engagement V1
+msgid "拜访"
+msgstr "Visite"
+
+#. Hospital Engagement V1
+msgid "接触中"
+msgstr "En contact"
+
+#. Hospital Engagement V1
+msgid "搜索医院、联系人或产品需求"
+msgstr "Rechercher un hôpital, un contact ou un besoin"
+
+#. Hospital Engagement V1
+msgid "新增产品需求"
+msgstr "Ajouter un besoin en produits"
+
+#. Hospital Engagement V1
+msgid "新增沟通"
+msgstr "Ajouter un échange"
+
+#. Hospital Engagement V1
+msgid "新增联系人"
+msgstr "Ajouter un contact"
+
+#. Hospital Engagement V1
+msgid "无效的阶段。"
+msgstr "Étape non valide."
+
+#. Hospital Engagement V1
+msgid "无法保存，请检查重复资料并重试。"
+msgstr "Enregistrement impossible. Vérifiez les doublons et réessayez."
+
+#. Hospital Engagement V1
+msgid "暂无产品需求。"
+msgstr "Aucun besoin en produits pour le moment."
+
+#. Hospital Engagement V1
+msgid "暂无沟通记录"
+msgstr "Aucun échange pour le moment"
+
+#. Hospital Engagement V1
+msgid "暂无科室。"
+msgstr "Aucun service pour le moment."
+
+#. Hospital Engagement V1
+msgid "暂无联系人。"
+msgstr "Aucun contact pour le moment."
+
+#. Hospital Engagement V1
+msgid "更改阶段"
+msgstr "Changer d’étape"
+
+#. Hospital Engagement V1
+msgid "最近业务沟通"
+msgstr "Dernier échange / prochaine action"
+
+#. Hospital Engagement V1
+msgid "未接触"
+msgstr "Non contacté"
+
+#. Hospital Engagement V1
+msgid "查看医院资料"
+msgstr "Voir la fiche de l’hôpital"
+
+#. Hospital Engagement V1
+msgid "沟通内容"
+msgstr "Compte rendu de l’échange"
+
+#. Hospital Engagement V1
+msgid "沟通方式"
+msgstr "Mode de communication"
+
+#. Hospital Engagement V1
+msgid "沟通时间"
+msgstr "Date et heure de l’échange"
+
+#. Hospital Engagement V1
+msgid "沟通结果"
+msgstr "Résultat de l’échange"
+
+#. Hospital Engagement V1
+msgid "沟通记录"
+msgstr "Historique des échanges"
+
+#. Hospital Engagement V1
+msgid "沟通记录已保存。"
+msgstr "Échange enregistré."
+
+#. Hospital Engagement V1
+msgid "没有符合条件的医院。"
+msgstr "Aucun hôpital ne correspond aux filtres."
+
+#. Hospital Engagement V1
+msgid "特殊需求"
+msgstr "Exigences particulières"
+
+#. Hospital Engagement V1
+msgid "科室 / 医生"
+msgstr "Services / médecins"
+
+#. Hospital Engagement V1
+msgid "科室必须属于当前医院。"
+msgstr "Le service doit appartenir à cet hôpital."
+
+#. Hospital Engagement V1
+msgid "第一阶段"
+msgstr "Étape 1"
+
+#. Hospital Engagement V1
+msgid "第一阶段 · 未接触"
+msgstr "Étape 1 · Non contacté"
+
+#. Hospital Engagement V1
+msgid "第三阶段"
+msgstr "Étape 3"
+
+#. Hospital Engagement V1
+msgid "第三阶段 · 落地中"
+msgstr "Étape 3 · Mise en place"
+
+#. Hospital Engagement V1
+msgid "第二阶段"
+msgstr "Étape 2"
+
+#. Hospital Engagement V1
+msgid "第二阶段 · 接触中"
+msgstr "Étape 2 · En contact"
+
+#. Hospital Engagement V1
+msgid "管理合作医院的沟通阶段、联系人、产品需求和下一步行动。"
+msgstr "Gérez les étapes de suivi, les contacts, les besoins en produits et les prochaines actions des hôpitaux partenaires."
+
+#. Hospital Engagement V1
+msgid "职位"
+msgstr "Fonction"
+
+#. Hospital Engagement V1
+msgid "联系人必须属于当前医院。"
+msgstr "Le contact doit appartenir à cet hôpital."
+
+#. Hospital Engagement V1
+msgid "联系人类型"
+msgstr "Type de contact"
+
+#. Hospital Engagement V1
+msgid "自由文本需求"
+msgstr "Besoin en texte libre"
+
+#. Hospital Engagement V1
+msgid "落地中"
+msgstr "Mise en place"
+
+#. Hospital Engagement V1
+msgid "行政人员"
+msgstr "Personnel administratif"
+
+#. Hospital Engagement V1
+msgid "设为主要联系人"
+msgstr "Définir comme contact principal"
+
+#. Hospital Engagement V1
+msgid "该医院已有同名启用科室。"
+msgstr "Cet hôpital possède déjà un service actif portant ce nom."
+
+#. Hospital Engagement V1
+msgid "说明"
+msgstr "Description"
+
+#. Hospital Engagement V1
+msgid "请填写沟通内容。"
+msgstr "Veuillez saisir un compte rendu de l’échange."
+
+#. Hospital Engagement V1
+msgid "请至少选择一个产品或填写自由文本需求。"
+msgstr "Sélectionnez un produit ou décrivez le besoin."
+
+#. Hospital Engagement V1
+msgid "请选择沟通方式。"
+msgstr "Veuillez sélectionner un mode de communication."
+
+#. Hospital Engagement V1
+msgid "负责人"
+msgstr "Responsable"
+
+#. Hospital Engagement V1
+msgid "返回"
+msgstr "Retour"
+
+#. Hospital Engagement V1
+msgid "选择"
+msgstr "Sélection"
+
+#. Hospital Engagement V1
+msgid "采购人员"
+msgstr "Personnel des achats"
+
+#. Hospital Engagement V1
+msgid "阶段"
+msgstr "Étape"
+
+#. Hospital Engagement V1
+msgid "阶段变更"
+msgstr "Changement d’étape"
+
+#. Hospital Engagement V1
+msgid "阶段已保存。"
+msgstr "Étape enregistrée."
+
+#. Hospital Engagement V1
+msgid "需求摘要"
+msgstr "Résumé des besoins"
+
+#. Team Activity overview
+msgid "团队工作概览"
+msgstr "Activité de l’équipe"
+
+#. Team Activity overview
+msgid "每日沟通、阶段推进与待跟进情况"
+msgstr "Communications quotidiennes, progression et suivis"
+
+#. Team Activity overview
+msgid "查看业务团队的医院跟进工作"
+msgstr "Consulter le suivi des hôpitaux par l’équipe commerciale"
+
+#. Team Activity overview
+msgid "查看业务员的医院沟通、阶段推进和当前需要关注的跟进事项。"
+msgstr "Consultez les communications avec les hôpitaux, la progression des étapes et les suivis à traiter."
+
+#. Team Activity overview
+msgid "联系医院"
+msgstr "Hôpitaux contactés"
+
+#. Team Activity overview
+msgid "沟通次数"
+msgstr "Communications"
+
+#. Team Activity overview
+msgid "阶段前进医院"
+msgstr "Hôpitaux ayant progressé"
+
+#. Team Activity overview
+msgid "进入第二阶段"
+msgstr "Passés à l’étape 2"
+
+#. Team Activity overview
+msgid "进入第三阶段"
+msgstr "Passés à l’étape 3"
+
+#. Team Activity overview
+msgid "时间范围"
+msgstr "Période"
+
+#. Team Activity overview
+msgid "今天"
+msgstr "Aujourd’hui"
+
+#. Team Activity overview
+msgid "本周"
+msgstr "Cette semaine"
+
+#. Team Activity overview
+msgid "自定义日期"
+msgstr "Dates personnalisées"
+
+#. Team Activity overview
+msgid "业务员"
+msgstr "Commercial"
+
+#. Team Activity overview
+msgid "请选择开始日期和结束日期。"
+msgstr "Sélectionnez une date de début et une date de fin."
+
+#. Team Activity overview
+msgid "结束日期超出支持范围。"
+msgstr "La date de fin dépasse la plage prise en charge."
+
+#. Team Activity overview
+msgid "本周从周一零点统计至当前时间；自定义日期包含开始日和结束日。"
+msgstr "Cette semaine commence lundi à minuit et s’arrête à l’instant présent. Les dates personnalisées incluent les deux dates."
+
+#. Team Activity overview
+msgid "统计区间"
+msgstr "Intervalle du rapport"
+
+#. Team Activity overview
+msgid "不含结束时刻"
+msgstr "instant de fin exclu"
+
+#. Team Activity overview
+msgid "业务员工作摘要"
+msgstr "Synthèse de l’activité par commercial"
+
+#. Team Activity overview
+msgid "沟通和阶段推进按记录人统计；当前负责人用于待跟进事项。"
+msgstr "Les communications et les progressions sont attribuées à leur auteur ; les suivis relèvent du responsable actuel."
+
+#. Team Activity overview
+msgid "所选时间范围内暂无工作记录。"
+msgstr "Aucune activité sur la période sélectionnée."
+
+#. Team Activity overview
+msgid "沟通明细"
+msgstr "Détail des communications"
+
+#. Team Activity overview
+msgid "时间"
+msgstr "Date et heure"
+
+#. Team Activity overview
+msgid "当前负责人"
+msgstr "Responsable actuel"
+
+#. Team Activity overview
+msgid "联系人 / 科室"
+msgstr "Contact / service"
+
+#. Team Activity overview
+msgid "沟通内容 / 结果"
+msgstr "Communication / résultat"
+
+#. Team Activity overview
+msgid "下一步 / 下次跟进"
+msgstr "Prochaine action / date de suivi"
+
+#. Team Activity overview
+msgid "所选时间范围内暂无沟通记录。"
+msgstr "Aucune communication sur la période sélectionnée."
+
+#. Team Activity overview
+msgid "阶段推进"
+msgstr "Progression des étapes"
+
+#. Team Activity overview
+msgid "原阶段"
+msgstr "Étape précédente"
+
+#. Team Activity overview
+msgid "新阶段"
+msgstr "Nouvelle étape"
+
+#. Team Activity overview
+msgid "所选时间范围内暂无阶段推进。"
+msgstr "Aucune progression sur la période sélectionnée."
+
+#. Team Activity overview
+msgid "当前需要关注"
+msgstr "À traiter actuellement"
+
+#. Team Activity overview
+msgid "当前快照，不受上方时间范围影响；业务员筛选按医院当前负责人匹配。"
+msgstr "Situation actuelle, indépendante de la période sélectionnée. Le filtre commercial correspond au responsable actuel de l’hôpital."
+
+#. Team Activity overview
+msgid "当前阶段"
+msgstr "Étape actuelle"
+
+#. Team Activity overview
+msgid "原计划跟进日期"
+msgstr "Date de suivi prévue"
+
+#. Team Activity overview
+msgid "逾期天数"
+msgstr "Jours de retard"
+
+#. Team Activity overview
+msgid "最近一次沟通"
+msgstr "Dernière communication"
+
+#. Team Activity overview
+msgid "当前没有逾期待跟进医院。"
+msgstr "Aucun hôpital n’a de suivi en retard."
+
+#. Team Activity overview
+msgid "未分配"
+msgstr "Non attribué"
+
+#: portal/templates/portal/orders/list.html
+msgid "下单日期"
+msgstr "Date de commande"
+
+#. Shipment tracking editor
+msgid "填写快递单号"
+msgstr "Ajouter le numéro de suivi"
+
+#. Shipment tracking editor
+msgid "修改快递单号"
+msgstr "Modifier le numéro de suivi"
+
+#. Shipment tracking editor
+msgid "快递单号"
+msgstr "Numéro de suivi"
+
+#. Shipment tracking editor
+msgid "保存快递单号"
+msgstr "Enregistrer"
+
+#. Shipment tracking editor
+msgid "快递单号已保存。"
+msgstr "Numéro de suivi enregistré."
+
+#. Factory purchase list
+msgid "全部采购文件"
+msgstr "Tous les documents d’achat"
+
+#. Factory purchase list
+msgid "输入订单号或工厂名称"
+msgstr "Saisir un numéro de commande ou un nom d’usine"
+
+#. Factory purchase list
+msgid "没有找到符合条件的工厂采购文件。"
+msgstr "Aucun document d’achat fournisseur ne correspond aux critères."

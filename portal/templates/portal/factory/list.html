@@ -4,38 +4,50 @@
 {% block title %}{% trans "工厂采购" %}{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/list.css' %}">
 <link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
 {% endblock %}
 
-{% block breadcrumb %}
-<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
-<span>/</span>
-<span>{% trans "工厂采购" %}</span>
-{% endblock %}
+
 
 {% block content %}
-<div class="portal-page-header">
+<section class="portal-page-header">
     <div>
         <h1>{% trans "工厂采购" %}</h1>
         <p>{% trans "管理工厂采购 PDF、serial number、发货批次与后续流程。" %}</p>
     </div>
 
-    <div class="page-actions">
+    <div class="portal-header-actions">
         <a class="portal-button primary" href="{{ upload_url }}">{% trans "上传工厂采购" %}</a>
+        <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
+        <a class="portal-button" href="/admin/factory_confirmations/factoryconfirmation/">Admin</a>
     </div>
-</div>
+</section>
 
-<div class="portal-panel">
-    <div class="panel-header">
-        <div>
-            <h2>{% trans "采购文件列表" %}</h2>
-            <p>{% blocktrans trimmed with value1=total_count %}共 {{ value1 }} 份采购文件{% endblocktrans %}</p>
+<section class="portal-list-stats factory-stats">
+    {% for card in cards %}
+    <a class="stat-card{% if card.active %} active{% endif %}" href="{{ card.url }}"{% if card.active %} aria-current="page"{% endif %}>
+        <span class="stat-label">{{ card.label }}</span><strong>{{ card.count }}</strong>
+    </a>
+    {% endfor %}
+</section>
+
+<section class="portal-list-filters portal-panel factory-filters">
+    <form method="get" class="portal-list-filter-form">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <div class="filter-search">
+            <label for="factory-search">{% trans "搜索" %}</label>
+            <input id="factory-search" type="text" name="q" value="{{ query }}" placeholder="{% trans '输入订单号或工厂名称' %}">
         </div>
-    </div>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
+        {% if query %}<a class="portal-button" href="?status={{ status_filter }}">{% trans "清除" %}</a>{% endif %}
+    </form>
+</section>
 
-    <div class="portal-table-wrap factory-table-wrap">
+<section class="portal-table-wrap factory-table-wrap">
         <table class="portal-table factory-table clean-factory-table">
             <colgroup>
+                <col class="col-bon-ordinal">
                 <col class="col-order">
                 <col class="col-factory">
                 <col class="col-date">
@@ -47,6 +59,7 @@
 
             <thead>
                 <tr>
+                    <th class="bon-ordinal-cell">{% trans "BON 序号" %}</th>
                     <th>{% trans "订单号" %}</th>
                     <th>{% trans "工厂" %}</th>
                     <th>{% trans "发货日期" %}</th>
@@ -60,12 +73,13 @@
             <tbody>
                 {% for row in rows %}
                     <tr>
+                        <td class="bon-ordinal-cell"><span class="factory-sub-text">{{ row.bon_ordinal|default_if_none:"—" }}</span></td>
                         <td>
                             <div class="order-number">{{ row.order_number }}</div>
                         </td>
 
                         <td>
-                            <div class="factory-name">{{ row.factory_name }}</div>
+                            <div class="factory-name" title="{{ row.factory_name }}">{{ row.factory_name }}</div>
                         </td>
 
                         <td>
@@ -89,9 +103,14 @@
                         </td>
 
                         <td>
-                            <span class="next-action {{ row.next_class }}">
-                                {{ row.next_text }}
-                            </span>
+                            <div class="factory-next-actions">
+                                {% if row.tracking_url %}
+                                    <a class="factory-next-link" href="{{ row.tracking_url }}?next={{ request.get_full_path|urlencode }}">{{ row.tracking_label }}</a>
+                                    {% if row.tracking_number %}<span class="factory-sub-text tracking-value">{{ row.tracking_number }}</span>{% endif %}
+                                {% endif %}
+                                {% if row.workflow_detail_url %}<a class="factory-next-link" href="{{ row.workflow_detail_url }}">{% trans "查看工作流" %}</a>{% endif %}
+                                {% if row.show_next_hint %}<span class="next-action {{ row.next_class }}">{{ row.next_text }}</span>{% endif %}
+                            </div>
                         </td>
 
                         <td>
@@ -102,13 +121,12 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="7" class="empty-cell">
-                            {% trans "还没有工厂采购文件。" %}
+                        <td colspan="8" class="empty-cell">
+                            {% trans "没有找到符合条件的工厂采购文件。" %}
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
+</section>
 {% endblock %}

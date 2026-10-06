@@ -159,3 +159,20 @@ def get_safe_next_url(request, fallback_url):
 
 def safe_redirect_after_action(request, fallback_url):
     return redirect(get_safe_next_url(request, fallback_url))
+
+
+def get_global_numeric_bon_ordinals():
+    """Number all numeric BON orders, including orders outside the current result."""
+    from orders.models import Order
+
+    numeric_orders = Order.objects.filter(
+        bon_de_commande__regex=r"^[0-9]+$"
+    ).values_list("id", "bon_de_commande")
+    sorted_orders = sorted(
+        numeric_orders,
+        key=lambda order: (int(order[1]), order[1], order[0]),
+    )
+    return {
+        order_id: ordinal
+        for ordinal, (order_id, _) in enumerate(sorted_orders, start=1)
+    }

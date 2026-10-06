@@ -1,0 +1,2 @@
+{% for error in form.non_field_errors %}<p class="he-error" role="alert">{{ error }}</p>{% endfor %}
+<div class="he-form-grid">{% for field in form %}<div class="he-field{% if field.field.widget.input_type == 'checkbox' %} he-checkbox-field{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="he-error" role="alert">{{ error }}</span>{% endfor %}</div>{% endfor %}</div>

@@ -1,0 +1,107 @@
+{% extends "portal/base.html" %}
+{% load i18n static tz %}
+{% block title %}{% trans "团队工作概览" %} · Acoeurs France{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/hospital_engagements.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/team_activity.css' %}">
+{% endblock %}
+{% block breadcrumb %}
+<nav class="he-breadcrumb" aria-label="{% trans '导航' %}"><a href="{% url 'portal:home' %}">{% trans "首页" %}</a><span> / </span><span aria-current="page">{% trans "团队工作概览" %}</span></nav>
+{% endblock %}
+{% block content %}
+<div class="he ta">
+    <header class="he-heading">
+        <h1>{% trans "团队工作概览" %}</h1>
+        <p>{% trans "查看业务员的医院沟通、阶段推进和当前需要关注的跟进事项。" %}</p>
+    </header>
+    <form method="get" class="he-panel ta-filter">
+        {{ filter_form.non_field_errors }}
+        <div class="he-filters">
+            {% for field in filter_form %}<div class="he-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+            <button class="portal-button primary" type="submit">{% trans "筛选" %}</button>
+            <a class="portal-button" href="{% url 'portal:team_activity' %}">{% trans "重置" %}</a>
+        </div>
+        <p class="he-muted ta-hint">{% trans "本周从周一零点统计至当前时间；自定义日期包含开始日和结束日。" %}</p>
+    </form>
+    {% if valid_filters %}
+    <p class="he-muted">{% trans "统计区间" %}: {{ period_start|localtime|date:"Y-m-d H:i" }} → {{ period_end|localtime|date:"Y-m-d H:i" }} <span>({% trans "不含结束时刻" %})</span></p>
+    <div class="ta-kpis">
+        {% for kpi in kpis %}<article class="ta-kpi"><h2>{{ kpi.label }}</h2><strong>{{ kpi.value }}</strong></article>{% endfor %}
+    </div>
+    {% if show_summary %}
+    <section class="ta-section" aria-labelledby="summary-heading">
+        <h2 id="summary-heading">{% trans "业务员工作摘要" %}</h2>
+        <p class="he-muted">{% trans "沟通和阶段推进按记录人统计；当前负责人用于待跟进事项。" %}</p>
+        <div class="he-table-wrap" role="region" tabindex="0" aria-label="{% trans '业务员工作摘要' %}">
+            <table class="ta-table ta-summary">
+                <thead><tr><th>{% trans "业务员" %}</th>{% for kpi in kpis %}<th>{{ kpi.label }}</th>{% endfor %}</tr></thead>
+                <tbody>{% for row in summary %}
+                    <tr><td>{{ row.actor_name }}</td><td>{{ row.contacted_hospitals }}</td><td>{{ row.communications }}</td><td>{{ row.advanced_hospitals }}</td><td>{{ row.entered_stage_2 }}</td><td>{{ row.entered_stage_3 }}</td></tr>
+                {% empty %}<tr><td colspan="6" class="he-empty">{% trans "所选时间范围内暂无工作记录。" %}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+    <section class="ta-section" id="communications" aria-labelledby="communications-heading">
+        <div class="he-section-heading"><h2 id="communications-heading">{% trans "沟通明细" %}</h2><span class="ta-count">{{ communications.page.paginator.count }}</span></div>
+        <div class="he-table-wrap" role="region" tabindex="0" aria-label="{% trans '沟通明细' %}">
+            <table class="ta-table ta-communications">
+                <thead><tr><th>{% trans "时间" %}</th><th>{% trans "业务员" %}</th><th>{% trans "医院" %}</th><th>{% trans "当前负责人" %}</th><th>{% trans "方式" %}</th><th>{% trans "联系人 / 科室" %}</th><th>{% trans "沟通内容 / 结果" %}</th><th>{% trans "下一步 / 下次跟进" %}</th></tr></thead>
+                <tbody>{% for entry in communications.page %}
+                    <tr>
+                        <td>{{ entry.occurred_at|localtime|date:"Y-m-d H:i" }}</td>
+                        <td>{% firstof entry.created_by.get_full_name entry.created_by.username "—" %}</td>
+                        <td><strong>{{ entry.engagement.hospital.name }}</strong></td>
+                        <td>{% firstof entry.engagement.owner.get_full_name entry.engagement.owner.username "—" %}</td>
+                        <td>{{ entry.get_channel_display|default:"—" }}</td>
+                        <td>{{ entry.contact.name|default:"—" }}<div class="he-muted">{% firstof entry.department.name entry.contact.department.name "—" %}</div></td>
+                        <td><div class="he-prewrap">{{ entry.summary|default:"—" }}</div>{% if entry.outcome %}<div class="he-prewrap he-muted">{{ entry.outcome }}</div>{% endif %}</td>
+                        <td><div class="he-prewrap">{{ entry.next_action|default:"—" }}</div><div class="he-muted">{{ entry.next_follow_up_date|date:"Y-m-d"|default:"—" }}</div></td>
+                    </tr>
+                {% empty %}<tr><td colspan="8" class="he-empty">{% trans "所选时间范围内暂无沟通记录。" %}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+        {% include "portal/team_activity/pagination.html" with pager=communications %}
+    </section>
+    <section class="ta-section" id="advancements" aria-labelledby="advancements-heading">
+        <div class="he-section-heading"><h2 id="advancements-heading">{% trans "阶段推进" %}</h2><span class="ta-count">{{ advancements.page.paginator.count }}</span></div>
+        <div class="he-table-wrap" role="region" tabindex="0" aria-label="{% trans '阶段推进' %}">
+            <table class="ta-table">
+                <thead><tr><th>{% trans "时间" %}</th><th>{% trans "业务员" %}</th><th>{% trans "医院" %}</th><th>{% trans "当前负责人" %}</th><th>{% trans "原阶段" %}</th><th>{% trans "新阶段" %}</th></tr></thead>
+                <tbody>{% for entry in advancements.page %}
+                    <tr>
+                        <td>{{ entry.occurred_at|localtime|date:"Y-m-d H:i" }}</td>
+                        <td>{% firstof entry.created_by.get_full_name entry.created_by.username "—" %}</td>
+                        <td><strong>{{ entry.engagement.hospital.name }}</strong></td>
+                        <td>{% firstof entry.engagement.owner.get_full_name entry.engagement.owner.username "—" %}</td>
+                        <td>{{ entry.get_stage_from_display }}</td><td><span class="he-chip">{{ entry.get_stage_to_display }}</span></td>
+                    </tr>
+                {% empty %}<tr><td colspan="6" class="he-empty">{% trans "所选时间范围内暂无阶段推进。" %}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+        {% include "portal/team_activity/pagination.html" with pager=advancements %}
+    </section>
+    <section class="ta-section" id="overdue" aria-labelledby="overdue-heading">
+        <div class="he-section-heading"><h2 id="overdue-heading">{% trans "当前需要关注" %}</h2><span class="ta-count">{{ overdue.page.paginator.count }}</span></div>
+        <p class="he-muted">{% trans "当前快照，不受上方时间范围影响；业务员筛选按医院当前负责人匹配。" %} <span>{{ snapshot_date|date:"Y-m-d" }}</span></p>
+        <div class="he-table-wrap" role="region" tabindex="0" aria-label="{% trans '当前需要关注' %}">
+            <table class="ta-table ta-overdue">
+                <thead><tr><th>{% trans "医院" %}</th><th>{% trans "负责人" %}</th><th>{% trans "当前阶段" %}</th><th>{% trans "原计划跟进日期" %}</th><th>{% trans "逾期天数" %}</th><th>{% trans "下一步" %}</th><th>{% trans "最近一次沟通" %}</th></tr></thead>
+                <tbody>{% for item in overdue.page %}
+                    <tr>
+                        <td><strong>{{ item.hospital.name }}</strong></td>
+                        <td>{% firstof item.owner.get_full_name item.owner.username "—" %}</td>
+                        <td>{{ item.get_stage_display }}</td><td>{{ item.next_follow_up_date|date:"Y-m-d" }}</td>
+                        <td><span class="ta-overdue-days">{{ item.overdue_days }}</span></td>
+                        <td class="he-prewrap">{{ item.next_action|default:"—" }}</td>
+                        <td>{% if item.latest_communication_at %}<div>{{ item.latest_communication_at|localtime|date:"Y-m-d H:i" }}</div><div class="he-prewrap he-muted">{{ item.latest_communication_summary }}</div>{% else %}{% trans "暂无沟通记录" %}{% endif %}</td>
+                    </tr>
+                {% empty %}<tr><td colspan="7" class="he-empty">{% trans "当前没有逾期待跟进医院。" %}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+        {% include "portal/team_activity/pagination.html" with pager=overdue %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+

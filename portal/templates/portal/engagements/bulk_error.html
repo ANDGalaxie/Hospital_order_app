@@ -1,0 +1,3 @@
+{% extends "portal/engagements/base.html" %}
+{% load i18n %}
+{% block engagement_content %}<section class="he-panel"><h1>{% trans "批量移动" %}</h1><div class="he-error" role="alert">{{ form.errors }}</div><a class="portal-button" href="{% url 'portal:engagement_stage' slug %}">{% trans "返回" %}</a></section>{% endblock %}

@@ -68,25 +68,27 @@
 <section class="portal-table-wrap workflow-table-wrap">
     <table class="portal-table workflow-table">
         <colgroup>
+            <col class="col-bon-ordinal">
             <col class="col-order">
             <col class="col-hospital">
             <col class="col-validation">
             <col class="col-invoice">
             <col class="col-po">
             <col class="col-next">
-            <col class="col-updated">
+            <col class="col-shipping-date">
             <col class="col-actions">
         </colgroup>
 
         <thead>
             <tr>
+                <th class="bon-ordinal-cell">{% trans "BON 序号" %}</th>
                 <th>{% trans "订单号" %}</th>
                 <th>{% trans "医院" %}</th>
                 <th>{% trans "验证" %}</th>
                 <th>Invoice</th>
                 <th>PO</th>
                 <th>{% trans "下一步" %}</th>
-                <th>{% trans "更新时间" %}</th>
+                <th>{% trans "发货日期" %}</th>
                 <th>{% trans "操作" %}</th>
             </tr>
         </thead>
@@ -94,6 +96,7 @@
         <tbody>
             {% for row in rows %}
                 <tr>
+                    <td class="bon-ordinal-cell"><span class="sub-text">{{ row.bon_ordinal|default_if_none:"—" }}</span></td>
                     <td>
                         <div class="order-number">{{ row.order_number }}</div>
                         {% if row.batch_number %}
@@ -142,7 +145,7 @@
                     </td>
 
                     <td>
-                        <span class="sub-text">{{ row.updated_at|date:"Y-m-d H:i" }}</span>
+                        <span class="sub-text">{{ row.shipping_date|date:"Y-m-d"|default:"—" }}</span>
                     </td>
 
                     <td class="action-cell">
@@ -170,7 +173,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="portal-empty">
                             {% trans "没有找到符合条件的工作流记录。" %}
                         </div>

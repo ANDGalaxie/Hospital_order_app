@@ -141,6 +141,10 @@ class ShipmentBatch(models.Model):
         verbose_name="库存预留记录",
     )
 
+    tracking_number = models.CharField(
+        max_length=200, blank=True, default="", verbose_name="Tracking number",
+    )
+
     batch_number = models.PositiveIntegerField(default=1)
 
     batch_date = models.DateField(

@@ -2,10 +2,12 @@ from portal.i18n import display_validation_message
 from django.utils.translation import gettext as _
 from decimal import Decimal
 
+from django.db.models import F
 from django.urls import reverse
 
 from portal.services.common import (
     document_url,
+    get_global_numeric_bon_ordinals,
     get_portal_lang,
     get_user_display_name,
 )
@@ -152,9 +154,13 @@ def build_workflow_list_context(request):
             "invoice_document",
             "po_document",
         )
-        .order_by("-updated_at", "-id")[:300]
+        .order_by(
+            F("shipment_batch__batch_date").desc(nulls_last=True),
+            "-shipment_batch__batch_number", "-id",
+        )[:300]
     )
 
+    bon_ordinals = get_global_numeric_bon_ordinals()
     rows = []
 
     for item in items:
@@ -179,10 +185,12 @@ def build_workflow_list_context(request):
         rows.append(
             {
                 "id": item.id,
+                "bon_ordinal": bon_ordinals.get(item.order_id),
+                "shipping_date": item.shipment_batch.batch_date,
                 "order_number": order_number,
                 "hospital_name": hospital_name,
                 "source_label": get_source_label(item),
-                "batch_number": data.get("batch_number"),
+                "batch_number": item.shipment_batch.batch_number,
                 "workflow_text": workflow_text,
                 "workflow_class": workflow_class,
                 "validation_text": validation_text,

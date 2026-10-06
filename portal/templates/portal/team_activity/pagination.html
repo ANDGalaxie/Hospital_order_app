@@ -1,0 +1,9 @@
+{% load i18n %}
+{% if pager.page.paginator.num_pages > 1 %}
+<nav class="he-pagination" aria-label="{% trans '分页' %}">
+    {% if pager.previous_url %}<a class="portal-button" href="{{ pager.previous_url }}">{% trans "上一页" %}</a>{% endif %}
+    <span>{{ pager.page.number }} / {{ pager.page.paginator.num_pages }}</span>
+    {% if pager.next_url %}<a class="portal-button" href="{{ pager.next_url }}">{% trans "下一页" %}</a>{% endif %}
+</nav>
+{% endif %}
+

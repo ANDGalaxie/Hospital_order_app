@@ -21,6 +21,8 @@ from django.db.models.functions import Cast
 from django.urls import reverse
 from django.utils import timezone
 
+from portal.services.common import get_global_numeric_bon_ordinals
+
 from documents.models import GeneratedDocument
 from orders.models import Order, OrderItem
 from settlements.models import (
@@ -88,21 +90,6 @@ def get_frozen_document_amount(document, payload_key):
 def format_comparison_money(amount):
     """Keep comparison amounts in one language-independent display format."""
     return f"€{amount:,.2f}" if amount is not None else None
-
-
-def get_global_numeric_bon_ordinals():
-    """Number all numeric BON orders, including orders outside the current result."""
-    numeric_orders = Order.objects.filter(
-        bon_de_commande__regex=r"^[0-9]+$"
-    ).values_list("id", "bon_de_commande")
-    sorted_orders = sorted(
-        numeric_orders,
-        key=lambda order: (int(order[1]), order[1], order[0]),
-    )
-    return {
-        order_id: ordinal
-        for ordinal, (order_id, _) in enumerate(sorted_orders, start=1)
-    }
 
 
 def get_order_batch_comparison_queryset(query=""):

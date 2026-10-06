@@ -1,0 +1,32 @@
+/* Team Activity only; reuse Portal and Hospital Engagement form primitives. */
+.ta { min-width: 0; }
+.ta-hint { font-size: 13px; margin: 16px 0 0; }
+.ta .he-filters .he-field:first-child { flex: 1 1 160px; }
+.ta-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin: 22px 0 34px; }
+.ta-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; }
+.ta-kpi h2 { font-size: 14px; line-height: 1.5; font-weight: 500; color: #52647b; margin: 0 0 16px; }
+.ta-kpi strong { font-size: 34px; font-weight: 650; color: #354d6b; }
+.ta-section { margin: 34px 0; scroll-margin-top: 24px; }
+.ta-section h2 { font-size: 20px; }
+.ta-count { background: #eef2f8; padding: 5px 12px; border-radius: 20px; color: #52647b; font-variant-numeric: tabular-nums; }
+.ta-table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 13px; line-height: 1.6; }
+.ta-table th, .ta-table td { padding: 16px; text-align: left; vertical-align: top; border-bottom: 1px solid #edf1f5; overflow-wrap: anywhere; max-width: 300px; }
+.ta-table th { background: #f7f9fc; color: #52647b; font-weight: 600; }
+.ta-table tr:last-child td { border-bottom: 0; }
+.ta-table td > div + div { margin-top: 6px; }
+.ta-table tbody tr:hover { background: #fafcff; }
+.ta-communications { min-width: 1240px; }
+.ta-communications th:nth-child(7), .ta-communications th:nth-child(8) { width: 20%; }
+.ta-overdue { min-width: 1100px; }
+.ta-overdue th:last-child { width: 24%; }
+.ta-overdue-days { color: #98512c; background: #fff3e7; border-radius: 6px; padding: 3px 9px; font-weight: 600; }
+.ta-summary td:not(:first-child) { font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) { .ta-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+    .ta-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .ta-kpi { padding: 16px; }
+    .ta-kpi h2 { min-height: 42px; margin-bottom: 8px; }
+    .ta-kpi strong { font-size: 28px; }
+    .ta .he-filters .he-field { flex-basis: 100%; }
+}
+

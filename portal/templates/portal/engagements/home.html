@@ -1,0 +1,6 @@
+{% extends "portal/engagements/base.html" %}
+{% load i18n %}
+{% block engagement_content %}
+<header class="he-heading"><h1>{% trans "医院沟通进度" %}</h1><p>{% trans "管理合作医院的沟通阶段、联系人、产品需求和下一步行动。" %}</p></header>
+<div class="he-stage-grid">{% for card in cards %}<a class="he-stage-card he-stage-{{ card.theme }}" href="{% url 'portal:engagement_stage' card.slug %}"><h2>{{ card.title }}</h2><p>{{ card.subtitle }}</p><strong>{{ card.count }}</strong><span>{% trans "家医院" %} <span aria-hidden="true">→</span></span></a>{% endfor %}</div>
+{% endblock %}

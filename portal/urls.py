@@ -1,4 +1,5 @@
-from portal import settlement_views
+from portal import settlement_views, team_activity_views, shipment_tracking_views
+from portal import hospital_engagement_views as engagement_views
 from django.urls import include, path
 
 from . import media_views, views
@@ -6,6 +7,18 @@ from . import media_views, views
 app_name = "portal"
 
 urlpatterns = [
+    path("hospital-engagements/team-activity/", team_activity_views.team_activity, name="team_activity"),
+    path("hospital-engagements/", engagement_views.home, name="engagement_home"),
+    path("hospital-engagements/stage/<slug:slug>/", engagement_views.stage_list, name="engagement_stage"),
+    path("hospital-engagements/stage/<slug:slug>/move/", engagement_views.bulk_move, name="engagement_bulk_move"),
+    path("hospital-engagements/<int:hospital_id>/", engagement_views.detail, name="engagement_detail"),
+    path("hospital-engagements/<int:hospital_id>/stage/", engagement_views.change_stage, name="engagement_change_stage"),
+    path("hospital-engagements/<int:hospital_id>/business/", engagement_views.save_business, name="engagement_business"),
+    path("hospital-engagements/<int:hospital_id>/follow-ups/add/", engagement_views.add_follow_up, name="engagement_follow_up"),
+    path("hospital-engagements/<int:hospital_id>/contacts/<int:record_id>/primary/", engagement_views.primary_contact, name="engagement_primary"),
+    path("hospital-engagements/<int:hospital_id>/<slug:kind>/add/", engagement_views.edit_record, name="engagement_record_add"),
+    path("hospital-engagements/<int:hospital_id>/<slug:kind>/<int:record_id>/edit/", engagement_views.edit_record, name="engagement_record_edit"),
+    path("hospital-engagements/<int:hospital_id>/<slug:kind>/<int:record_id>/remove/", engagement_views.remove_record, name="engagement_record_remove"),
     path("files/<path:path>", media_views.protected_media, name="protected_media"),
     path("finance/", include("finance.urls")),
     path("", views.home, name="home"),
@@ -33,6 +46,7 @@ urlpatterns = [
     path("factory/upload/", views.factory_upload, name="factory_upload"),
     path("factory/<int:confirmation_id>/", views.factory_detail, name="factory_detail"),
     path("factory/<int:confirmation_id>/action/", views.factory_action, name="factory_action"),
+    path("shipments/<int:batch_id>/tracking/", shipment_tracking_views.edit, name="shipment_tracking_edit"),
     path("shipments/", views.shipment_list, name="shipment_list"),
     path("shipments/<int:batch_id>/", views.shipment_detail, name="shipment_detail"),
     path("backorders/", views.backorder_list, name="backorder_list"),

@@ -126,7 +126,7 @@
     width: 13%;
 }
 
-.order-table .col-updated {
+.order-table .col-order-date {
     width: 12%;
 }
 
@@ -892,7 +892,7 @@
     width: 14%;
 }
 
-.order-table .col-updated {
+.order-table .col-order-date {
     width: 11%;
 }
 
@@ -952,17 +952,41 @@
     min-width: 0 !important;
 }
 
-/* 总和 100% */
+/* Allow translated headers to fit within the existing desktop table. */
+.order-table th {
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+/* Total 100%, including the auxiliary global BON ordinal. */
+.order-table .col-bon-ordinal {
+    width: 7.5% !important;
+}
+
+.order-table .bon-ordinal-cell {
+    text-align: center;
+}
+
+/* Hospital and BON remain left-aligned after insertion of the ordinal column. */
+.order-table th:nth-child(3),
+.order-table td:nth-child(3) {
+    text-align: left;
+}
+
+.order-table th:nth-child(8),
+.order-table td:nth-child(8) {
+    text-align: center;
+}
 .order-table .col-order {
     width: 9% !important;
 }
 
 .order-table .col-hospital {
-    width: 18% !important;
+    width: 16% !important;
 }
 
 .order-table .col-items {
-    width: 9% !important;
+    width: 8% !important;
 }
 
 .order-table .col-order-status {
@@ -974,15 +998,15 @@
 }
 
 .order-table .col-next {
-    width: 13% !important;
+    width: 12% !important;
 }
 
-.order-table .col-updated {
+.order-table .col-order-date {
     width: 10% !important;
 }
 
 .order-table .col-actions {
-    width: 21% !important;
+    width: 17.5% !important;
 }
 
 .order-table th,

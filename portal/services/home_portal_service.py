@@ -1,4 +1,7 @@
 from django.utils.translation import gettext as _
+from django.urls import reverse
+from hospital_engagements.models import ACCESS_PERMISSION, HospitalEngagement
+from hospital_engagements.boss_access import is_boss_user
 from portal.services.common import (
     get_portal_lang,
     get_user_display_name,
@@ -95,6 +98,30 @@ def build_home_context(request):
             "status_text": _("结算"),
         },
     ]
+
+    if request.user.has_perm(ACCESS_PERMISSION):
+        modules.insert(1, {
+            "title": _("医院沟通进度"),
+            "subtitle": _("管理合作医院的沟通阶段、联系人、产品需求和下一步行动。"),
+            "description": _("医院商务跟进"),
+            "icon": "portal/img/app-icons/hospital-orders.png",
+            "theme": "teal",
+            "url": reverse("portal:engagement_home"),
+            "badge": HospitalEngagement.objects.filter(hospital__is_active=True).count(),
+            "status_text": _("医院"),
+        })
+
+    if is_boss_user(request.user):
+        modules.append({
+            "title": _("团队工作概览"),
+            "subtitle": _("每日沟通、阶段推进与待跟进情况"),
+            "description": _("查看业务团队的医院跟进工作"),
+            "icon": "portal/img/app-icons/workflow.png",
+            "theme": "violet",
+            "url": reverse("portal:team_activity"),
+            "badge": None,
+            "status_text": _("团队工作概览"),
+        })
 
     return {
         "modules": modules,

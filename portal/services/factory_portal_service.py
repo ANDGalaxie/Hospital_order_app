@@ -1,6 +1,7 @@
 from portal.i18n import display_choice, display_choices
 from django.utils.translation import gettext as _
 from collections import Counter
+from urllib.parse import urlencode
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -21,6 +22,7 @@ from factory_confirmations.services.factory_confirmation_extraction_service impo
 from datetime import datetime
 
 from products.models import Product
+from portal.services.common import get_global_numeric_bon_ordinals
 from portal.services.factory_serial_crop_service import (
     get_serial_row_crop_url,
     get_serial_source_text,
@@ -31,7 +33,7 @@ except Exception:
     sync_backorders_for_order = None
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import BooleanField, Case, Count, Q, Value, When
 
 
 MISSING_BON_WARNING_MARKERS = (
@@ -43,6 +45,29 @@ SUCCESSFUL_BON_MATCH_STATUSES = {
     "matched_by_detected_bon_de_commande",
     "selected_order_confirmed_by_detected_bon",
 }
+
+# Optional explicit workflow lets the list use strict eager-loaded relations;
+# legacy detail callers retain their existing fallback.
+_WORKFLOW_LOOKUP = object()
+PENDING_EXTRACTION_STATES = (
+    FactoryConfirmation.ExtractionStatus.NOT_STARTED, "pending", "processing",
+)
+
+
+def factory_list_status_filters():
+    """List-only facts. Pending extraction and unmatched orders can overlap."""
+    return {
+        "pending": Q(extraction_status__in=PENDING_EXTRACTION_STATES),
+        "needs_action": (
+            Q(extraction_status=FactoryConfirmation.ExtractionStatus.FAILED)
+            | Q(order__isnull=True)
+            | Q(
+                extraction_status=FactoryConfirmation.ExtractionStatus.SUCCESS,
+                shipment_batch__document_workflow_item__isnull=True,
+            )
+        ),
+        "workflow": Q(shipment_batch__document_workflow_item__isnull=False),
+    }
 
 
 def filter_resolved_bon_warnings(confirmation, django_data, warnings):
@@ -128,6 +153,8 @@ def get_serial_summary(confirmation):
 
 
 def get_shipment_batch(confirmation):
+    if "shipment_batch" in confirmation._state.fields_cache:
+        return confirmation._state.fields_cache["shipment_batch"]
     return (
         ShipmentBatch.objects
         .filter(factory_confirmation=confirmation)
@@ -136,18 +163,22 @@ def get_shipment_batch(confirmation):
     )
 
 
-def get_workflow_item(confirmation):
+def get_batch_workflow_item(confirmation):
+    """Strict batch relation only; never borrow another batch's workflow."""
     batch = get_shipment_batch(confirmation)
+    if batch is None:
+        return None
+    try:
+        return batch.document_workflow_item
+    except DocumentWorkflowItem.DoesNotExist:
+        return None
 
-    if batch:
-        item = (
-            DocumentWorkflowItem.objects
-            .filter(shipment_batch=batch)
-            .order_by("-id")
-            .first()
-        )
-        if item:
-            return item
+
+def get_workflow_item(confirmation):
+    """Legacy status/detail lookup retains the order-level fallback."""
+    item = get_batch_workflow_item(confirmation)
+    if item:
+        return item
 
     if confirmation.order_id:
         return (
@@ -160,8 +191,9 @@ def get_workflow_item(confirmation):
     return None
 
 
-def workflow_label(confirmation):
-    item = get_workflow_item(confirmation)
+def workflow_label(confirmation, *, item=_WORKFLOW_LOOKUP):
+    if item is _WORKFLOW_LOOKUP:
+        item = get_workflow_item(confirmation)
 
     if item:
         return _("已进入"), "success"
@@ -172,7 +204,7 @@ def workflow_label(confirmation):
     return _("未进入"), "muted"
 
 
-def next_action_label(confirmation):
+def next_action_label(confirmation, *, item=_WORKFLOW_LOOKUP):
     if not confirmation.order_id:
         return _("人工确认订单"), "warning"
 
@@ -182,7 +214,8 @@ def next_action_label(confirmation):
     if confirmation.extraction_status != FactoryConfirmation.ExtractionStatus.SUCCESS:
         return _("执行提取"), "info"
 
-    item = get_workflow_item(confirmation)
+    if item is _WORKFLOW_LOOKUP:
+        item = get_workflow_item(confirmation)
 
     if item:
         return _("查看工作流"), "success"
@@ -191,12 +224,36 @@ def next_action_label(confirmation):
 
 
 def build_factory_list_context(request):
-    confirmations = (
-        FactoryConfirmation.objects
-        .select_related("order", "factory", "created_by")
-        .order_by("-created_at", "-id")
-    )
+    query = (request.GET.get("q") or "").strip()
+    filters = factory_list_status_filters()
+    status_filter = request.GET.get("status") or "all"
+    if status_filter not in {"all", *filters}:
+        status_filter = "all"
 
+    dataset = FactoryConfirmation.objects.all()
+    # Database counts for the whole dataset, independent of search like Workflow.
+    stats = dataset.aggregate(
+        all=Count("pk"),
+        **{name: Count("pk", filter=condition) for name, condition in filters.items()},
+    )
+    confirmations = dataset.select_related(
+        "order", "factory", "created_by", "shipment_batch__document_workflow_item",
+    ).annotate(
+        **{
+            "portal_" + name: Case(
+                When(condition, then=Value(True)), default=Value(False),
+                output_field=BooleanField(),
+            )
+            for name, condition in filters.items()
+        },
+        portal_serial_count=Count("serial_items", distinct=True),
+        portal_product_count=Count(
+            "serial_items__product_code", distinct=True,
+            filter=~Q(serial_items__product_code=""),
+        ),
+    ).order_by("-created_at", "-id")
+
+    bon_ordinals = get_global_numeric_bon_ordinals()
     rows = []
 
     for confirmation in confirmations:
@@ -204,13 +261,39 @@ def build_factory_list_context(request):
             confirmation.extraction_status
         )
         match_text, match_class = order_match_label(confirmation)
-        workflow_text, workflow_class = workflow_label(confirmation)
-        next_text, next_class = next_action_label(confirmation)
+        batch = get_shipment_batch(confirmation)
+        batch_workflow = get_batch_workflow_item(confirmation)
+        workflow_text, workflow_class = workflow_label(confirmation, item=batch_workflow)
+        next_text, next_class = next_action_label(confirmation, item=batch_workflow)
         status_text, status_class = factory_combined_status(confirmation)
-        product_count, serial_count = get_serial_summary(confirmation)
+        product_count, serial_count = confirmation.portal_product_count, confirmation.portal_serial_count
+
+        tracking_url = None
+        workflow_detail_url = None
+        show_next_hint = True
+        if confirmation.order_id:
+            if batch:
+                tracking_url = reverse("portal:shipment_tracking_edit", args=[batch.pk])
+            if batch_workflow:
+                workflow_detail_url = reverse("portal:workflow_detail", args=[batch_workflow.pk])
+            if confirmation.extraction_status == FactoryConfirmation.ExtractionStatus.SUCCESS:
+                # The next-action link must describe this batch, not legacy fallback.
+                if batch_workflow:
+                    show_next_hint = False
+                else:
+                    next_text, next_class = _("同步后续流程"), "warning"
 
         rows.append({
             "id": confirmation.id,
+            "row_status": frozenset(
+                name for name in filters if getattr(confirmation, "portal_" + name)
+            ),
+            "bon_ordinal": bon_ordinals.get(confirmation.order_id),
+            "tracking_url": tracking_url,
+            "tracking_number": batch.tracking_number if batch else "",
+            "tracking_label": _("修改快递单号") if batch and batch.tracking_number else _("填写快递单号"),
+            "workflow_detail_url": workflow_detail_url,
+            "show_next_hint": show_next_hint,
             "detail_url": reverse("portal:factory_detail", args=[confirmation.id]),
             "order_number": get_confirmation_order_number(confirmation),
             "factory_name": get_factory_name(confirmation),
@@ -231,10 +314,33 @@ def build_factory_list_context(request):
             "serial_count": serial_count,
         })
 
+    if query:
+        term = query.casefold()
+        rows = [
+            row for row in rows
+            if term in str(row["order_number"]).casefold()
+            or term in row["factory_name"].casefold()
+        ]
+    if status_filter != "all":
+        rows = [row for row in rows if status_filter in row["row_status"]]
+
+    labels = {
+        "all": _("全部采购文件"), "pending": _("待提取"),
+        "needs_action": _("待处理"), "workflow": _("已进入工作流"),
+    }
+    cards = []
+    for value, label in labels.items():
+        params = {"status": value}
+        if query:
+            params["q"] = query
+        cards.append({
+            "label": label, "count": stats[value], "active": status_filter == value,
+            "url": "?" + urlencode(params),
+        })
     return {
-        "rows": rows,
-        "total_count": confirmations.count(),
-        "upload_url": reverse("portal:factory_upload"),
+        "rows": rows, "stats": stats, "cards": cards,
+        "query": query, "status_filter": status_filter,
+        "total_count": stats["all"], "upload_url": reverse("portal:factory_upload"),
     }
 
 

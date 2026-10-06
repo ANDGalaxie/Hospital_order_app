@@ -1,0 +1,24 @@
+{% extends "portal/base.html" %}
+{% load i18n static %}
+{% block title %}{{ title }} · Acoeurs France{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">{% endblock %}
+{% block breadcrumb %}<a href="{% url 'portal:home' %}">{% trans "首页" %}</a><span> / </span><a href="{{ back_url }}">{% trans "工厂采购" %}</a><span> / {{ title }}</span>{% endblock %}
+{% block content %}
+<header class="portal-page-header"><div><h1>{{ title }}</h1></div></header>
+<section class="portal-panel tracking-editor">
+    <dl class="tracking-context">
+        <div><dt>Bon de commande</dt><dd>{{ batch.order.bon_de_commande }}</dd></div>
+        <div><dt>{% trans "批次" %}</dt><dd>{{ batch.batch_number }}</dd></div>
+        <div><dt>{% trans "医院" %}</dt><dd>{% firstof batch.order.hospital.name batch.order.hospital_name "—" %}</dd></div>
+        <div><dt>{% trans "发货日期" %}</dt><dd>{{ batch.batch_date|date:"Y-m-d"|default:"—" }}</dd></div>
+    </dl>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ back_url }}">
+        {{ form.non_field_errors }}
+        <div class="tracking-field">{{ form.tracking_number.label_tag }}{{ form.tracking_number }}{{ form.tracking_number.errors }}</div>
+        <div class="page-actions"><button class="portal-button primary" type="submit">{% trans "保存快递单号" %}</button><a class="portal-button" href="{{ back_url }}">{% trans "取消" %}</a></div>
+    </form>
+</section>
+{% endblock %}
+

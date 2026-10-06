@@ -103,7 +103,7 @@
 }
 
 .workflow-table .col-hospital {
-    width: 17%;
+    width: 15%;
 }
 
 .workflow-table .col-validation {
@@ -111,23 +111,23 @@
 }
 
 .workflow-table .col-invoice {
-    width: 10%;
+    width: 9%;
 }
 
 .workflow-table .col-po {
-    width: 10%;
+    width: 8%;
 }
 
 .workflow-table .col-next {
-    width: 11%;
+    width: 13%;
 }
 
-.workflow-table .col-updated {
+.workflow-table .col-shipping-date {
     width: 12%;
 }
 
 .workflow-table .col-actions {
-    width: 23%;
+    width: 18.5%;
 }
 
 .workflow-table th,
@@ -430,32 +430,32 @@
 
 /* Align workflow status columns */
 
-.workflow-table th:nth-child(3),
-.workflow-table td:nth-child(3),
 .workflow-table th:nth-child(4),
 .workflow-table td:nth-child(4),
 .workflow-table th:nth-child(5),
 .workflow-table td:nth-child(5),
 .workflow-table th:nth-child(6),
-.workflow-table td:nth-child(6) {
+.workflow-table td:nth-child(6),
+.workflow-table th:nth-child(7),
+.workflow-table td:nth-child(7) {
     text-align: center;
 }
 
-.workflow-table td:nth-child(3) .status-pill,
-.workflow-table td:nth-child(4) .doc-status,
+.workflow-table td:nth-child(4) .status-pill,
 .workflow-table td:nth-child(5) .doc-status,
-.workflow-table td:nth-child(6) .next-action {
+.workflow-table td:nth-child(6) .doc-status,
+.workflow-table td:nth-child(7) .next-action {
     margin-left: auto;
     margin-right: auto;
 }
 
-.workflow-table td:nth-child(4) .doc-status,
-.workflow-table td:nth-child(5) .doc-status {
+.workflow-table td:nth-child(5) .doc-status,
+.workflow-table td:nth-child(6) .doc-status {
     justify-content: center;
 }
 
-.workflow-table th:nth-child(8),
-.workflow-table td:nth-child(8) {
+.workflow-table th:nth-child(9),
+.workflow-table td:nth-child(9) {
     text-align: left;
 }
 /* =========================================================
@@ -568,3 +568,13 @@
     background: #ecfdf5;
     color: #047857;
 }
+
+/* Batch date and global BON ordinal in the list only. Total column width: 100%. */
+.workflow-table .col-bon-ordinal { width: 7.5%; }
+.workflow-table .bon-ordinal-cell { text-align: center; }
+.workflow-table th { white-space: normal; overflow-wrap: anywhere; }
+.workflow-table .next-action { white-space: normal; overflow-wrap: anywhere; }
+.workflow-table td:nth-child(5) .doc-status,
+.workflow-table td:nth-child(6) .doc-status { flex-wrap: wrap; }
+.workflow-table th:nth-child(8), .workflow-table td:nth-child(8) { text-align: center; }
+.workflow-table .row-actions { flex-wrap: wrap; }

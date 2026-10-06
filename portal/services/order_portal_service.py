@@ -11,6 +11,7 @@ from portal.services.common import (
     address_data_from_text,
     document_url,
     file_url_safe,
+    get_global_numeric_bon_ordinals,
     get_portal_lang,
     get_user_display_name,
     json_to_lines,
@@ -399,6 +400,7 @@ def build_order_list_context(request):
         for item in DocumentWorkflowItem.objects.filter(order_id__in=order_ids):
             workflow_counts[item.order_id] = workflow_counts.get(item.order_id, 0) + 1
 
+    bon_ordinals = get_global_numeric_bon_ordinals()
     rows = []
 
     for order in orders:
@@ -427,6 +429,8 @@ def build_order_list_context(request):
         rows.append(
             {
                 "id": order.id,
+                "bon_ordinal": bon_ordinals.get(order.id),
+                "order_date": order.order_date,
                 "order_number": order.bon_de_commande or f"Order #{order.id}",
                 "hospital_name": hospital_name,
                 "item_summary": get_order_item_summary(order),

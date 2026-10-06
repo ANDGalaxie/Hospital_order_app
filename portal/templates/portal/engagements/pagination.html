@@ -1,0 +1,2 @@
+{% load i18n %}
+{% if page_obj.has_other_pages %}<nav class="he-pagination" aria-label="{% trans '分页' %}">{% if page_obj.has_previous %}<a class="portal-button" href="?{% if query_params %}{{ query_params }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">{% trans "上一页" %}</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="portal-button" href="?{% if query_params %}{{ query_params }}&amp;{% endif %}page={{ page_obj.next_page_number }}">{% trans "下一页" %}</a>{% endif %}</nav>{% endif %}

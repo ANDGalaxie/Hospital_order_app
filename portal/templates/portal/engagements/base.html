@@ -1,0 +1,6 @@
+{% extends "portal/base.html" %}
+{% load i18n static %}
+{% block title %}{% trans "医院沟通进度" %} · Acoeurs France{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'portal/css/hospital_engagements.css' %}">{% endblock %}
+{% block breadcrumb %}<nav class="he-breadcrumb" aria-label="{% trans '导航' %}"><a href="{% url 'portal:home' %}">{% trans "首页" %}</a><span> / </span><a href="{% url 'portal:engagement_home' %}">{% trans "医院沟通进度" %}</a>{% if engagement %}<span> / </span><a href="{% url 'portal:engagement_detail' engagement.hospital_id %}">{{ engagement.hospital.name }}</a>{% endif %}</nav>{% endblock %}
+{% block content %}<div class="he">{% block engagement_content %}{% endblock %}</div>{% endblock %}

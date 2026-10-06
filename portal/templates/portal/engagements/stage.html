@@ -1,0 +1,22 @@
+{% extends "portal/engagements/base.html" %}
+{% load i18n %}
+{% block engagement_content %}
+<header class="he-heading"><h1>{{ stage.title }} · {{ stage.subtitle }}</h1><p>{{ page_obj.paginator.count }} {% trans "家医院" %}</p></header>
+<form method="get" class="he-panel he-filters">{% for field in filter_form %}<div class="he-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="portal-button primary" type="submit">{% trans "筛选" %}</button><a class="portal-button" href="{% url 'portal:engagement_stage' slug %}">{% trans "重置" %}</a></form>
+<form id="he-bulk" method="post" action="{% url 'portal:engagement_bulk_move' slug %}" class="he-bulk">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label for="bulk-stage">{% trans "批量移动至" %}</label><select id="bulk-stage" name="stage">{% for value, label in stage_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select><button class="portal-button" type="submit">{% trans "批量移动" %}</button></form>
+<div class="he-table-wrap" tabindex="0" role="region" aria-label="{% trans '医院沟通进度' %}"><table class="he-table"><thead><tr><th>{% trans "选择" %}</th><th>{% trans "优先级" %}</th><th>{% trans "医院" %}</th><th>{% trans "科室 / 医生" %}</th><th>{% trans "产品需求" %}</th><th>{% trans "特殊需求" %}</th><th>{% trans "主要联系人" %}</th><th>{% trans "负责人" %}</th><th>{% trans "最近业务沟通" %}</th><th>{% trans "阶段" %}</th></tr></thead><tbody>
+{% for item in page_obj %}<tr>
+<td><input type="checkbox" form="he-bulk" name="engagements" value="{{ item.pk }}" aria-label="{{ item.hospital.name }}"></td>
+<td><span class="he-priority">{{ item.get_priority_display }}</span></td>
+<td><a class="he-hospital" href="{% url 'portal:engagement_detail' item.hospital_id %}">{{ item.hospital.name }}</a><div class="he-muted he-clamp">{{ item.hospital.default_shipping_address|default:item.hospital.billing_address|default:"—" }}</div></td>
+<td>{% for name in item.department_names|slice:":2" %}<div>{{ name }}</div>{% endfor %}{% if item.department_names|length > 2 %}<small class="he-muted">+{{ item.department_names|length|add:"-2" }}</small>{% endif %}{% for name in item.doctor_names|slice:":2" %}<div class="he-muted">{{ name }}</div>{% endfor %}{% if item.doctor_names|length > 2 %}<small class="he-muted">+{{ item.doctor_names|length|add:"-2" }}</small>{% endif %}{% if not item.department_names and not item.doctor_names %}—{% endif %}</td>
+<td>{% for label in item.interest_labels|slice:":2" %}<span class="he-chip">{{ label }}</span>{% empty %}—{% endfor %}{% if item.interest_labels|length > 2 %}<small class="he-muted">+{{ item.interest_labels|length|add:"-2" }}</small>{% endif %}</td>
+<td><div class="he-clamp" title="{{ item.special_requirements }}">{{ item.special_requirements|default:"—" }}</div></td>
+<td>{% if item.primary_contact %}<strong>{{ item.primary_contact.name }}</strong><div>{{ item.primary_contact.title }}</div><div class="he-muted">{{ item.primary_contact.email }}</div><div class="he-muted">{{ item.primary_contact.phone }}</div>{% else %}—{% endif %}</td>
+<td>{% firstof item.owner.get_full_name item.owner.username "—" %}</td>
+<td>{% if item.latest_communication_at %}<small>{{ item.latest_communication_at|date:"Y-m-d H:i" }} · {{ item.latest_channel_label }}</small><div class="he-clamp">{{ item.latest_communication_summary }}</div>{% else %}<span class="he-muted">{% trans "暂无沟通记录" %}</span>{% endif %}{% if item.next_action %}<div class="he-clamp"><strong>{% trans "下一步" %}:</strong> {{ item.next_action }}</div>{% endif %}{% if item.next_follow_up_date %}<div class="he-muted">{% trans "下次跟进日期" %}: {{ item.next_follow_up_date|date:"Y-m-d" }}</div>{% endif %}</td>
+<td><form method="post" action="{% url 'portal:engagement_change_stage' item.hospital_id %}" class="he-row-stage">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label class="he-sr-only" for="stage-{{ item.pk }}">{% trans "阶段" %} · {{ item.hospital.name }}</label><select id="stage-{{ item.pk }}" name="stage">{% for value, label in stage_choices %}<option value="{{ value }}"{% if value == item.stage %} selected{% endif %}>{{ label }}</option>{% endfor %}</select><button class="portal-button" type="submit">{% trans "保存" %}</button></form></td>
+</tr>{% empty %}<tr><td colspan="10" class="he-empty">{% trans "没有符合条件的医院。" %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% include "portal/engagements/pagination.html" %}
+{% endblock %}
