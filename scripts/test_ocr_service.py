@@ -9,6 +9,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
+import fitz
+import yaml
+
 from django.test import SimpleTestCase
 
 from scripts import ocr_service
@@ -71,7 +74,13 @@ class OCRServiceTests(SimpleTestCase):
         ), patch("builtins.print") as output:
             self.assertIs(ocr_service.get_ocr(), sentinel)
             self.assertIs(ocr_service.get_ocr(), sentinel)
-        model.assert_called_once_with(lang=ocr_service.OCR_LANG, enable_mkldnn=False)
+        model.assert_called_once_with(
+            lang=ocr_service.OCR_LANG,
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            enable_mkldnn=False,
+        )
         config_logs = [
             entry.args[0] for entry in output.call_args_list
             if "text_det_limit_type=" in entry.args[0]
@@ -126,7 +135,7 @@ class OCRServiceTests(SimpleTestCase):
             renderer.assert_not_called()
             model.assert_not_called()
 
-    def test_get_ocr_disables_mkldnn(self):
+    def test_get_ocr_disables_preprocessing_and_mkldnn(self):
         sentinel = object()
 
         with patch.object(ocr_service, "_ocr", None), patch.object(
@@ -135,8 +144,55 @@ class OCRServiceTests(SimpleTestCase):
             self.assertIs(ocr_service.get_ocr(), sentinel)
 
         paddle_ocr.assert_called_once_with(
-            lang=ocr_service.OCR_LANG, enable_mkldnn=False
+            lang=ocr_service.OCR_LANG,
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            enable_mkldnn=False
         )
+
+    def test_default_rendering_matches_original_local_220_dpi(self):
+        with patch.dict(os.environ, {}, clear=True):
+            state = runpy.run_path(ocr_service.__file__)
+        self.assertEqual(state["OCR_ZOOM"], 220 / 72)
+        with TemporaryDirectory() as root:
+            pdf = Path(root) / "input.pdf"
+            output_dir = Path(root) / "ocr"
+            output_dir.mkdir()
+            with fitz.open() as doc:
+                doc.new_page(width=595.2, height=841.44)
+                doc.save(pdf)
+            with patch.object(ocr_service, "OCR_ZOOM", state["OCR_ZOOM"]):
+                pages = ocr_service.pdf_to_images(pdf, output_dir)
+            self.assertEqual(pages, [output_dir / "page_1.png"])
+            pix = fitz.Pixmap(str(pages[0]))
+            self.assertEqual((pix.width, pix.height, pix.n, pix.alpha), (1819, 2572, 3, 0))
+
+    def test_language_and_zoom_accept_environment_overrides(self):
+        with patch.dict(os.environ, {
+            "ACOEUR_OCR_LANG": "en",
+            "ACOEUR_OCR_ZOOM": "2.5",
+        }, clear=True):
+            state = runpy.run_path(ocr_service.__file__)
+        self.assertEqual(state["OCR_LANG"], "en")
+        self.assertEqual(state["OCR_ZOOM"], 2.5)
+
+    def test_both_compose_files_forward_ocr_configuration(self):
+        # Production uses Compose-specific sequence tags elsewhere in the file.
+        class ComposeLoader(yaml.SafeLoader):
+            pass
+
+        ComposeLoader.add_constructor("!override", lambda loader, node: loader.construct_sequence(node))
+        ComposeLoader.add_constructor("!reset", lambda loader, node: loader.construct_sequence(node))
+        root = Path(ocr_service.__file__).resolve().parents[1]
+        for filename in ("docker-compose.yml", "docker-compose.production.yml"):
+            with self.subTest(filename=filename):
+                config = yaml.load((root / filename).read_text(), Loader=ComposeLoader)
+                env = config["services"]["ocr"]["environment"]
+                self.assertEqual(env["ACOEUR_OCR_LANG"], "${ACOEUR_OCR_LANG:-fr}")
+                self.assertEqual(env["ACOEUR_OCR_ZOOM"], "${ACOEUR_OCR_ZOOM:-3.0555555555555554}")
+                self.assertEqual(env["ACOEUR_OCR_DET_LIMIT_TYPE"], "${ACOEUR_OCR_DET_LIMIT_TYPE:-max}")
+                self.assertEqual(env["ACOEUR_OCR_DET_LIMIT_SIDE_LEN"], "${ACOEUR_OCR_DET_LIMIT_SIDE_LEN:-960}")
 
     def test_health_endpoint_returns_ready_response(self):
         server = HTTPServer(("127.0.0.1", 0), ocr_service.Handler)

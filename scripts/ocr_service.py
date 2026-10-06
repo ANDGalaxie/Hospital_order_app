@@ -19,7 +19,8 @@ HOST_MEDIA_ROOT = os.getenv(
 )
 
 OCR_LANG = os.getenv("ACOEUR_OCR_LANG", "fr")
-OCR_ZOOM = float(os.getenv("ACOEUR_OCR_ZOOM", "2.0"))
+# Match the original local renderer's 220 DPI (PDF coordinates use 72 DPI).
+OCR_ZOOM = float(os.getenv("ACOEUR_OCR_ZOOM", str(220 / 72)))
 
 
 def read_detector_limits():
@@ -57,7 +58,13 @@ def get_ocr():
             f"text_det_limit_side_len={OCR_DET_LIMIT_SIDE_LEN} ...",
             flush=True,
         )
-        _ocr = PaddleOCR(lang=OCR_LANG, enable_mkldnn=False)
+        _ocr = PaddleOCR(
+            lang=OCR_LANG,
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            enable_mkldnn=False,
+        )
         print("[OCR SERVICE] PaddleOCR loaded.", flush=True)
     return _ocr
 
