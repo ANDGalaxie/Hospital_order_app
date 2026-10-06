@@ -1,11 +1,23 @@
 {% load i18n %}
 <div class="portal-table-wrap">
     <table class="portal-table settlement-comparison-table">
+        <colgroup>
+            <col class="comparison-col-ordinal">
+            <col class="comparison-col-order">
+            <col class="comparison-col-total">
+            <col class="comparison-col-batch">
+            <col class="comparison-col-units">
+            <col class="comparison-col-invoice">
+            <col class="comparison-col-po">
+            <col class="comparison-col-status">
+        </colgroup>
         <thead>
             <tr>
+                <th>{% trans "BON 序号" %}</th>
                 <th>{% trans "医院订单" %}</th>
                 <th>{% trans "医院订单总额" %}</th>
                 <th>{% trans "批次" %}</th>
+                <th>{% trans "本批数量" %}</th>
                 <th>Hospital Invoice</th>
                 <th>Factory PO</th>
                 <th>{% trans "状态" %}</th>
@@ -15,19 +27,23 @@
         <tbody>
             {% for row in rows %}
                 <tr{% if row.is_order_start %} class="settlement-order-start"{% endif %}>
+                    <td class="settlement-comparison-ordinal">
+                        {% if row.is_order_start %}{{ row.bon_ordinal|default:"—" }}{% endif %}
+                    </td>
                     <td class="settlement-comparison-order">
                         {{ row.order_number }}
                     </td>
 
                     <td class="settlement-comparison-money">
                         {% if row.is_order_start %}
-                            €{{ row.order_total|floatformat:"2u" }}
+                            {{ row.order_total_display }}
                         {% endif %}
                     </td>
 
-                    <td>B{{ row.batch_number }}</td>
+                    <td class="settlement-comparison-batch">B{{ row.batch_number }}</td>
+                    <td class="settlement-comparison-units">{{ row.batch_units }}</td>
 
-                    <td>
+                    <td class="settlement-comparison-document">
                         {% if row.invoice %}
                             <a class="settlement-document-link"
                                href="{{ row.invoice_url }}">
@@ -37,7 +53,7 @@
                                 {% if row.invoice_amount == None %}
                                     —
                                 {% else %}
-                                    €{{ row.invoice_amount|floatformat:"2u" }}
+                                    {{ row.invoice_amount_display }}
                                 {% endif %}
                             </span>
                         {% else %}
@@ -47,7 +63,7 @@
                         {% endif %}
                     </td>
 
-                    <td>
+                    <td class="settlement-comparison-document">
                         {% if row.factory_po %}
                             <a class="settlement-document-link"
                                href="{{ row.factory_po_url }}">
@@ -57,7 +73,7 @@
                                 {% if row.factory_po_amount == None %}
                                     —
                                 {% else %}
-                                    €{{ row.factory_po_amount|floatformat:"2u" }}
+                                    {{ row.factory_po_amount_display }}
                                 {% endif %}
                             </span>
                         {% else %}
@@ -67,7 +83,7 @@
                         {% endif %}
                     </td>
 
-                    <td>
+                    <td class="settlement-comparison-status">
                         <span class="settlement-status {{ row.status_class }}">
                             {{ row.status_text }}
                         </span>
@@ -75,7 +91,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="settlement-comparison-empty">
+                    <td colspan="8" class="settlement-comparison-empty">
                         {% trans "暂无符合条件的发货批次。" %}
                     </td>
                 </tr>

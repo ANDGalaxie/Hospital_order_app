@@ -246,7 +246,7 @@ class SettlementHomeAmountComparisonTests(TestCase):
                 Decimal("120.00") * batch_number,
             )
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             rows = build_order_batch_amount_rows()
 
         self.assertEqual(len(rows), 3)

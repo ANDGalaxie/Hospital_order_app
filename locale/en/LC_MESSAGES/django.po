@@ -3763,7 +3763,11 @@ msgstr ""
 msgid "上传、提取并验证"
 msgstr "Upload, extract and validate"
 
-#: portal/templates/portal/settlements/_comparison_table.html:7
+#: portal/templates/portal/settlements/_comparison_table.html:6
+msgid "BON 序号"
+msgstr "BON No."
+
+#: portal/templates/portal/settlements/_comparison_table.html:8
 msgid "医院订单总额"
 msgstr "Hospital order total"
 
@@ -4276,6 +4280,7 @@ msgstr "Factory final amount:"
 msgid "价格需要检查"
 msgstr "Prices need review"
 
+#: portal/templates/portal/settlements/_comparison_table.html:10
 #: portal/templates/portal/workflow/detail.html:307
 msgid "本批数量"
 msgstr "Batch quantity"

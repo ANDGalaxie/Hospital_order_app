@@ -3805,7 +3805,11 @@ msgstr ""
 msgid "上传、提取并验证"
 msgstr "Importer, extraire et valider"
 
-#: portal/templates/portal/settlements/_comparison_table.html:7
+#: portal/templates/portal/settlements/_comparison_table.html:6
+msgid "BON 序号"
+msgstr "N° BON"
+
+#: portal/templates/portal/settlements/_comparison_table.html:8
 msgid "医院订单总额"
 msgstr "Montant total de la commande hospitalière"
 
@@ -4323,6 +4327,7 @@ msgstr "Montant fournisseur final :"
 msgid "价格需要检查"
 msgstr "Prix à vérifier"
 
+#: portal/templates/portal/settlements/_comparison_table.html:10
 #: portal/templates/portal/workflow/detail.html:307
 msgid "本批数量"
 msgstr "Quantité du lot"

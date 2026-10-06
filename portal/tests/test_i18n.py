@@ -248,7 +248,7 @@ class PortalI18nTests(TestCase):
             for value in ['156264', self.hospital.name, self.factory.name, 'BMA-2.5010', '原始产品描述', '2 rue de Paris']:
                 self.assertContains(response, value)
             comparison = self.client.get(reverse('portal:settlement_comparison'))
-            for value in ['156264', 'Invoice 20260409', 'DELAHK0409S', '€1440.00']:
+            for value in ['156264', 'Invoice 20260409', 'DELAHK0409S', '€1,440.00']:
                 self.assertContains(comparison, value)
             self.assertEqual(Order.objects.values().get(pk=self.order.pk), before)
             for doc, expected in zip(self.documents, source):

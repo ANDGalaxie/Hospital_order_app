@@ -85,6 +85,26 @@ def get_frozen_document_amount(document, payload_key):
     return amount
 
 
+def format_comparison_money(amount):
+    """Keep comparison amounts in one language-independent display format."""
+    return f"€{amount:,.2f}" if amount is not None else None
+
+
+def get_global_numeric_bon_ordinals():
+    """Number all numeric BON orders, including orders outside the current result."""
+    numeric_orders = Order.objects.filter(
+        bon_de_commande__regex=r"^[0-9]+$"
+    ).values_list("id", "bon_de_commande")
+    sorted_orders = sorted(
+        numeric_orders,
+        key=lambda order: (int(order[1]), order[1], order[0]),
+    )
+    return {
+        order_id: ordinal
+        for ordinal, (order_id, _) in enumerate(sorted_orders, start=1)
+    }
+
+
 def get_order_batch_comparison_queryset(query=""):
     has_batch = ShipmentBatch.objects.filter(order_id=OuterRef("pk"))
     numeric_bon_condition = Q(bon_de_commande__regex=r"^[0-9]+$")
@@ -135,6 +155,7 @@ def build_order_batch_amount_rows(order_queryset=None):
         "id",
         "order_id",
         "batch_number",
+        "shipped_this_batch_quantity",
     ).order_by("batch_number", "id")
 
     orders = list(
@@ -151,6 +172,7 @@ def build_order_batch_amount_rows(order_queryset=None):
             ),
         )
     )
+    bon_ordinals = get_global_numeric_bon_ordinals()
 
     batch_ids = [
         batch.id
@@ -234,15 +256,26 @@ def build_order_batch_amount_rows(order_queryset=None):
                     "order_id": order.id,
                     "batch_id": batch.id,
                     "is_order_start": batch_index == 0,
+                    "bon_ordinal": (
+                        bon_ordinals.get(order.id) if batch_index == 0 else None
+                    ),
                     "order_number": (
                         order.bon_de_commande if batch_index == 0 else ""
                     ),
                     "order_total": (
                         order_total if batch_index == 0 else None
                     ),
+                    "order_total_display": (
+                        format_comparison_money(order_total)
+                        if batch_index == 0 else None
+                    ),
                     "batch_number": batch.batch_number,
+                    "batch_units": batch.shipped_this_batch_quantity,
                     "invoice": invoice,
                     "invoice_amount": invoice_amount,
+                    "invoice_amount_display": format_comparison_money(
+                        invoice_amount
+                    ),
                     "invoice_url": (
                         reverse("portal:document_detail", args=[invoice.id])
                         if invoice
@@ -250,6 +283,9 @@ def build_order_batch_amount_rows(order_queryset=None):
                     ),
                     "factory_po": factory_po,
                     "factory_po_amount": factory_po_amount,
+                    "factory_po_amount_display": format_comparison_money(
+                        factory_po_amount
+                    ),
                     "factory_po_url": (
                         reverse("portal:document_detail", args=[factory_po.id])
                         if factory_po
