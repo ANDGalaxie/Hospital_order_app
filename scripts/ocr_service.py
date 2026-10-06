@@ -21,13 +21,42 @@ HOST_MEDIA_ROOT = os.getenv(
 OCR_LANG = os.getenv("ACOEUR_OCR_LANG", "fr")
 OCR_ZOOM = float(os.getenv("ACOEUR_OCR_ZOOM", "2.0"))
 
+
+def read_detector_limits():
+    """Validate deployment settings before the OCR service can accept requests."""
+    limit_type = os.getenv("ACOEUR_OCR_DET_LIMIT_TYPE", "max").strip()
+    if limit_type not in {"max", "min", "resize_long"}:
+        raise ValueError(
+            "ACOEUR_OCR_DET_LIMIT_TYPE must be max, min, or resize_long."
+        )
+
+    try:
+        side_len = int(os.getenv("ACOEUR_OCR_DET_LIMIT_SIDE_LEN", "960"))
+    except ValueError:
+        raise ValueError(
+            "ACOEUR_OCR_DET_LIMIT_SIDE_LEN must be a positive integer."
+        ) from None
+    if side_len <= 0:
+        raise ValueError(
+            "ACOEUR_OCR_DET_LIMIT_SIDE_LEN must be a positive integer."
+        )
+    return limit_type, side_len
+
+
+OCR_DET_LIMIT_TYPE, OCR_DET_LIMIT_SIDE_LEN = read_detector_limits()
+
 _ocr = None
 
 
 def get_ocr():
     global _ocr
     if _ocr is None:
-        print(f"[OCR SERVICE] Loading PaddleOCR lang={OCR_LANG} ...", flush=True)
+        print(
+            f"[OCR SERVICE] Loading PaddleOCR lang={OCR_LANG} "
+            f"text_det_limit_type={OCR_DET_LIMIT_TYPE} "
+            f"text_det_limit_side_len={OCR_DET_LIMIT_SIDE_LEN} ...",
+            flush=True,
+        )
         _ocr = PaddleOCR(lang=OCR_LANG, enable_mkldnn=False)
         print("[OCR SERVICE] PaddleOCR loaded.", flush=True)
     return _ocr
@@ -102,7 +131,11 @@ def run_ocr(pdf_path_text: str, ocr_dir_text: str, force_ocr: bool = False):
 
     for image_path in image_paths:
         print(f"[OCR SERVICE] OCR image: {image_path}", flush=True)
-        result = ocr.predict(str(image_path))
+        result = ocr.predict(
+            str(image_path),
+            text_det_limit_type=OCR_DET_LIMIT_TYPE,
+            text_det_limit_side_len=OCR_DET_LIMIT_SIDE_LEN,
+        )
 
         for res in result:
             if hasattr(res, "save_to_json"):
