@@ -1,12 +1,22 @@
 from portal import settlement_views, team_activity_views, shipment_tracking_views
 from portal import hospital_engagement_views as engagement_views
 from django.urls import include, path
+from portal import commercial_views
 
 from . import media_views, views
 
 app_name = "portal"
 
 urlpatterns = [
+    path("login/", commercial_views.ShowcaseLoginView.as_view(), name="showcase_login"),
+    path("logout/", commercial_views.ShowcaseLogoutView.as_view(), name="showcase_logout"),
+    path("commercial/purchase-orders/", commercial_views.purchase_orders, name="commercial_purchase_orders"),
+    path("commercial/operations/", commercial_views.operations, name="commercial_operations"),
+    path("commercial/finance/", commercial_views.finance, name="commercial_finance"),
+    path("commercial/batches/<int:batch_id>/", commercial_views.batch_detail, name="commercial_batch"),
+    path("commercial/purchase-orders/batches/<int:batch_id>/", commercial_views.purchase_detail, name="commercial_purchase_detail"),
+    path("commercial/operations/batches/<int:batch_id>/", commercial_views.operations_detail, name="commercial_operations_detail"),
+    path("commercial/documents/<int:document_id>/<str:kind>/", commercial_views.document_file, name="commercial_document_file"),
     path("hospital-engagements/team-activity/", team_activity_views.team_activity, name="team_activity"),
     path("hospital-engagements/", engagement_views.home, name="engagement_home"),
     path("hospital-engagements/stage/<slug:slug>/", engagement_views.stage_list, name="engagement_stage"),

@@ -1,0 +1,6 @@
+{% extends "portal/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "登录" %} | Acoeurs France{% endblock %}
+{% block content %}<section class="portal-panel"><h1>{% trans "登录" %}</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button class="portal-button primary" type="submit">{% trans "登录" %}</button></form>
+</section>{% endblock %}

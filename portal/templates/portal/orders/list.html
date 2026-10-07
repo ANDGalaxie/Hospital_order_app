@@ -19,7 +19,7 @@
             {% trans "上传医院订单" %}
         </a>
         <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
-        <a class="portal-button" href="/admin/orders/order/">Admin</a>
+        {% if portal_admin_visible %}<a class="portal-button" href="/admin/orders/order/">Admin</a>{% endif %}
     </div>
 </section>
 

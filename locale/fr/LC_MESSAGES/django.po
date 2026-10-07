@@ -5535,3 +5535,161 @@ msgstr "Saisir un numéro de commande ou un nom d’usine"
 #. Factory purchase list
 msgid "没有找到符合条件的工厂采购文件。"
 msgstr "Aucun document d’achat fournisseur ne correspond aux critères."
+
+#: portal/commercial_showcase
+msgid "采购订单"
+msgstr "Commandes d’achat"
+
+#: portal/commercial_showcase
+msgid "操作平台"
+msgstr "Plateforme opérationnelle"
+
+#: portal/commercial_showcase
+msgid "数据与财务"
+msgstr "Données et finances"
+
+#: portal/commercial_showcase
+msgid "只读查看商业展示采购订单"
+msgstr "Consulter les commandes commerciales"
+
+#: portal/commercial_showcase
+msgid "查看同批次 Invoice 与 Commercial PO"
+msgstr "Consulter la facture et le Commercial PO de chaque lot"
+
+#: portal/commercial_showcase
+msgid "按商业展示 PO 冻结金额统计"
+msgstr "Statistiques des montants figés des Commercial PO"
+
+#: portal/commercial_showcase
+msgid "只读展示"
+msgstr "Consultation seule"
+
+#: portal/commercial_showcase
+msgid "商业展示 · Acoeur"
+msgstr "Présentation commerciale · Acoeur"
+
+#: portal/commercial_showcase
+msgid "请选择商业展示模块。所有业务信息均为只读。"
+msgstr ""
+"Choisissez un module de présentation commerciale. Les informations sont en "
+"lecture seule."
+
+#: portal/commercial_showcase
+msgid "已生成新版 PO"
+msgstr "Commercial PO générés"
+
+#: portal/commercial_showcase
+msgid "暂未生成或不可用"
+msgstr "Non généré ou indisponible"
+
+#: portal/commercial_showcase
+msgid "对应 BON"
+msgstr "BON distincts"
+
+#: portal/commercial_showcase
+msgid "暂不可用"
+msgstr "Indisponible"
+
+#: portal/commercial_showcase
+msgid "文件暂不可用"
+msgstr "Fichier indisponible"
+
+#: portal/commercial_showcase
+msgid "只读查看"
+msgstr "Consultation"
+
+#: portal/commercial_showcase
+msgid "产品数量"
+msgstr "Unités de produits"
+
+#: portal/commercial_showcase
+msgid "商业展示总金额"
+msgstr "Montant total de présentation"
+
+#: portal/commercial_showcase
+msgid "按发货月份汇总"
+msgstr "Par mois d’expédition"
+
+#: portal/commercial_showcase
+msgid "按医院汇总"
+msgstr "Par hôpital"
+
+#: portal/commercial_showcase
+msgid "按产品汇总"
+msgstr "Par produit"
+
+#: portal/commercial_showcase
+msgid "商业展示"
+msgstr "Présentation commerciale"
+
+#: portal/commercial_showcase
+msgid "商业展示文件与本批发货事实，仅供只读查看。"
+msgstr "Documents commerciaux et données du lot, en consultation seule."
+
+#: portal/commercial_showcase
+msgid "订单号 / 批次"
+msgstr "Commande / Lot"
+
+#: portal/commercial_showcase
+msgid "金额按商业展示 PO 口径统计，不构成结算数据。"
+msgstr ""
+"Les montants correspondent aux Commercial PO et ne constituent pas des "
+"données de règlement."
+
+#: portal/commercial_showcase
+msgid "存在未计入记录。部分冻结快照缺失或损坏，已从统计中排除。"
+msgstr ""
+"Certains enregistrements sont exclus car leurs instantanés figés sont "
+"manquants ou endommagés."
+
+#: portal/commercial_showcase
+msgid "分类"
+msgstr "Catégorie"
+
+#: portal/commercial_showcase
+msgid "商业展示金额"
+msgstr "Montant de présentation"
+
+#: portal/commercial_showcase
+msgid "登录"
+msgstr "Connexion"
+
+#: portal/commercial_showcase
+msgid "退出"
+msgstr "Déconnexion"
+
+#: portal/commercial_showcase
+msgid "此资源暂不可用。"
+msgstr "Cette ressource est indisponible."
+
+#: portal/templates/portal/commercial
+msgid "下载"
+msgstr "Télécharger"
+
+#: portal/templates/portal/commercial
+msgid "暂无记录"
+msgstr "Aucun enregistrement"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购单价"
+msgstr "Prix unitaire d’achat"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购金额"
+msgstr "Montant d’achat"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购总额"
+msgstr "Total des achats"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "当前批次尚未生成采购订单。"
+msgstr "Aucun bon de commande n’a encore été généré pour ce lot."
+
+#: portal/hospital_browse
+msgid "请选择一个业务模块。"
+msgstr "Choisissez un module métier."
+
+#: portal/hospital_browse
+msgid "原始 PDF"
+msgstr "PDF original"

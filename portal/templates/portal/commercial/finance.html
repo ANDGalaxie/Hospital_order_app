@@ -1,0 +1,501 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}
+{{ page_title }} · Acoeur
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'finance/css/settlement_dashboard.css' %}"
+>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="finance-breadcrumb">
+    <a href="/portal/">{% trans "首页" %}</a>
+    <span>›</span>
+    <span>{% trans "数据与财务" %}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="finance-header">
+    <div>
+        <p class="finance-eyebrow">
+            COMMERCIAL PO
+        </p>
+
+        <h1>{% trans "数据与财务" %}</h1>
+
+        <p class="finance-subtitle">
+            {% trans "金额按商业展示 PO 口径统计，不构成结算数据。" %}
+        </p>
+    </div>
+
+    <div class="finance-header-actions">
+        <span class="currency-badge">
+            {% blocktrans trimmed with value1=reporting_currency %}记账币种：{{ value1 }}{% endblocktrans %}
+        </span>
+
+        <a class="secondary-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
+
+
+    </div>
+</section>
+
+<section class="finance-filter-panel">
+    <form
+        method="get"
+        class="finance-filter-form"
+    >
+        <div class="filter-field">
+            <label for="date_from">
+                {% trans "开始日期" %}
+            </label>
+
+            <input
+                id="date_from"
+                type="date"
+                name="date_from"
+                value="{{ filter_values.date_from }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="date_to">
+                {% trans "结束日期" %}
+            </label>
+
+            <input
+                id="date_to"
+                type="date"
+                name="date_to"
+                value="{{ filter_values.date_to }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="hospital">
+                {% trans "医院" %}
+            </label>
+
+            <input
+                id="hospital"
+                type="text"
+                name="hospital"
+                value="{{ filter_values.hospital }}"
+                placeholder="{% trans "医院名称" %}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="order">
+                {% trans "订单号" %}
+            </label>
+
+            <input
+                id="order"
+                type="text"
+                name="order"
+                value="{{ filter_values.order }}"
+                placeholder="Bon de commande"
+            >
+        </div>
+
+        <div class="filter-actions">
+            <button
+                type="submit"
+                class="finance-filter-submit"
+            >
+                {% trans "筛选" %}
+            </button>
+
+            {% if has_active_filters %}
+                <a
+                    href="{% url 'portal:commercial_finance' %}"
+                    class="finance-filter-reset"
+                >
+                    {% trans "清除" %}
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if filter_errors %}
+        <div class="finance-filter-errors">
+            {% for error in filter_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+
+<section class="kpi-grid">
+    {% for card in kpi_cards %}
+        <article
+            class="kpi-card kpi-{{ card.key }}"
+            title="{{ card.help }}"
+        >
+            <div class="kpi-label">
+                {{ card.label }}
+            </div>
+
+            <div class="kpi-value">
+                {{ card.value }}
+            </div>
+
+            <div class="kpi-help">
+                {{ card.help }}
+            </div>
+        </article>
+    {% empty %}
+        <div class="empty-state">
+            {% trans "暂无财务数据。" %}
+        </div>
+    {% endfor %}
+</section>
+
+<section class="finance-grid-two">
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    COMMERCIAL PO
+                </p>
+                <h2>{% trans "按发货月份汇总" %}</h2>
+            </div>
+
+            <span class="panel-note">
+                {% trans "发货日期" %}
+            </span>
+        </div>
+
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="accrual-finance-chart"
+                class="finance-chart"
+                aria-label="{% trans "按发货月份汇总图" %}"
+            ></canvas>
+        </div>
+<div class="table-scroll">
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "月份" %}</th>
+                        <th>{% trans "商业展示金额" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in monthly_rows %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ row.label }}
+                                </strong>
+                            </td>
+                            <td>{{ row.amount }}</td>
+                            <td>{{ "—" }}</td>
+                            <td>{{ "—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="4"
+                                class="empty-cell"
+                            >
+                                {% trans "暂无记录" %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    —
+                </p>
+                <h2>{% trans "暂无数据" %}</h2>
+            </div>
+
+            <span class="panel-note">
+                {% trans "暂无数据" %}
+            </span>
+        </div>
+
+
+        <div class="finance-chart-wrap">
+            <canvas
+                id="cash-finance-chart"
+                class="finance-chart"
+                aria-label="{% trans "暂无数据趋势图" %}"
+            ></canvas>
+        </div>
+<div class="table-scroll">
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "月份" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in cash_rows %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ row.label }}
+                                </strong>
+                            </td>
+                            <td>{{ row.receipts }}</td>
+                            <td>{{ row.payments }}</td>
+                            <td>{{ row.net_inflow }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="4"
+                                class="empty-cell"
+                            >
+                                {% trans "暂无数据" %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="finance-grid-two">
+    <article class="finance-panel risk-panel overdue-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    HOSPITAL
+                </p>
+                <h2>{% trans "按医院汇总" %}</h2>
+            </div>
+
+            <span class="risk-count">
+                {{ hospital_rows|length }}
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="finance-table compact-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "分类" %}</th>
+                        <th>{% trans "已生成新版 PO" %}</th>
+                        <th>{% trans "医院" %}</th>
+                        <th>{% trans "产品数量" %}</th>
+                        <th>{% trans "商业展示金额" %}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in hospital_rows %}
+                        <tr>
+                            <td>{{ row.label }}</td>
+                            <td>
+                                {{ row.count }}
+                            </td>
+                            <td>
+                                {{ "—" }}
+                            </td>
+                            <td>
+                                {{ row.units }}
+                            </td>
+                            <td class="risk-money">
+                                {{ row.amount }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="empty-cell success-empty"
+                            >
+                                {% trans "暂无记录" %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="finance-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="panel-eyebrow">
+                    PRODUCT
+                </p>
+                <h2>{% trans "按产品汇总" %}</h2>
+            </div>
+
+            <span class="risk-count neutral">
+                {{ product_rows|length }}
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="finance-table compact-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "分类" %}</th>
+                        <th>{% trans "已生成新版 PO" %}</th>
+                        <th>{% trans "医院" %}</th>
+                        <th>{% trans "产品数量" %}</th>
+                        <th>{% trans "商业展示金额" %}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in product_rows %}
+                        <tr>
+                            <td>{{ row.label }}</td>
+                            <td>
+                                {{ row.count }}
+                            </td>
+                            <td>
+                                {{ "—" }}
+                            </td>
+                            <td>
+                                {{ row.units }}
+                            </td>
+                            <td>
+                                {{ row.amount }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="empty-cell"
+                            >
+                                {% trans "暂无记录" %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="finance-panel order-panel">
+    <div class="panel-heading">
+        <div>
+            <p class="panel-eyebrow">
+                COMMERCIAL PO
+            </p>
+            <h2>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</h2>
+        </div>
+
+        <span class="panel-note">
+            {{ order_rows|length }} Commercial PO
+        </span>
+    </div>
+
+    <div class="table-scroll">
+        <table class="finance-table order-table">
+            <thead>
+                <tr>
+                    <th>{% trans "订单号" %}</th>
+                    <th>{% trans "医院" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                    <th>{% trans "已生成新版 PO" %}</th>
+                    <th>PO</th>
+                    <th>{% trans "商业展示金额" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                    <th>{% trans "商业展示金额" %}</th>
+                    <th>{% trans "只读查看" %}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in order_rows %}
+                    <tr>
+                        <td>
+                            <a
+                                href="{{ row.detail_url }}"
+                            >
+                                {{ row.label }}
+                            </a>
+                        </td>
+
+                        <td>{{ row.hospital_name }}</td>
+                        <td>{{ "—" }}</td>
+
+                        <td>
+                            {{ "—" }}
+                        </td>
+
+                        <td>
+                            {{ row.number }}
+                        </td>
+
+                        <td>{{ row.amount }}</td>
+                        <td>—</td>
+
+                        <td class="profit-cell">
+                            —
+                        </td>
+
+                        <td>{{ "—" }}</td>
+                        <td>{{ "—" }}</td>
+
+                        <td>
+                            {{ "—" }}
+                        </td>
+
+                        <td>
+                            {{ "—" }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td
+                            colspan="12"
+                            class="empty-cell"
+                        >
+                            {% trans "尚无正式财务订单数据。" %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<footer class="finance-footer">
+    {% trans "金额按商业展示 PO 口径统计，不构成结算数据。" %}
+    {% if ignored_count %}<p>{% trans "存在未计入记录。部分冻结快照缺失或损坏，已从统计中排除。" %}</p>{% endif %}
+</footer>
+
+{{ chart_data|json_script:"finance-chart-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{% static 'finance/js/settlement_dashboard.js' %}"
+    defer
+></script>
+{% endblock %}

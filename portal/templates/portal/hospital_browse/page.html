@@ -1,0 +1,32 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+{% block title %}{{ page_title }} | Acoeurs France{% endblock %}
+{% block user_role %}Acoeur{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">{% endblock %}
+{% block content %}
+<section class="portal-page-header">
+    <h1>{{ page_title }}</h1>
+    <div class="portal-header-actions"><a class="portal-button" href="{{ back_url }}">{% trans "返回" %}</a><a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a></div>
+</section>
+{% if modules %}
+<section class="detail-info-grid">
+    {% for module in modules %}<a class="portal-panel" href="{{ module.url }}"><h2 class="portal-panel-title">{{ module.title }}</h2></a>{% endfor %}
+</section>
+{% else %}
+{% if fields %}
+<section class="portal-panel detail-section"><div class="detail-info-grid">
+    {% for field in fields %}<div><span class="detail-label">{{ field.label }}</span><strong>{{ field.value }}</strong></div>{% endfor %}
+</div>{% for attachment in attachments %}<a class="portal-button" href="{{ attachment.url }}" target="_blank">{{ attachment.label }}</a>{% endfor %}</section>
+{% endif %}
+{% if page_obj %}
+<section class="portal-panel detail-section"><form method="get"><label for="browse-query">{% trans "搜索" %}</label> <input id="browse-query" name="q" value="{{ query }}"><button class="portal-button" type="submit">{% trans "搜索" %}</button></form></section>
+{% endif %}
+{% if headers %}
+<section class="portal-panel detail-section"><div class="portal-table-wrap"><table class="portal-table">
+    <thead><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in rows %}<tr>{% for cell in row.cells %}<td>{% if forloop.first and row.url %}<a href="{{ row.url }}">{{ cell|default_if_none:"—" }}</a>{% else %}{{ cell|default_if_none:"—" }}{% endif %}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ headers|length }}">{% trans "暂无记录" %}</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endif %}
+{% if page_obj %}<div class="detail-link-row">{% if page_obj.has_previous %}<a class="portal-button" href="?page={{ page_obj.previous_page_number }}&amp;q={{ query|urlencode }}">{% trans "上一页" %}</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="portal-button" href="?page={{ page_obj.next_page_number }}&amp;q={{ query|urlencode }}">{% trans "下一页" %}</a>{% endif %}</div>{% endif %}
+{% endif %}
+{% endblock %}

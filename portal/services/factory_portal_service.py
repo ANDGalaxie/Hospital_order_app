@@ -427,6 +427,7 @@ def build_factory_detail_context(request, confirmation_id):
         generated_documents = list(
             GeneratedDocument.objects.filter(
                 shipment_batch=shipment_batch,
+                document_type__in=["hospital_invoice", "factory_po", "factory_order_request"],
             ).order_by("-generated_at", "-id")
         )
 

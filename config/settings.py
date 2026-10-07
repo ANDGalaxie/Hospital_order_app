@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "finance.apps.FinanceConfig",
     "settlements.apps.SettlementsConfig",
     "hospital_engagements.apps.HospitalEngagementsConfig",
+    "commercial_pos.apps.CommercialPosConfig",
 ]
 
 MIDDLEWARE = [
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'portal.middleware.DemoIsolationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -87,6 +89,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'portal.commercial_access.showcase_flags',
             ],
         },
     },
@@ -159,7 +162,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "/media/"
+MEDIA_URL = "/portal/files/"
 MEDIA_ROOT = BASE_DIR / "media"
 MAX_PDF_UPLOAD_SIZE = int(
     os.getenv("MAX_PDF_UPLOAD_SIZE", str(25 * 1024 * 1024))

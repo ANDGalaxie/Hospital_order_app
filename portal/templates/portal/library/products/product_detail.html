@@ -49,10 +49,10 @@
     </div>
 
     <div class="portal-header-actions">
-        <a class="portal-button"
+        {% if portal_admin_visible %}<a class="portal-button"
            href="/admin/products/product/{{ product.id }}/change/">
             {% trans "在 Admin 中编辑" %}
-        </a>
+        </a>{% endif %}
     </div>
 </section>
 

@@ -7,16 +7,51 @@ from portal.services.common import (
     get_user_display_name,
     safe_count,
 )
+from portal.commercial_access import can_view_showcase, is_demo
+
+
+def commercial_modules():
+    return [
+        {"title": _("采购订单"), "subtitle": "",
+         "icon": "portal/img/app-icons/factory-purchase.png", "theme": "green",
+         "url": reverse("portal:commercial_purchase_orders"), "badge": None, "status_text": _("只读展示")},
+        {"title": _("操作平台"), "subtitle": _("查看同批次 Invoice 与 Commercial PO"),
+         "icon": "portal/img/app-icons/workflow.png", "theme": "violet",
+         "url": reverse("portal:commercial_operations"), "badge": None, "status_text": _("只读展示")},
+        {"title": _("数据与财务"), "subtitle": _("按商业展示 PO 冻结金额统计"),
+         "icon": "portal/img/app-icons/finance.png", "theme": "orange",
+         "url": reverse("portal:commercial_finance"), "badge": None, "status_text": _("只读展示")},
+    ]
 
 
 def build_home_context(request):
     lang = get_portal_lang(request)
 
+    if is_demo(request.user):
+        return {"modules": commercial_modules(), "lang": lang,
+                "user_display_name": get_user_display_name(request.user)}
+
+    from portal.role_access import MODULES, ROLE_MODULES, portal_navigation, portal_role, role_route_allowed
+    role = portal_role(request.user)
+    if role == "hospital":
+        modules = []
+        for key in ROLE_MODULES[role]:
+            spec = MODULES[key]
+            if role_route_allowed(request.user, spec["route"], "GET"):
+                modules.append({"title": spec["title"], "subtitle": "",
+                                "icon": "portal/img/app-icons/" + spec["icon"],
+                                "theme": spec["theme"], "url": reverse(spec["route"]), "badge": None})
+        return {"modules": modules, "lang": lang, "user_display_name": get_user_display_name(request.user)}
+
+    from documents.models import GeneratedDocument
+
     counters = {
         "orders": safe_count("orders", "Order"),
         "factory_confirmations": safe_count("factory_confirmations", "FactoryConfirmation"),
         "workflow": safe_count("workflow", "DocumentWorkflowItem"),
-        "documents": safe_count("documents", "GeneratedDocument"),
+        "documents": GeneratedDocument.objects.filter(document_type__in=[
+            "hospital_invoice", "factory_po", "factory_order_request",
+        ]).count(),
         "products": safe_count("products", "Product"),
         "hospitals": safe_count("hospitals", "Hospital"),
         "factories": safe_count("factories", "Factory"),
@@ -122,6 +157,15 @@ def build_home_context(request):
             "badge": None,
             "status_text": _("团队工作概览"),
         })
+
+    if can_view_showcase(request.user):
+        modules.extend(commercial_modules())
+
+    if role == "internal":
+        from django.urls import resolve
+        by_route = {resolve(module["url"]).view_name: module for module in modules}
+        modules = [by_route[MODULES[key]["route"]] for key in portal_navigation(request.user, role=role)["modules"]
+                   if MODULES[key]["route"] in by_route]
 
     return {
         "modules": modules,

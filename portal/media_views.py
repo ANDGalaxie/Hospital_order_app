@@ -2,9 +2,9 @@ import mimetypes
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
+from portal.role_access import media_browse_required
 from django.core.exceptions import SuspiciousFileOperation
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.utils._os import safe_join
 
 
@@ -17,9 +17,12 @@ INLINE_CONTENT_TYPES = {
 }
 
 
-@staff_member_required
+@media_browse_required
 def protected_media(request, path):
     """Stream a staff-only media file without exposing arbitrary server paths."""
+    from portal.commercial_access import is_demo
+    if is_demo(request.user):
+        return HttpResponseForbidden("Access denied")
     media_root = Path(settings.MEDIA_ROOT).resolve()
 
     try:

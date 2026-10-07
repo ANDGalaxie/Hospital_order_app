@@ -654,6 +654,9 @@ def generate_documents_for_workflow_item(
         ]
     )
 
+    from commercial_pos.services.generation_service import schedule_commercial_po
+    schedule_commercial_po(item.shipment_batch_id, item.order_id, generated_by)
+
     return {
         "workflow_item_id": item.id,
         "order_id": item.order_id,

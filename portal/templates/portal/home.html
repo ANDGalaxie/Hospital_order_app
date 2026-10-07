@@ -11,7 +11,7 @@
     <section class="portal-page-header home-header">
         <div>
             <h1>{% trans "工作台" %}</h1>
-            <p>{% trans "请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。" %}</p>
+            <p>{% if is_hospital_browser %}{% trans "请选择一个业务模块。" %}{% elif is_hospital_demo %}{% trans "请选择商业展示模块。所有业务信息均为只读。" %}{% else %}{% trans "请选择一个业务模块，开始处理医院订单、工厂采购、文件生成或财务追踪。" %}{% endif %}</p>
         </div>
     </section>
 
@@ -30,7 +30,7 @@
                         {% endif %}
                     </div>
 
-                    <p>{{ module.subtitle }}</p>
+                    {% if module.subtitle %}<p>{{ module.subtitle }}</p>{% endif %}
 
                     {% if module.status_text %}
                         <span class="module-status">{{ module.status_text }}</span>

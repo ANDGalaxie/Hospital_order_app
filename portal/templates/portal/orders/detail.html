@@ -16,7 +16,7 @@
 
     <div class="portal-header-actions">
         <a class="portal-button" href="{% url 'portal:order_list' %}">{% trans "返回订单列表" %}</a>
-        <a class="portal-button" href="{{ admin_url }}">Admin</a>
+        {% if portal_admin_visible %}<a class="portal-button" href="{{ admin_url }}">Admin</a>{% endif %}
     </div>
 </section>
 

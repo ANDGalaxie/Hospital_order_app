@@ -1,0 +1,213 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ page_title }} · {{ row.bon }} / B{{ row.batch_number }} | Acoeurs France{% endblock %}
+
+{% block user_role %}Acoeur{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{% trans "操作平台" %}</h1>
+        <p>{{ row.bon }} / B{{ row.batch_number }}</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{{ list_url }}">{% trans "返回列表" %}</a>
+    </div>
+</section>
+
+<section class="workflow-detail-grid">
+    <div class="portal-panel detail-main-card">
+        <h2 class="portal-panel-title">{% trans "订单信息" %}</h2>
+
+        <div class="detail-info-grid">
+            <div>
+                <span class="detail-label">{% trans "订单号" %}</span>
+                <strong>{{ row.bon }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">{% trans "医院" %}</span>
+                <strong>{{ row.hospital }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">{% trans "来源" %}</span>
+                <strong>{{ row.bon }}</strong>
+            </div>
+
+            <div>
+                <span class="detail-label">{% trans "批次" %}</span>
+                <strong>
+                    {% if row.batch_number %}
+                        {% trans "批次" %} {{ row.batch_number }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span class="detail-label">{% trans "状态" %}</span>
+                <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+            </div>
+
+            <div>
+                <span class="detail-label">{% trans "采购总额" %}</span>
+                <span class="next-action {{ row.status_class }}">{{ row.commercial_po.amount|default:"—" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-panel detail-actions-card">
+        <h2 class="portal-panel-title">{% trans "查看文件" %}</h2>
+
+        <div class="detail-actions">
+            {% if row.invoice.pdf %}<a class="portal-button" href="{{ row.invoice.pdf }}" target="_blank">{% trans "医院销售发票" %} PDF</a>{% endif %}
+            {% if row.commercial_po.pdf %}<a class="portal-button" href="{{ row.commercial_po.pdf }}" target="_blank">{% trans "采购订单" %} PDF</a>{% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="workflow-doc-grid">
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">{% trans "状态" %}</h2>
+        <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+
+
+    </div>
+
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">{% trans "医院销售发票" %}</h2>
+        <span class="status-pill {{ row.invoice.ready|yesno:"success,warning" }}">{{ row.invoice.status }}</span>
+
+        {% if row.invoice.pdf %}
+            <div class="detail-link-row">
+                <a class="portal-button" href="{{ row.invoice.pdf }}" target="_blank">{% trans "打开 PDF" %}</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="portal-panel">
+        <h2 class="portal-panel-title">{% trans "采购订单" %}</h2>
+        <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+
+        {% if row.commercial_po.pdf %}
+            <div class="detail-link-row">
+                <a class="portal-button" href="{{ row.commercial_po.pdf }}" target="_blank">{% trans "打开 PDF" %}</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="portal-panel detail-section">
+    <div class="workflow-price-heading">
+        <div>
+            <h2 class="portal-panel-title">
+                {% trans "当前批次价格快照" %}
+            </h2>
+
+            <p class="detail-muted">
+                {% trans "发货日期" %}: {{ row.shipping_date|date:"Y-m-d"|default:"—" }}
+            </p>
+        </div>
+
+        {% if price_summary %}
+            <div class="workflow-price-summary">
+                <span>{% trans "本批数量" %}: <strong>{{ price_summary.quantity|floatformat:"0u" }}</strong></span>
+                <span>{% trans "采购总额" %}: <strong>{{ price_summary.amount }}</strong></span>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if price_summary %}
+        <div class="portal-table-wrap">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "本批数量" %}</th>
+                        <th>{% trans "采购单价" %}</th>
+                        <th>{% trans "采购金额" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in price_rows %}
+                        <tr>
+                            <td><strong>{{ item.product_code }}</strong></td>
+                            <td>{{ item.quantity|floatformat:"0u" }}</td>
+                            <td>{{ item.unit_price }}</td>
+                            <td><strong>{{ item.amount }}</strong></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">{% trans "当前批次尚未生成采购订单。" %}</p>
+    {% endif %}
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">{% trans "当前批次数量" %}</h2>
+
+    {% if products %}
+        <div class="portal-table-wrap simple-table-wrap">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "本批次数量" %}</th>
+                        <th>{% trans "Serial 数量" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td><strong>{{ product.product_code }}</strong></td>
+                            <td>{{ product.shipped_quantity }}</td>
+                            <td>{{ product.serial_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">{% trans "没有当前批次数量数据。" %}</p>
+    {% endif %}
+</section>
+
+<section class="portal-panel detail-section">
+    <h2 class="portal-panel-title">{% trans "Serial 明细" %}</h2>
+
+    {% if serial_rows %}
+        <div class="portal-table-wrap simple-table-wrap">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "产品号" %}</th>
+                        <th>Serial Number</th>
+                        <th>{% trans "有效期" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in serial_rows %}
+                        <tr>
+                            <td><strong>{{ row.product_code }}</strong></td>
+                            <td>{{ row.serial_number }}</td>
+                            <td>{{ row.expiration_date|date:"Y-m-d" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="detail-muted">{% trans "没有订单累计明细。" %}</p>
+    {% endif %}
+</section>
+{% endblock %}

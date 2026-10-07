@@ -1,0 +1,16 @@
+/* Only display-specific sizing; shared Portal components provide the design. */
+.commercial-navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.commercial-table { min-width: 920px; }
+.commercial-table th, .commercial-table td { vertical-align: top; }
+.commercial-table td { overflow-wrap: anywhere; }
+.commercial-table .commercial-date { white-space: nowrap; }
+.commercial-amount { color: #172638; font-variant-numeric: tabular-nums; font-weight: 750; white-space: nowrap; }
+.portal-list-stats .commercial-amount { font-size: clamp(20px, 2vw, 28px); }
+.commercial-file-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px; }
+.commercial-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 22px 0; }
+.commercial-summary { margin: 28px 0; }
+.portal-list-filter-form select { height: 42px; border: 1px solid #dbe3ef; border-radius: 12px; background: white; padding: 0 12px; max-width: 100%; }
+@media (max-width: 600px) {
+  .commercial-navigation .portal-button { flex: 1 1 auto; text-align: center; }
+  .commercial-table { min-width: 820px; }
+}

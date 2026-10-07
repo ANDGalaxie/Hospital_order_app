@@ -5458,3 +5458,157 @@ msgstr "Enter an order number or factory name"
 #. Factory purchase list
 msgid "没有找到符合条件的工厂采购文件。"
 msgstr "No matching factory purchase files found."
+
+#: portal/commercial_showcase
+msgid "采购订单"
+msgstr "Purchase Orders"
+
+#: portal/commercial_showcase
+msgid "操作平台"
+msgstr "Operations Platform"
+
+#: portal/commercial_showcase
+msgid "数据与财务"
+msgstr "Data & Finance"
+
+#: portal/commercial_showcase
+msgid "只读查看商业展示采购订单"
+msgstr "View commercial purchase orders"
+
+#: portal/commercial_showcase
+msgid "查看同批次 Invoice 与 Commercial PO"
+msgstr "View Invoice and Commercial PO for each batch"
+
+#: portal/commercial_showcase
+msgid "按商业展示 PO 冻结金额统计"
+msgstr "Statistics from frozen Commercial PO amounts"
+
+#: portal/commercial_showcase
+msgid "只读展示"
+msgstr "Read-only display"
+
+#: portal/commercial_showcase
+msgid "商业展示 · Acoeur"
+msgstr "Commercial display · Acoeur"
+
+#: portal/commercial_showcase
+msgid "请选择商业展示模块。所有业务信息均为只读。"
+msgstr ""
+"Choose a commercial display module. All business information is read-only."
+
+#: portal/commercial_showcase
+msgid "已生成新版 PO"
+msgstr "Generated Commercial POs"
+
+#: portal/commercial_showcase
+msgid "暂未生成或不可用"
+msgstr "Not generated or unavailable"
+
+#: portal/commercial_showcase
+msgid "对应 BON"
+msgstr "Distinct BONs"
+
+#: portal/commercial_showcase
+msgid "暂不可用"
+msgstr "Unavailable"
+
+#: portal/commercial_showcase
+msgid "文件暂不可用"
+msgstr "File unavailable"
+
+#: portal/commercial_showcase
+msgid "只读查看"
+msgstr "Read-only view"
+
+#: portal/commercial_showcase
+msgid "产品数量"
+msgstr "Product units"
+
+#: portal/commercial_showcase
+msgid "商业展示总金额"
+msgstr "Commercial display total"
+
+#: portal/commercial_showcase
+msgid "按发货月份汇总"
+msgstr "By shipping month"
+
+#: portal/commercial_showcase
+msgid "按医院汇总"
+msgstr "By hospital"
+
+#: portal/commercial_showcase
+msgid "按产品汇总"
+msgstr "By product"
+
+#: portal/commercial_showcase
+msgid "商业展示"
+msgstr "Commercial display"
+
+#: portal/commercial_showcase
+msgid "商业展示文件与本批发货事实，仅供只读查看。"
+msgstr "Commercial documents and physical batch facts, for read-only viewing."
+
+#: portal/commercial_showcase
+msgid "订单号 / 批次"
+msgstr "Order / Batch"
+
+#: portal/commercial_showcase
+msgid "金额按商业展示 PO 口径统计，不构成结算数据。"
+msgstr "Amounts reflect Commercial POs and do not constitute settlement data."
+
+#: portal/commercial_showcase
+msgid "存在未计入记录。部分冻结快照缺失或损坏，已从统计中排除。"
+msgstr ""
+"Some records are excluded because frozen snapshots are missing or damaged."
+
+#: portal/commercial_showcase
+msgid "分类"
+msgstr "Category"
+
+#: portal/commercial_showcase
+msgid "商业展示金额"
+msgstr "Commercial display amount"
+
+#: portal/commercial_showcase
+msgid "登录"
+msgstr "Log in"
+
+#: portal/commercial_showcase
+msgid "退出"
+msgstr "Log out"
+
+#: portal/commercial_showcase
+msgid "此资源暂不可用。"
+msgstr "This resource is unavailable."
+
+#: portal/templates/portal/commercial
+msgid "下载"
+msgstr "Download"
+
+#: portal/templates/portal/commercial
+msgid "暂无记录"
+msgstr "No records"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购单价"
+msgstr "Purchase Unit Price"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购金额"
+msgstr "Purchase Amount"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "采购总额"
+msgstr "Purchase Total"
+
+#: portal/templates/portal/commercial/operations_detail.html
+msgid "当前批次尚未生成采购订单。"
+msgstr "No purchase order has been generated for this batch yet."
+
+#: portal/hospital_browse
+msgid "请选择一个业务模块。"
+msgstr "Choose a business module."
+
+#: portal/hospital_browse
+msgid "原始 PDF"
+msgstr "Original PDF"

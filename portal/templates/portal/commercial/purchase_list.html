@@ -1,0 +1,133 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "采购订单" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/list.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
+{% endblock %}
+
+
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{% trans "采购订单" %}</h1>
+        <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
+    </div>
+</section>
+
+<section class="portal-list-stats factory-stats">
+    {% for card in cards %}
+    <a class="stat-card{% if card.active %} active{% endif %}" href="{{ card.url }}"{% if card.active %} aria-current="page"{% endif %}>
+        <span class="stat-label">{{ card.label }}</span><strong>{{ card.count }}</strong>
+    </a>
+    {% endfor %}
+</section>
+
+<section class="portal-list-filters portal-panel factory-filters">
+    <form method="get" class="portal-list-filter-form">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <div class="filter-search">
+            <label for="factory-search">{% trans "搜索" %}</label>
+            <input id="factory-search" type="text" name="q" value="{{ query }}" placeholder="{% trans '输入订单号或医院名称' %}">
+        </div>
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
+        {% if query %}<a class="portal-button" href="?status={{ status_filter }}">{% trans "清除" %}</a>{% endif %}
+    </form>
+</section>
+
+<section class="portal-table-wrap factory-table-wrap">
+        <table class="portal-table factory-table clean-factory-table">
+            <colgroup>
+                <col class="col-bon-ordinal">
+                <col class="col-order">
+                <col class="col-factory">
+                <col class="col-date">
+                <col class="col-serial">
+                <col class="col-status">
+                <col class="col-next">
+                <col class="col-actions">
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th class="bon-ordinal-cell">{% trans "BON 序号" %}</th>
+                    <th>{% trans "订单号" %}</th>
+                    <th>{% trans "医院" %}</th>
+                    <th>{% trans "发货日期" %}</th>
+                    <th>{% trans "本批数量" %}</th>
+                    <th>{% trans "状态" %}</th>
+                    <th>Commercial PO</th>
+                    <th>{% trans "操作" %}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in page_obj %}
+                    <tr>
+                        <td class="bon-ordinal-cell"><span class="factory-sub-text"><a href="{{ row.detail_url }}">{{ row.ordinal|default_if_none:"—" }}</a></span></td>
+                        <td>
+                            <div class="order-number"><a href="{{ row.detail_url }}">{{ row.bon }}</a></div><div class="factory-sub-text">B{{ row.batch_number }}</div>
+                        </td>
+
+                        <td>
+                            <div class="factory-name" title="{{ row.hospital }}">{{ row.hospital }}</div>
+                        </td>
+
+                        <td>
+                            {% if row.shipping_date %}
+                                {{ row.shipping_date|date:"d/m/Y" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="serial-summary">
+                                {{ row.quantity }}
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="status-pill {{ row.status_class }}">
+                                {{ row.commercial_po.status }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="factory-next-actions">
+                                {% if row.commercial_po.pdf %}<a class="factory-next-link" href="{{ row.commercial_po.pdf }}" target="_blank">PDF</a>{% endif %}
+                                <span class="factory-sub-text">{{ row.commercial_po.number }}</span>
+                                <strong>{{ row.commercial_po.amount|default:"—" }}</strong>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="row-actions">
+                                <a class="mini-button" href="{{ row.detail_url }}">{% trans "查看" %}</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="empty-cell">
+                            {% trans "没有找到符合条件的采购订单文件。" %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</section>
+
+<nav class="row-actions" aria-label="{% trans '分页' %}">
+    {% if page_obj.has_previous %}<a class="mini-button" href="?{{ query_without_page }}&page={{ page_obj.previous_page_number }}">{% trans "上一页" %}</a>{% endif %}
+    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="mini-button" href="?{{ query_without_page }}&page={{ page_obj.next_page_number }}">{% trans "下一页" %}</a>{% endif %}
+</nav>
+{% endblock %}

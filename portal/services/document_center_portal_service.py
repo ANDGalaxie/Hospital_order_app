@@ -13,6 +13,9 @@ from django.utils import timezone
 
 from documents.models import GeneratedDocument
 
+LEGACY_DOCUMENT_TYPES = ("hospital_invoice", "factory_po", "factory_order_request")
+LEGACY_DOCUMENT_CHOICES = [choice for choice in GeneratedDocument.DocumentType.choices if choice[0] in LEGACY_DOCUMENT_TYPES]
+
 
 DOCUMENT_TYPE_LABELS = {
     GeneratedDocument.DocumentType.HOSPITAL_INVOICE: (
@@ -489,7 +492,7 @@ def build_document_month_options():
     month_keys = set()
 
     generated_dates = (
-        GeneratedDocument.objects
+        GeneratedDocument.objects.filter(document_type__in=LEGACY_DOCUMENT_TYPES)
         .values_list(
             "generated_at",
             flat=True,
@@ -616,7 +619,7 @@ def build_document_center_home_context(
     ]
 
     documents = (
-        GeneratedDocument.objects
+        GeneratedDocument.objects.filter(document_type__in=LEGACY_DOCUMENT_TYPES)
         .select_related(
             "order",
             "order__hospital",
@@ -719,7 +722,7 @@ def build_document_list_context(request, forced_document_type=None):
     ).strip()
 
     documents = (
-        GeneratedDocument.objects
+        GeneratedDocument.objects.filter(document_type__in=LEGACY_DOCUMENT_TYPES)
         .select_related(
             "order",
             "order__hospital",
@@ -756,9 +759,7 @@ def build_document_list_context(request, forced_document_type=None):
     valid_types = {
         value
         for value, label
-        in display_choices(GeneratedDocument
-        .DocumentType
-        .choices)
+        in display_choices(LEGACY_DOCUMENT_CHOICES)
     }
 
     if document_type in valid_types:
@@ -825,7 +826,7 @@ def build_document_list_context(request, forced_document_type=None):
         decorate_document(document)
 
     all_documents = (
-        GeneratedDocument.objects.all()
+        GeneratedDocument.objects.filter(document_type__in=LEGACY_DOCUMENT_TYPES).all()
     )
 
     today = timezone.localdate()
@@ -867,9 +868,7 @@ def build_document_list_context(request, forced_document_type=None):
             build_document_month_options()
         ),
         "document_type_choices": (
-            display_choices(GeneratedDocument
-            .DocumentType
-            .choices)
+            display_choices(LEGACY_DOCUMENT_CHOICES)
         ),
         "total_count": (
             all_documents.count()
@@ -915,7 +914,7 @@ def build_document_detail_context(
     document_id,
 ):
     document = get_object_or_404(
-        GeneratedDocument.objects
+        GeneratedDocument.objects.filter(document_type__in=LEGACY_DOCUMENT_TYPES)
         .select_related(
             "order",
             "order__hospital",

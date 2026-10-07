@@ -1,0 +1,9 @@
+{% load i18n %}
+<span class="status-pill {% if document.ready %}success{% else %}warning{% endif %}">{{ document.status }}</span>
+{% if document.number %}<div class="cell-title">{{ document.number }}</div>{% endif %}
+{% if document.amount %}<div class="commercial-amount">{{ document.amount }}</div>{% endif %}
+{% if document.ready %}<div class="commercial-file-links">
+  <a href="{{ document.pdf }}" target="_blank" rel="noopener">PDF</a>
+  {% if document.html %}<a href="{{ document.html }}" target="_blank" rel="noopener">HTML</a>{% endif %}
+  <a href="{{ document.download }}">{% trans "下载" %}</a>
+</div>{% endif %}

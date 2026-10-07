@@ -112,6 +112,7 @@ class GeneratedDocument(models.Model):
         HOSPITAL_INVOICE = "hospital_invoice", "Hospital Invoice"
         FACTORY_PO = "factory_po", "Factory Purchase Order"
         FACTORY_ORDER_REQUEST = "factory_order_request", "Factory Order Request"
+        COMMERCIAL_PO = "commercial_po", "Commercial Purchase Order"
 
     order = models.ForeignKey(
         Order,
@@ -172,6 +173,12 @@ class GeneratedDocument(models.Model):
 
     class Meta:
         ordering = ["-generated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["shipment_batch"], condition=models.Q(document_type="commercial_po"),
+                name="unique_commercial_po_batch",
+            ),
+        ]
         unique_together = [
             ("document_type", "document_number"),
         ]

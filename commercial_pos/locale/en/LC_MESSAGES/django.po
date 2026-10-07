@@ -1,0 +1,23 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "暂无数据"
+msgstr "No data available"
+
+msgid "查看文件"
+msgstr "View documents"
+
+msgid "没有找到符合条件的采购订单文件。"
+msgstr "No matching commercial purchase orders found."
+
+msgid "按发货月份汇总图"
+msgstr "Commercial amounts by shipping month"
+
+msgid "暂无数据趋势图"
+msgstr "No trend data available"
+
+msgid "日期格式无效，请使用 YYYY-MM-DD。"
+msgstr "Invalid date format. Use YYYY-MM-DD."

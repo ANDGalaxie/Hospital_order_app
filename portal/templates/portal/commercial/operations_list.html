@@ -1,0 +1,162 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ page_title }} | Acoeurs France{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/workflow.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="portal-page-header">
+    <div>
+        <h1>{% trans "操作平台" %}</h1>
+        <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+    </div>
+
+    <div class="portal-header-actions">
+        <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
+    </div>
+</section>
+
+<section class="workflow-stats">
+    {% for card in cards %}
+    <a class="stat-card{% if card.active %} active{% endif %}" href="{{ card.url }}">
+        <span class="stat-label">{{ card.label }}</span><strong>{{ card.count }}</strong>
+    </a>
+    {% endfor %}
+</section>
+
+<section class="workflow-filters portal-panel">
+    <form method="get" class="workflow-filter-form">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+
+        <div class="filter-search">
+            <label for="workflow-search">{% trans "搜索" %}</label>
+            <input
+                id="workflow-search"
+                type="text"
+                name="q"
+                value="{{ query }}"
+                placeholder="{% trans "输入订单号或医院名称" %}"
+            >
+        </div>
+
+        <button class="portal-button primary" type="submit">{% trans "搜索" %}</button>
+
+        {% if query %}
+            <a class="portal-button" href="?status={{ status_filter }}">{% trans "清除" %}</a>
+        {% endif %}
+    </form>
+</section>
+
+<section class="portal-table-wrap workflow-table-wrap">
+    <table class="portal-table workflow-table">
+        <colgroup>
+            <col class="col-bon-ordinal">
+            <col class="col-order">
+            <col class="col-hospital">
+            <col class="col-validation">
+            <col class="col-invoice">
+            <col class="col-po">
+            <col class="col-next">
+            <col class="col-shipping-date">
+            <col class="col-actions">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th class="bon-ordinal-cell">{% trans "BON 序号" %}</th>
+                <th>{% trans "订单号" %}</th>
+                <th>{% trans "医院" %}</th>
+                <th>{% trans "只读查看" %}</th>
+                <th>Invoice</th>
+                <th>Commercial PO</th>
+                <th>{% trans "下一步" %}</th>
+                <th>{% trans "发货日期" %}</th>
+                <th>{% trans "操作" %}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in page_obj %}
+                <tr>
+                    <td class="bon-ordinal-cell"><span class="sub-text"><a href="{{ row.detail_url }}">{{ row.ordinal|default_if_none:"—" }}</a></span></td>
+                    <td>
+                        <div class="order-number"><a href="{{ row.detail_url }}">{{ row.bon }}</a></div>
+                        {% if row.batch_number %}
+                            <div class="sub-text">{% trans "批次" %} {{ row.batch_number }}</div>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="hospital-name">{{ row.hospital }}</div>
+                    </td>
+
+                    <td>
+                        <span class="status-pill {{ row.status_class }}">
+                            {{ row.commercial_po.status }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="doc-status">
+                            <span class="status-pill {{ row.invoice.ready|yesno:"success,warning" }}">
+                                {{ row.invoice.status }}
+                            </span>
+
+                            {% if row.invoice.pdf %}
+                                <a class="small-link" href="{{ row.invoice.pdf }}" target="_blank">PDF</a>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="doc-status">
+                            <span class="status-pill {{ row.status_class }}">
+                                {{ row.commercial_po.status }}
+                            </span>
+
+                            {% if row.commercial_po.pdf %}
+                                <a class="small-link" href="{{ row.commercial_po.pdf }}" target="_blank">PDF</a>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="next-action {{ row.status_class }}">
+                            {{ row.commercial_po.amount|default:"—" }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="sub-text">{{ row.shipping_date|date:"Y-m-d"|default:"—" }}</span>
+                    </td>
+
+                    <td class="action-cell">
+                        <div class="row-actions">
+
+
+                            <a class="mini-button ghost" href="{{ row.detail_url }}">{% trans "查看" %}</a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="portal-empty">
+                            {% trans "没有找到符合条件的工作流记录。" %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<nav class="row-actions" aria-label="{% trans '分页' %}">
+    {% if page_obj.has_previous %}<a class="mini-button" href="?{{ query_without_page }}&page={{ page_obj.previous_page_number }}">{% trans "上一页" %}</a>{% endif %}
+    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="mini-button" href="?{{ query_without_page }}&page={{ page_obj.next_page_number }}">{% trans "下一页" %}</a>{% endif %}
+</nav>
+{% endblock %}

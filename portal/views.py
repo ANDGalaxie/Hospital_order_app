@@ -19,6 +19,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from config.upload_validation import validate_pdf_upload
+from portal.commercial_access import home_required
+from portal.role_access import shared_browse_required
 
 
 logger = logging.getLogger(__name__)
@@ -197,11 +199,11 @@ def _redirect_after_factory_processing(request, confirmation, success, message_t
 # =============================================================================
 
 
-@staff_member_required
+@home_required
 def home(request):
     return render(request, "portal/home.html", build_home_context(request))
 
-@staff_member_required
+@shared_browse_required
 def library_home(request):
     """
     资料库首页。
@@ -216,7 +218,7 @@ def library_home(request):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_products(request):
     return render(
         request,
@@ -225,7 +227,7 @@ def library_products(request):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_product_department(request, department_id):
     return render(
         request,
@@ -237,7 +239,7 @@ def library_product_department(request, department_id):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_product_factory(request, factory_node_id):
     return render(
         request,
@@ -249,7 +251,7 @@ def library_product_factory(request, factory_node_id):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_product_category(request, category_id):
     return render(
         request,
@@ -261,7 +263,7 @@ def library_product_category(request, category_id):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_product_detail(request, product_id):
     return render(
         request,
@@ -617,7 +619,7 @@ def library_product_add(
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_hospitals(request):
     return render(
         request,
@@ -626,7 +628,7 @@ def library_hospitals(request):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_hospital_detail(request, hospital_id):
     return render(
         request,
@@ -823,7 +825,7 @@ def library_hospital_toggle_active(
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_factories(request):
     return render(
         request,
@@ -832,7 +834,7 @@ def library_factories(request):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def library_factory_detail(request, factory_id):
     return render(
         request,
@@ -1773,7 +1775,7 @@ def _generate_and_download_factory_request(request, order):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def order_list(request):
     return render(
         request,
@@ -1782,7 +1784,7 @@ def order_list(request):
     )
 
 
-@staff_member_required
+@shared_browse_required
 def order_detail(request, order_id):
     return render(
         request,

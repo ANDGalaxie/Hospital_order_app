@@ -1,0 +1,6 @@
+{% load i18n %}
+<nav class="commercial-navigation" aria-label="{% trans '商业展示' %}">
+  <a class="portal-button" href="{% url 'portal:commercial_purchase_orders' %}">{% trans "采购订单" %}</a>
+  <a class="portal-button" href="{% url 'portal:commercial_operations' %}">{% trans "操作平台" %}</a>
+  <a class="portal-button" href="{% url 'portal:commercial_finance' %}">{% trans "数据与财务" %}</a>
+</nav>

@@ -20,7 +20,7 @@
     <div class="portal-header-actions">
         <a class="portal-button primary" href="{{ upload_url }}">{% trans "上传工厂采购" %}</a>
         <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
-        <a class="portal-button" href="/admin/factory_confirmations/factoryconfirmation/">Admin</a>
+        {% if portal_admin_visible %}<a class="portal-button" href="/admin/factory_confirmations/factoryconfirmation/">Admin</a>{% endif %}
     </div>
 </section>
 

@@ -1,0 +1,260 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ page_title }} · {{ row.bon }} / B{{ row.batch_number }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/factory.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<a href="{% url 'portal:home' %}">{% trans "首页" %}</a>
+<span>/</span>
+<a href="{{ list_url }}">{{ page_title }}</a>
+<span>/</span>
+<span>B{{ row.batch_number }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="portal-page-header">
+    <div>
+        <h1>{{ page_title }} · {{ row.bon }} / B{{ row.batch_number }}</h1>
+        <p>{% blocktrans trimmed with value1=row.bon %}订单号：{{ value1 }}{% endblocktrans %}</p>
+    </div>
+
+    <div class="page-actions factory-detail-actions">
+        <a class="portal-button" href="{{ list_url }}">{% trans "返回列表" %}</a>
+
+        {% if row.commercial_po.pdf %}
+            <a class="portal-button primary" href="{{ row.commercial_po.pdf }}" target="_blank">{% trans "查看 PDF" %}</a>
+        {% endif %}
+
+
+
+
+    </div>
+</div>
+
+<div class="factory-detail-grid">
+    <div class="portal-panel">
+        <div class="panel-header">
+            <div>
+                <h2>{% trans "基础信息" %}</h2>
+                <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">{% trans "订单号" %}</span>
+                <strong>{{ row.bon }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "BON 序号" %}</span>
+                <strong>
+                    {{ row.ordinal|default_if_none:"—" }}
+                </strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "医院" %}</span>
+                <strong>{{ row.hospital }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "发货日期" %}</span>
+                <strong>
+                    {% if row.shipping_date %}
+                        {{ row.shipping_date|date:"d/m/Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "状态" %}</span>
+                <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Commercial PO</span>
+                <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "只读查看" %}</span>
+                <span class="status-pill {{ row.status_class }}">{{ row.commercial_po.status }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "批次" %}</span>
+                <strong>B{{ row.batch_number }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "商业展示金额" %}</span>
+                <strong>{{ row.commercial_po.amount|default:"—" }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "产品数" %}</span>
+                <strong>{{ product_count }}</strong>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">{% trans "Serial 数" %}</span>
+                <strong>{{ serial_count }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-panel">
+        <div class="panel-header">
+            <div>
+                <h2>Commercial PO</h2>
+                <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+            </div>
+        </div>
+
+        <div class="debug-box">
+            <div><span>{% trans "批次" %}</span><strong>B{{ row.batch_number }}</strong></div>
+            <div><span>BON</span><strong>{{ row.bon }}</strong></div>
+            <div><span>ShipmentBatch</span><strong>#{{ row.batch_id }}</strong></div>
+            <div><span>Commercial PO</span><strong>{{ row.commercial_po.number|default:row.commercial_po.status }}</strong></div>
+            <div><span>{% trans "商业展示金额" %}</span><strong>{{ row.commercial_po.amount|default:"—" }}</strong></div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+{% if row %}
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>{% trans "已生成文件" %}</h2>
+            <p>{% trans "当前批次关联的 GeneratedDocument" %}</p>
+        </div>
+    </div>
+
+    <ul class="warning-list">
+        {% with document=row.commercial_po %}
+            <li>
+                Commercial PO / {{ document.number|default:document.status }}
+                {% if document.pdf %}
+                    <a href="{{ document.pdf }}" target="_blank">PDF</a>
+                {% endif %}
+            </li>
+        {% endwith %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>{% trans "产品汇总" %}</h2>
+            <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+        </div>
+    </div>
+
+    <div class="portal-table-wrap">
+        <table class="portal-table summary-table">
+            <thead>
+                <tr>
+                    <th>{% trans "产品号" %}</th>
+                    <th>{% trans "产品" %}</th>
+                    <th>{% trans "本批数量" %}</th>
+                    <th>{% trans "差异" %}</th>
+                    <th>{% trans "状态" %}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td><strong>{{ product.product_code }}</strong></td>
+                        <td>{{ product.product__description }}</td>
+                        <td>{{ product.shipped_quantity }}</td>
+                        <td>—</td>
+                        <td>
+                            <span class="status-pill {{ row.status_class }}">
+                                {{ row.commercial_po.status }}
+                            </span>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-cell">{% trans "暂无产品汇总。" %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="portal-panel">
+    <div class="panel-header">
+        <div>
+            <h2>{% trans "Serial 明细" %}</h2>
+            <p>{% trans "商业展示文件与本批发货事实，仅供只读查看。" %}</p>
+        </div>
+    </div>
+
+
+
+        <div class="portal-table-wrap">
+            <table class="portal-table serial-table editable-serial-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "产品号" %}</th>
+                        <th>{% trans "只读查看" %}</th>
+                        <th>Serial Number</th>
+                        <th>{% trans "有效期" %}</th>
+                        <th>{% trans "状态" %}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in serial_rows %}
+                        <tr>
+                            <td>
+                                {{ row.product_code }}
+                            </td>
+
+                            <td>
+                                —
+                            </td>
+
+                            <td>
+                                {{ row.serial_number }}
+                            </td>
+
+                            <td>
+                                {{ row.expiration_date|date:"Y-m-d" }}
+                            </td>
+
+                            <td>
+                                —
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">{% trans "暂无 Serial 明细。" %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+</div>
+{% endblock %}

@@ -18,11 +18,11 @@
             <div class="brand-text">Acoeurs France</div>
         </a>
 
-        <div class="search-box">
+        {% if not is_hospital_demo %}<div class="search-box">
             <span class="search-icon">⌕</span>
             <input type="text" placeholder="{% trans "搜索菜单、功能或数据..." %}" disabled>
             <span class="shortcut">⌘ K</span>
-        </div>
+        </div>{% endif %}
 
         <div class="user-area">
             <div class="lang-switch">
@@ -49,10 +49,10 @@
                 </div>
             </div>
 
-            <div class="notification">
+            {% if not is_hospital_demo %}<div class="notification">
                 🔔
                 <span class="notification-badge">3</span>
-            </div>
+            </div>{% endif %}
 
             <div class="avatar">
                 {{ request.user.username|default:"A"|slice:":1"|upper }}
@@ -62,15 +62,16 @@
                 <div class="user-name">
                     {% firstof user_display_name request.user.get_full_name request.user.username "Acoeur" %}
                 </div>
-                <div class="user-role">{% trans "操作员 · Acoeur" %}</div>
+                <div class="user-role">{% block user_role %}{% if is_hospital_browser %}Acoeur{% elif is_hospital_demo %}{% trans "商业展示 · Acoeur" %}{% else %}{% trans "操作员 · Acoeur" %}{% endif %}{% endblock %}</div>
             </div>
 
-            <a class="admin-link" href="/admin/">Admin</a>
+            {% if portal_admin_visible and request.user.is_staff and not is_hospital_demo and not is_showcase_page %}<a class="admin-link" href="/admin/">Admin</a>{% endif %}
+            {% if request.user.is_authenticated %}<form method="post" action="{% url 'portal:showcase_logout' %}">{% csrf_token %}<button class="portal-button" type="submit">{% trans "退出" %}</button></form>{% endif %}
         </div>
     </header>
 
     <main class="page">
-        {% if messages %}
+        {% if messages and not is_hospital_demo %}
             <section class="portal-messages">
                 {% for message in messages %}
                     <div class="portal-message {{ message.tags }}">

@@ -16,7 +16,7 @@
 
     <div class="portal-header-actions">
         <a class="portal-button" href="{% url 'portal:home' %}">{% trans "返回首页" %}</a>
-        <a class="portal-button" href="/admin/workflow/documentworkflowitem/">Admin</a>
+        {% if portal_admin_visible %}<a class="portal-button" href="/admin/workflow/documentworkflowitem/">Admin</a>{% endif %}
     </div>
 </section>
 

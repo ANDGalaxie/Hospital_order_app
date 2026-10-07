@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ document_number }} · Commercial Purchase Order</title>
+  <style>
+    @page { size: A4; margin: 24mm 16mm 22mm;
+      @bottom-left { content: "Acoeur · Commercial presentation"; color: #687268; font-size: 9px; }
+      @bottom-right { content: "Page " counter(page) " / " counter(pages); color: #687268; font-size: 9px; }
+    }
+    body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1f2933; font-size: 11px; }
+    header { border-top: 8px solid #3a8d24; background: #eef6ea; padding: 18px 20px; margin-bottom: 22px; }
+    .brand { font-size: 25px; font-weight: bold; color: #3a8d24; }
+    h1 { font-size: 20px; margin: 8px 0; }
+    .identity { color: #4b5563; font-size: 10px; }
+    .address { margin-bottom: 18px; }
+    .meta { width: 100%; margin: 18px 0 24px; }
+    .meta td { padding: 6px 0; vertical-align: top; }
+    table.products { border-collapse: collapse; width: 100%; }
+    .products th { background: #eef6ea; border-bottom: 2px solid #7ab65a; text-align: left; padding: 9px 7px; }
+    .products td { border-bottom: 1px solid #d8e3d4; padding: 10px 7px; vertical-align: top; }
+    .products tr { break-inside: avoid; }
+    .products .number { text-align: right; white-space: nowrap; }
+    .summary { margin-top: 20px; width: 52%; margin-left: auto; border-collapse: collapse; }
+    .summary th, .summary td { padding: 11px; background: #eef6ea; border-bottom: 2px solid #7ab65a; }
+    .summary th { text-align: left; color: #3a8d24; }
+    .summary td { text-align: right; font-weight: bold; font-size: 14px; }
+    .note { margin-top: 25px; color: #4b5563; font-size: 10px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Acoeur</div>
+    <h1>Commercial Purchase Order</h1>
+    <div class="identity">Issued by Acoeur for hospital commercial presentation · {{ document_number }}</div>
+  </header>
+  <div class="address"><strong>Ship to</strong><br>
+    {% for line in shipping_address %}{{ line }}<br>{% endfor %}
+  </div>
+  <table class="meta">
+    <tr><td><strong>Source / BON</strong><br>BON DE COMMANDE N° {{ bon_de_commande }}</td>
+        <td><strong>Document / Batch</strong><br>{{ document_number }} / B{{ batch_number }}</td></tr>
+    <tr><td><strong>Hospital</strong><br>{{ hospital_name }}</td>
+        <td><strong>Shipping date</strong><br>{{ shipping_date }}</td></tr>
+  </table>
+  <table class="products">
+    <thead><tr><th>Product</th><th>Description</th><th class="number">Quantity</th><th class="number">Unit Price</th><th class="number">Amount</th></tr></thead>
+    <tbody>{% for item in items %}<tr><td>{{ item.product_code }}</td><td>{{ item.description }}</td>
+      <td class="number">{{ item.quantity }}</td><td class="number">{{ item.unit_price_display }}</td><td class="number">{{ item.amount_display }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <table class="summary"><tr><th>Total Units</th><td>{{ total_units }}</td></tr><tr><th>Total (EUR)</th><td>{{ total_display }}</td></tr></table>
+  <p class="note">Commercial presentation only. This document is not a supplier-issued confirmation or a supplier payment instrument.</p>
+</body>
+</html>
