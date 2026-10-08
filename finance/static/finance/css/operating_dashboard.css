@@ -1,0 +1,24 @@
+.operating-dashboard .operating-month-form { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+.operating-dashboard .operating-month-form .filter-field { width:220px; max-width:100%; }
+.operating-dashboard .operating-scope { border-left:3px solid #f97316; padding:4px 18px; margin:24px 0; color:#64748b; font-size:13px; line-height:1.65; }
+.operating-dashboard .operating-scope p { margin:8px 0; }
+.operating-dashboard .operating-kpis h2 { font-size:16px; margin:26px 0 14px; color:#334155; }
+.operating-dashboard .kpi-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.operating-dashboard .operating-kpi-estimated_operating_balance { border-color:#ddd6fe; background:#faf8ff; }
+.operating-dashboard .operating-kpi-estimated_net_cash_inflow { border-color:#99f6e4; background:#f0fdfa; }
+.operating-dashboard .operating-charts { display:grid; gap:18px; margin:26px 0; }
+.operating-dashboard .operating-chart-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-bottom:16px; }
+.operating-dashboard .operating-chart-legend button { display:inline-flex; align-items:center; gap:7px; border:0; padding:5px 0; background:none; cursor:pointer; font:inherit; font-size:12px; color:#475569; }
+.operating-dashboard .operating-chart-legend button:focus-visible { outline:2px solid #2563eb; outline-offset:4px; }
+.operating-dashboard .operating-chart-legend button[aria-pressed="false"] { opacity:0.45; }
+.operating-dashboard .operating-chart-legend span { display:block; width:18px; height:3px; border-radius:2px; background:var(--series-color); }
+.operating-dashboard .finance-chart-wrap { overflow:visible; }
+.operating-dashboard .operating-chart-tooltip { position:absolute; top:8px; right:8px; max-width:calc(100% - 16px); padding:12px; border:1px solid #cbd5e1; border-radius:10px; background:rgba(255,255,255,0.98); color:#334155; font-size:12px; line-height:1.6; box-shadow:0 5px 18px #0f172a12; pointer-events:none; }
+.operating-dashboard .operating-chart-tooltip strong { display:block; margin-bottom:4px; }
+.operating-dashboard .operating-chart-help { color:#64748b; font-size:12px; line-height:1.6; }
+.operating-dashboard .operating-categories,.operating-dashboard .operating-monthly-table { margin-bottom:18px; }
+.operating-dashboard .operating-category-children details { padding:0 6px 10px; }
+.operating-dashboard details > summary { cursor:pointer; color:#475569; font-weight:600; }
+.operating-dashboard details[open] > summary { margin-bottom:16px; }
+@media(max-width:900px) { .operating-dashboard .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:520px) { .operating-dashboard .kpi-grid { grid-template-columns:1fr; } .operating-dashboard .finance-header h1 { font-size:27px; } }

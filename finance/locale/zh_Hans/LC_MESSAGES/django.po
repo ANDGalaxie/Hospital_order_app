@@ -1,0 +1,126 @@
+msgid ""
+msgstr "Project-Id-Version: Finance Operating Analysis V1\nPO-Revision-Date: 2026-10-08 00:00+0000\nLast-Translator: Acoeurs\nLanguage-Team: Acoeurs\nLanguage: zh_Hans\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Operating Analysis"
+msgstr "公司经营分析"
+
+msgid "Company-wide analysis"
+msgstr "公司整体分析"
+
+msgid "Official invoices, factory purchase orders and registered administrative expenses."
+msgstr "基于正式医院发票、工厂采购单与已登记行政支出。"
+
+msgid "Back to financial actuals"
+msgstr "返回财务实绩"
+
+msgid "Reporting month"
+msgstr "统计月份"
+
+msgid "Apply"
+msgstr "筛选"
+
+msgid "Company-wide EUR estimates based on currently registered documents and expenses. VAT, income tax, depreciation, bank charges, unrecorded costs and accounting period adjustments may not be fully covered."
+msgstr "公司整体 EUR 经营估算基于当前已登记单据和费用，可能未完整覆盖增值税、所得税、折旧、银行手续费、未登记成本和会计期间调整。"
+
+msgid "Sales and purchases use account issue dates; administrative expenses use expense dates. Cash flow uses transaction payment dates and administrative payment dates, including payments for earlier months."
+msgstr "销售和采购按结算账户开立日期统计，行政支出按费用发生日期统计；现金流按流水付款日期和行政费用付款日期统计，包含以前月份费用的本月付款。"
+
+msgid "Administrative payment status is manually registered. The cash flow estimate is not a bank-reconciled cash balance. Administrative expenses are not allocated to hospitals or orders."
+msgstr "行政费用付款状态为人工登记；净现金流估算不代表经银行对账的现金余额。行政支出不分摊到医院或订单。"
+
+msgid "Sales and factory purchases"
+msgstr "销售与工厂采购"
+
+msgid "Company operating estimate"
+msgstr "公司经营估算"
+
+msgid "Registered cash flow"
+msgstr "已登记现金流"
+
+msgid "Hospital invoiced sales"
+msgstr "医院开票销售额"
+
+msgid "Factory purchases"
+msgstr "工厂采购额"
+
+msgid "Estimated gross profit"
+msgstr "预计毛利润"
+
+msgid "Estimated gross margin"
+msgstr "预计毛利率"
+
+msgid "Company administrative expenses"
+msgstr "公司行政支出"
+
+msgid "Estimated operating balance"
+msgstr "预计经营结余"
+
+msgid "Estimated operating margin"
+msgstr "预计经营结余率"
+
+msgid "Registered hospital receipts"
+msgstr "医院登记收款"
+
+msgid "Registered factory payments"
+msgstr "工厂登记付款"
+
+msgid "Paid administrative expenses"
+msgstr "行政费用已付款"
+
+msgid "Estimated net cash inflow"
+msgstr "净现金流估算"
+
+msgid "Operating trends"
+msgstr "经营趋势"
+
+msgid "Cash flow trends"
+msgstr "现金流趋势"
+
+msgid "Administrative expenses by category"
+msgstr "行政费用分类汇总"
+
+msgid "Expense date basis; voided expenses excluded."
+msgstr "按费用发生日期统计，排除作废记录。"
+
+msgid "Category"
+msgstr "一级分类"
+
+msgid "Subcategory"
+msgstr "二级分类"
+
+msgid "Amount (EUR)"
+msgstr "金额（EUR）"
+
+msgid "Share of administrative expenses"
+msgstr "占行政支出比例"
+
+msgid "Details"
+msgstr "详情"
+
+msgid "View category"
+msgstr "查看分类记录"
+
+msgid "Show subcategories"
+msgstr "展开二级分类"
+
+msgid "Monthly figures for the displayed trends"
+msgstr "查看趋势月度数据"
+
+msgid "Month"
+msgstr "月份"
+
+msgid "Generated at"
+msgstr "数据生成时间"
+
+msgid "Chart series"
+msgstr "图表指标"
+
+msgid "Select a legend item to show or hide a series. Hover over the chart for exact monthly amounts; the monthly figures below also include every series."
+msgstr "点击图例可显示或隐藏指标；悬停查看精确月度金额，下方月度数据包含全部指标。"
+
+msgid "Choose a month that supports a complete 12-month reporting period."
+msgstr "请选择支持完整 12 个月统计区间的月份。"
+
+msgid "Choose exactly one reporting month."
+msgstr "请仅选择一个统计月份。"
+

@@ -1,0 +1,62 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "Operating Analysis" %} | Acoeurs France{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'finance/css/settlement_dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'finance/css/operating_dashboard.css' %}">
+{% endblock %}
+{% block breadcrumb %}
+<nav class="finance-breadcrumb"><a href="{% url 'portal:home' %}">{% trans "首页" %}</a><span>›</span><a href="{% url 'portal:finance:settlement_dashboard' %}">{% trans "财务数据" %}</a><span>›</span><span>{% trans "Operating Analysis" %}</span></nav>
+{% endblock %}
+{% block content %}
+<div class="operating-dashboard">
+<section class="finance-header">
+<div><p class="finance-eyebrow">EUR · {% trans "Company-wide analysis" %}</p><h1>{% trans "Operating Analysis" %}</h1><p class="finance-subtitle">{% trans "Official invoices, factory purchase orders and registered administrative expenses." %}</p></div>
+<div class="finance-header-actions"><a class="secondary-button" href="{% url 'portal:finance:settlement_dashboard' %}">{% trans "Back to financial actuals" %}</a></div>
+</section>
+<section class="finance-filter-panel">
+<form method="get" class="operating-month-form">
+<div class="filter-field"><label for="operating-month">{% trans "Reporting month" %}</label><input id="operating-month" name="month" type="month" value="{{ month }}" required></div>
+<button class="finance-filter-submit" type="submit">{% trans "Apply" %}</button>
+</form>
+{% if filter_errors %}<div class="finance-filter-errors" role="alert">{% for error in filter_errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+</section>
+{% if not filter_errors %}
+<section class="operating-scope">
+<p>{% trans "Company-wide EUR estimates based on currently registered documents and expenses. VAT, income tax, depreciation, bank charges, unrecorded costs and accounting period adjustments may not be fully covered." %}</p>
+<p>{% trans "Sales and purchases use account issue dates; administrative expenses use expense dates. Cash flow uses transaction payment dates and administrative payment dates, including payments for earlier months." %}</p>
+<p>{% trans "Administrative payment status is manually registered. The cash flow estimate is not a bank-reconciled cash balance. Administrative expenses are not allocated to hospitals or orders." %}</p>
+</section>
+{% for group in kpi_groups %}
+<section class="operating-kpis"><h2>{{ group.label }}</h2><div class="kpi-grid">
+{% for card in group.cards %}<article class="kpi-card operating-kpi-{{ card.key }}"><div class="kpi-label">{{ card.label }}</div><div class="kpi-value">{{ card.value }}</div></article>{% endfor %}
+</div></section>
+{% endfor %}
+<section class="operating-charts">
+{% trans "Operating trends" as operating_title %}
+{% trans "Cash flow trends" as cash_title %}
+{% include "finance/operating_chart.html" with chart_key="accrual" chart_title=operating_title labels=accrual_labels %}
+{% include "finance/operating_chart.html" with chart_key="cash" chart_title=cash_title labels=cash_labels %}
+</section>
+<section class="finance-panel operating-categories">
+<div class="panel-heading"><div><h2>{% trans "Administrative expenses by category" %}</h2><p class="finance-subtitle">{{ month }} · {% trans "Expense date basis; voided expenses excluded." %}</p></div></div>
+<div class="table-scroll"><table class="finance-table">
+<thead><tr><th>{% trans "Category" %}</th><th>{% trans "Amount (EUR)" %}</th><th>{% trans "Share of administrative expenses" %}</th><th>{% trans "Details" %}</th></tr></thead><tbody>
+{% for category in categories %}
+<tr><td><strong>{{ category.label }}</strong></td><td>{{ category.amount_display }}</td><td>{{ category.share_display }}</td><td><a href="{{ category.url }}">{% trans "View category" %}</a></td></tr>
+{% if category.children %}<tr class="operating-category-children"><td colspan="4"><details><summary>{% trans "Show subcategories" %}</summary><div class="table-scroll"><table class="finance-table compact-table"><thead><tr><th>{% trans "Subcategory" %}</th><th>{% trans "Amount (EUR)" %}</th><th>{% trans "Share of administrative expenses" %}</th><th>{% trans "Details" %}</th></tr></thead><tbody>
+{% for child in category.children %}<tr><td>{{ child.label }}</td><td>{{ child.amount_display }}</td><td>{{ child.share_display }}</td><td><a href="{{ child.url }}">{% trans "View category" %}</a></td></tr>{% endfor %}
+</tbody></table></div></details></td></tr>{% endif %}
+{% endfor %}
+</tbody></table></div>
+</section>
+<details class="finance-panel operating-monthly-table"><summary>{% trans "Monthly figures for the displayed trends" %}</summary><div class="table-scroll"><table class="finance-table">
+<thead><tr><th>{% trans "Month" %}</th>{% for label in accrual_labels %}<th>{{ label }}</th>{% endfor %}{% for label in cash_labels %}<th>{{ label }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in table_rows %}<tr><td>{{ row.month }}</td>{% for amount in row.accrual %}<td>{{ amount }}</td>{% endfor %}{% for amount in row.cash %}<td>{{ amount }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div></details>
+<footer class="finance-footer">{% trans "Generated at" %}: {{ generated_at|date:"Y-m-d H:i:s" }}</footer>
+{{ chart_data|json_script:"operating-chart-data" }}
+{% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'finance/js/operating_dashboard.js' %}" defer></script>{% endblock %}

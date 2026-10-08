@@ -1,0 +1,126 @@
+msgid ""
+msgstr "Project-Id-Version: Finance Operating Analysis V1\nPO-Revision-Date: 2026-10-08 00:00+0000\nLast-Translator: Acoeurs\nLanguage-Team: Acoeurs\nLanguage: fr\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Operating Analysis"
+msgstr "Analyse de l’activité"
+
+msgid "Company-wide analysis"
+msgstr "Analyse globale de l’entreprise"
+
+msgid "Official invoices, factory purchase orders and registered administrative expenses."
+msgstr "Factures officielles, commandes fournisseurs et dépenses administratives enregistrées."
+
+msgid "Back to financial actuals"
+msgstr "Retour aux données financières"
+
+msgid "Reporting month"
+msgstr "Mois d’analyse"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Company-wide EUR estimates based on currently registered documents and expenses. VAT, income tax, depreciation, bank charges, unrecorded costs and accounting period adjustments may not be fully covered."
+msgstr "Estimations globales en EUR fondées sur les documents et dépenses enregistrés. La TVA, l’impôt sur les bénéfices, les amortissements, les frais bancaires, les coûts non enregistrés et les ajustements de période peuvent ne pas être entièrement couverts."
+
+msgid "Sales and purchases use account issue dates; administrative expenses use expense dates. Cash flow uses transaction payment dates and administrative payment dates, including payments for earlier months."
+msgstr "Les ventes et achats suivent la date d’émission du compte ; les dépenses administratives suivent leur date de dépense. Les flux de trésorerie suivent les dates de paiement, y compris ceux relatifs aux mois précédents."
+
+msgid "Administrative payment status is manually registered. The cash flow estimate is not a bank-reconciled cash balance. Administrative expenses are not allocated to hospitals or orders."
+msgstr "Le paiement administratif est enregistré manuellement. L’estimation des flux n’est pas un solde rapproché avec la banque. Les dépenses administratives ne sont pas réparties entre hôpitaux ou commandes."
+
+msgid "Sales and factory purchases"
+msgstr "Ventes et achats fournisseurs"
+
+msgid "Company operating estimate"
+msgstr "Estimation de l’activité de l’entreprise"
+
+msgid "Registered cash flow"
+msgstr "Flux de trésorerie enregistrés"
+
+msgid "Hospital invoiced sales"
+msgstr "Ventes facturées aux hôpitaux"
+
+msgid "Factory purchases"
+msgstr "Achats fournisseurs"
+
+msgid "Estimated gross profit"
+msgstr "Marge brute estimée"
+
+msgid "Estimated gross margin"
+msgstr "Taux de marge brute estimé"
+
+msgid "Company administrative expenses"
+msgstr "Dépenses administratives de l’entreprise"
+
+msgid "Estimated operating balance"
+msgstr "Solde d’activité estimé"
+
+msgid "Estimated operating margin"
+msgstr "Taux du solde d’activité estimé"
+
+msgid "Registered hospital receipts"
+msgstr "Encaissements hospitaliers enregistrés"
+
+msgid "Registered factory payments"
+msgstr "Paiements fournisseurs enregistrés"
+
+msgid "Paid administrative expenses"
+msgstr "Dépenses administratives payées"
+
+msgid "Estimated net cash inflow"
+msgstr "Flux net de trésorerie estimé"
+
+msgid "Operating trends"
+msgstr "Évolution de l’activité"
+
+msgid "Cash flow trends"
+msgstr "Évolution de la trésorerie"
+
+msgid "Administrative expenses by category"
+msgstr "Dépenses administratives par catégorie"
+
+msgid "Expense date basis; voided expenses excluded."
+msgstr "Selon la date de dépense ; dépenses annulées exclues."
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Subcategory"
+msgstr "Sous-catégorie"
+
+msgid "Amount (EUR)"
+msgstr "Montant (EUR)"
+
+msgid "Share of administrative expenses"
+msgstr "Part des dépenses administratives"
+
+msgid "Details"
+msgstr "Détails"
+
+msgid "View category"
+msgstr "Voir les dépenses de la catégorie"
+
+msgid "Show subcategories"
+msgstr "Afficher les sous-catégories"
+
+msgid "Monthly figures for the displayed trends"
+msgstr "Voir les données mensuelles des graphiques"
+
+msgid "Month"
+msgstr "Mois"
+
+msgid "Generated at"
+msgstr "Données générées le"
+
+msgid "Chart series"
+msgstr "Séries du graphique"
+
+msgid "Select a legend item to show or hide a series. Hover over the chart for exact monthly amounts; the monthly figures below also include every series."
+msgstr "Cliquez sur une légende pour afficher ou masquer une série. Survolez le graphique pour les montants mensuels exacts ; le tableau ci-dessous contient toutes les séries."
+
+msgid "Choose a month that supports a complete 12-month reporting period."
+msgstr "Choisissez un mois permettant une période complète de 12 mois."
+
+msgid "Choose exactly one reporting month."
+msgstr "Choisissez un seul mois d’analyse."
+

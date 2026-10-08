@@ -1,0 +1,7 @@
+{% load i18n %}
+<section class="finance-panel operating-chart-panel" data-operating-chart="{{ chart_key }}">
+<div class="panel-heading"><div><h2>{{ chart_title }}</h2><p class="finance-subtitle">{{ trend_start }} — {{ month }}</p></div></div>
+<div class="operating-chart-legend" aria-label="{% trans 'Chart series' %}"></div>
+<div class="finance-chart-wrap"><canvas class="finance-chart" role="img" aria-label="{{ chart_title }}"></canvas><div class="operating-chart-tooltip" hidden></div></div>
+<p class="operating-chart-help">{% trans "Select a legend item to show or hide a series. Hover over the chart for exact monthly amounts; the monthly figures below also include every series." %}</p>
+</section>

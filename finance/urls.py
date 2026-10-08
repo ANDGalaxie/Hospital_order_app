@@ -7,6 +7,7 @@ app_name = "finance"
 
 
 urlpatterns = [
+    path("operations/", views.operating_dashboard, name="operating_dashboard"),
     path(
         "",
         views.settlement_dashboard,

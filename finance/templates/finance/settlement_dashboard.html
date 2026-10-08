@@ -35,6 +35,9 @@
     </div>
 
     <div class="finance-header-actions">
+        {% if show_operating_analysis %}
+        <a class="secondary-button" href="{% url 'portal:finance:operating_dashboard' %}">{% trans "Operating Analysis" %}</a>
+        {% endif %}
         <span class="currency-badge">
             {% blocktrans trimmed with value1=reporting_currency %}记账币种：{{ value1 }}{% endblocktrans %}
         </span>

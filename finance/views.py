@@ -2,6 +2,11 @@ from django.utils.translation import gettext as _
 from portal.i18n import display_choices
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+from django.views.decorators.http import require_safe
+
+from hospital_engagements.boss_access import boss_account_required, is_boss_user
+from finance.services.operating_finance_service import build_operating_finance_context
 from django.shortcuts import render
 from django.utils.dateparse import parse_date
 
@@ -278,6 +283,7 @@ def settlement_dashboard(request):
             ]
         ),
         "export_url": export_url,
+        "show_operating_analysis": is_boss_user(request.user),
         "accrual_rows": (
             build_accrual_rows(
                 dashboard_data[
@@ -357,4 +363,27 @@ def settlement_dashboard_export(
         "X-Content-Type-Options"
     ] = "nosniff"
 
+    return response
+
+
+@boss_account_required
+@require_safe
+def operating_dashboard(request):
+    month = request.GET.get("month")
+    try:
+        if len(request.GET.getlist("month")) > 1:
+            raise ValidationError(_("Choose exactly one reporting month."))
+        context = build_operating_finance_context(month=month)
+    except ValidationError as exc:
+        context = {"month": month or "", "filter_errors": exc.messages}
+        status = 400
+    else:
+        status = 200
+    context.update(
+        lang=get_portal_lang(request),
+        user_display_name=get_user_display_name(request.user),
+    )
+    response = render(request, "finance/operating_dashboard.html", context, status=status)
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
     return response
