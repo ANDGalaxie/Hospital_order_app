@@ -5837,3 +5837,7 @@ msgstr "Nécessite les échéances et les données d’encaissement ; calcul en 
 #: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
 msgid "暂无订单与批次记录。"
 msgstr "Aucune commande ni aucun lot pour le moment."
+
+#: portal/templates/portal/base.html
+msgid "负责人 · Acoeurs"
+msgstr "Responsable · Acoeurs"

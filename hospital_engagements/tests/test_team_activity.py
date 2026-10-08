@@ -3,8 +3,8 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser, Permission
+from django.contrib.auth import SESSION_KEY, authenticate, get_user_model
+from django.contrib.auth.models import AnonymousUser, Group, Permission
 from django.db import connection
 from django.http import QueryDict
 from django.test import RequestFactory, TestCase
@@ -29,7 +29,7 @@ User = get_user_model()
 class TeamActivityAccessTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.boss = User.objects.create_user("Acoeur", is_staff=True)
+        cls.boss = User.objects.create_user("Acoeurs", is_staff=True)
         cls.similar = User.objects.create_user("acoeurs", is_staff=True)
         cls.staff = User.objects.create_user("Claire", is_staff=True)
         cls.admin = User.objects.create_user("another-admin", is_staff=True, is_superuser=True)
@@ -40,14 +40,60 @@ class TeamActivityAccessTests(TestCase):
         return self.client.get(reverse("portal:home")).context["modules"]
 
     def test_exact_boss_constant_and_active_authenticated_semantics(self):
-        self.assertEqual(BOSS_USERNAME, "Acoeur")
+        self.assertEqual(BOSS_USERNAME, "Acoeurs")
         self.assertTrue(is_boss_user(self.boss))
         self.assertFalse(is_boss_user(AnonymousUser()))
-        for name in ("acoeur", "ACOEUR", "acoeurs", "Acoeur2", " Acoeur"):
+        for name in ("Acoeur", "acoeur", "ACOEUR", "acoeurs", "ACOEURS", "Acoeurs2", " Acoeurs", "Acoeurs "):
             with self.subTest(name=name):
                 self.assertFalse(is_boss_user(User(username=name, is_active=True, is_superuser=True)))
         self.boss.is_active = False
         self.assertFalse(is_boss_user(self.boss))
+
+    def test_old_username_is_denied_even_with_admin_and_engagement_permissions(self):
+        previous = User.objects.create_user("Acoeur", is_staff=True, is_superuser=True)
+        self.client.force_login(previous)
+        self.assertNotIn(self.url, [m["url"] for m in self.client.get(reverse("portal:home")).context["modules"]])
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+    def test_username_only_sync_keeps_identity_credentials_permissions_and_history(self):
+        # The synchronization happens solely inside this isolated test database.
+        self.boss.username = "Acoeur"
+        self.boss.first_name = "Historical name"
+        self.boss.is_superuser = True
+        self.boss.set_password("synthetic-only")
+        self.boss.save()
+        group = Group.objects.create(name="Boss identity regression")
+        self.boss.groups.add(group)
+        self.boss.user_permissions.add(Permission.objects.get(
+            content_type__app_label="hospital_engagements", codename="access_hospital_engagement",
+        ))
+        hospital = Hospital.objects.create(name="Rename history hospital")
+        engagement = hospital.engagement
+        engagement.owner = self.boss
+        engagement.save(update_fields=["owner"])
+        history = HospitalFollowUp.objects.create(engagement=engagement, created_by=self.boss,
+                                                  occurred_at=timezone.now(), summary="Historical record")
+        self.client.force_login(self.boss)
+        identity_fields = ("id", "password", "first_name", "last_name", "is_active", "is_staff", "is_superuser")
+        before = User.objects.filter(pk=self.boss.pk).values(*identity_fields).get()
+        groups = list(self.boss.groups.values_list("pk", flat=True))
+        permissions = list(self.boss.user_permissions.values_list("pk", flat=True))
+        self.assertFalse(User.objects.filter(username="Acoeurs").exists())
+        self.boss.username = "Acoeurs"
+        self.boss.save(update_fields=["username"])
+        self.assertEqual(before, User.objects.filter(pk=self.boss.pk).values(*identity_fields).get())
+        self.assertEqual(groups, list(self.boss.groups.values_list("pk", flat=True)))
+        self.assertEqual(permissions, list(self.boss.user_permissions.values_list("pk", flat=True)))
+        engagement.refresh_from_db()
+        history.refresh_from_db()
+        self.assertEqual(engagement.owner_id, self.boss.pk)
+        self.assertEqual((history.created_by_id, history.summary), (self.boss.pk, "Historical record"))
+        self.assertEqual(authenticate(username="Acoeurs", password="synthetic-only").pk, self.boss.pk)
+        self.assertIsNone(authenticate(username="Acoeur", password="synthetic-only"))
+        self.assertEqual(self.client.session[SESSION_KEY], str(self.boss.pk))
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
 
     def test_boss_home_card_without_engagement_permission(self):
         self.assertFalse(self.boss.has_perm(ACCESS_PERMISSION))
@@ -55,7 +101,7 @@ class TeamActivityAccessTests(TestCase):
         self.assertEqual(len([m for m in modules if m["url"] == self.url]), 1)
         self.assertNotIn(reverse("portal:engagement_home"), [m["url"] for m in modules])
 
-    def test_acoeurs_home_card_hidden(self):
+    def test_similar_username_home_card_hidden(self):
         self.assertNotIn(self.url, [m["url"] for m in self.home_modules(self.similar)])
 
     def test_other_staff_home_card_hidden_even_with_engagement_permission(self):
@@ -78,7 +124,7 @@ class TeamActivityAccessTests(TestCase):
         self.assertEqual(self.boss.user_permissions.count(), 0)
         self.assertEqual(self.boss.groups.count(), 0)
 
-    def test_acoeurs_direct_url_403(self):
+    def test_similar_username_direct_url_403(self):
         self.client.force_login(self.similar)
         self.assertEqual(self.client.get(self.url).status_code, 403)
 
@@ -128,7 +174,7 @@ class TeamActivityDataTests(TestCase):
     def setUpTestData(cls):
         cls.claire = User.objects.create_user("Claire", is_staff=True)
         cls.alice = User.objects.create_user("Alice", is_staff=True)
-        cls.boss = User.objects.create_user("Acoeur", is_staff=True)
+        cls.boss = User.objects.create_user("Acoeurs", is_staff=True)
         cls.hospital = Hospital.objects.create(name="Hospital A")
         cls.second = Hospital.objects.create(name="Hospital B")
         cls.engagement = cls.hospital.engagement

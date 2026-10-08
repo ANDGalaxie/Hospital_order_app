@@ -106,8 +106,8 @@ class CynthiaNavigationTests(FixtureMixin, TestCase):
         self.assertEqual(self.cynthia.get_all_permissions(), self.permissions_before)
         self.assertEqual((self.cynthia.password, self.cynthia.is_active, self.cynthia.is_staff, self.cynthia.is_superuser), self.identity_before)
 
-    def test_admin_navigation_still_visible_for_acoeur_and_other_members_of_same_group(self):
-        boss = get_user_model().objects.create_superuser(username="Acoeur", email="boss@example.test", password="synthetic-only")
+    def test_admin_navigation_still_visible_for_acoeurs_and_other_members_of_same_group(self):
+        boss = get_user_model().objects.create_superuser(username="Acoeurs", email="boss@example.test", password="synthetic-only")
         other = get_user_model().objects.create_user(username="another-internal", is_staff=True)
         other.groups.add(Group.objects.get(name=INTERNAL_GROUP))
         other.user_permissions.add(self.access)
@@ -124,6 +124,31 @@ class CynthiaNavigationTests(FixtureMixin, TestCase):
         self.assertTrue(portal_navigation(other)["show_admin"])
         self.client.force_login(boss)
         self.assertContains(self.client.get(reverse("portal:home")), 'href="/portal/hospital-engagements/team-activity/"')
+
+    def test_boss_display_uses_exact_username_despite_profile_and_child_role_override(self):
+        from hospital_engagements.boss_access import is_boss_user
+        from portal.services.common import get_user_display_name
+        boss = get_user_model().objects.create_superuser(username="Acoeurs", first_name="Acoeur",
+                                                         email="boss@example.test", password="synthetic-only")
+        self.assertEqual(get_user_display_name(boss), "Acoeurs")
+        ordinary = get_user_model()(username="ordinary-name", first_name="Acoeurs")
+        self.assertFalse(is_boss_user(ordinary))
+        self.assertEqual(get_user_display_name(ordinary), "Acoeurs")
+        self.client.force_login(boss)
+        for language, role in (("zh-hans", "负责人 · Acoeurs"), ("en", "Owner · Acoeurs"), ("fr", "Responsable · Acoeurs")):
+            self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = language
+            for path in (reverse("portal:home"), reverse("portal:team_activity"),
+                         reverse("portal:commercial_operations_detail", args=[self.batch.pk])):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                soup = BeautifulSoup(response.content, "html.parser")
+                self.assertEqual(soup.select_one(".user-name").get_text(strip=True), "Acoeurs")
+                self.assertEqual(soup.select_one(".user-role").get_text(strip=True), role)
+                self.assertEqual(soup.select_one(".brand-logo-img")["alt"], "Acoeur")
+                self.assertTrue(soup.select('form[action="/portal/logout/"]'))
+                if path == reverse("portal:home"):
+                    self.assertTrue(soup.select('a[href="/admin/"]'))
+                    self.assertTrue(soup.select('a[href="/portal/hospital-engagements/team-activity/"]'))
 
     def test_claire_five_cards_and_demo_isolation_unchanged(self):
         claire = get_user_model().objects.create_user(username="Claire")

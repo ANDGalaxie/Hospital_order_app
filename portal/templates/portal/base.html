@@ -60,9 +60,9 @@
 
             <div class="user-text">
                 <div class="user-name">
-                    {% firstof user_display_name request.user.get_full_name request.user.username "Acoeur" %}
+                    {% if is_portal_boss %}{{ request.user.username }}{% else %}{% firstof user_display_name request.user.get_full_name request.user.username "Acoeur" %}{% endif %}
                 </div>
-                <div class="user-role">{% block user_role %}{% if is_hospital_browser %}Acoeur{% elif is_hospital_demo %}{% trans "商业展示 · Acoeur" %}{% else %}{% trans "操作员 · Acoeur" %}{% endif %}{% endblock %}</div>
+                <div class="user-role">{% if is_portal_boss %}{% trans "负责人 · Acoeurs" %}{% else %}{% block user_role %}{% if is_hospital_browser %}Acoeur{% elif is_hospital_demo %}{% trans "商业展示 · Acoeur" %}{% else %}{% trans "操作员 · Acoeur" %}{% endif %}{% endblock %}{% endif %}</div>
             </div>
 
             {% if portal_admin_visible and request.user.is_staff and not is_hospital_demo and not is_showcase_page %}<a class="admin-link" href="/admin/">Admin</a>{% endif %}

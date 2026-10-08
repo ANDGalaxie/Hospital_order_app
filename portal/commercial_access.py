@@ -83,6 +83,8 @@ def showcase_flags(request):
     # A display context never needs permission maps or internal navigation data.
     from portal.role_access import portal_navigation, portal_role
     role = portal_role(request.user)
-    return {"portal_admin_visible": portal_navigation(request.user, role=role)["show_admin"],
+    from hospital_engagements.boss_access import is_boss_user
+    return {"is_portal_boss": is_boss_user(request.user),
+            "portal_admin_visible": portal_navigation(request.user, role=role)["show_admin"],
             "is_hospital_demo": demo, "is_hospital_browser": role == "hospital",
             "is_showcase_page": request.path_info.startswith("/portal/commercial/")}

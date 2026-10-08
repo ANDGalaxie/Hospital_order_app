@@ -5756,3 +5756,7 @@ msgstr "Requires payment terms and receipt data; calculation pending."
 #: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
 msgid "暂无订单与批次记录。"
 msgstr "No order or batch records yet."
+
+#: portal/templates/portal/base.html
+msgid "负责人 · Acoeurs"
+msgstr "Owner · Acoeurs"

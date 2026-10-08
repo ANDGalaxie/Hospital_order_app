@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 
-BOSS_USERNAME = "Acoeur"
+BOSS_USERNAME = "Acoeurs"
 
 
 def is_boss_user(user):

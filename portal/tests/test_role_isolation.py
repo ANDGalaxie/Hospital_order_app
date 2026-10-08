@@ -122,7 +122,7 @@ class PortalRoleIsolationTests(FixtureMixin, TestCase):
                 self.assertEqual(getattr(self.client, method)(reverse(route, args=args)).status_code, 403)
         self.assertTrue(self.cynthia.groups.filter(name=INTERNAL_GROUP).exists())
         self.assertEqual(self.client.get("/portal/workflow/").status_code, 200)
-        boss = get_user_model().objects.create_superuser(username="Acoeur", email="boss@example.test", password="test-only")
+        boss = get_user_model().objects.create_superuser(username="Acoeurs", email="boss@example.test", password="test-only")
         self.client.force_login(boss)
         self.assertEqual(self.client.get(reverse("admin:auth_user_changelist")).status_code, 200)
 
@@ -189,7 +189,7 @@ class PortalRoleIsolationTests(FixtureMixin, TestCase):
         for user, expected in ((self.user, ["资料库", "医院订单", "工厂采购", "工作流", "文档中心", "财务数据", "发票与结算"]),):
             response, modules = self.modules(user)
             self.assertEqual([title for title, url in modules], expected)
-        boss = get_user_model().objects.create_superuser(username="Acoeur", email="boss@example.test", password="test-only")
+        boss = get_user_model().objects.create_superuser(username="Acoeurs", email="boss@example.test", password="test-only")
         response, modules = self.modules(boss)
         self.assertTrue(is_boss_user(boss))
         self.assertIn("团队工作概览", [title for title, url in modules])

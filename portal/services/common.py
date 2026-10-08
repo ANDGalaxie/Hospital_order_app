@@ -17,6 +17,9 @@ def get_portal_lang(request):
 
 
 def get_user_display_name(user):
+    from hospital_engagements.boss_access import BOSS_USERNAME, is_boss_user
+    if is_boss_user(user):
+        return BOSS_USERNAME
     return user.get_full_name() or user.username
 
 

@@ -21,7 +21,7 @@ class PortalLogoutTests(TestCase):
         hospital.permissions.add(*[p for p in Permission.objects.select_related("content_type")
                                   if f"{p.content_type.app_label}.{p.codename}" in BROWSE_PERMISSIONS])
         cls.claire.groups.add(hospital)
-        cls.boss = User.objects.create_user(username="Acoeur", is_staff=True, is_superuser=True)
+        cls.boss = User.objects.create_user(username="Acoeurs", is_staff=True, is_superuser=True)
         cls.staff = User.objects.create_user(username="ordinary-staff", is_staff=True)
         cls.demo = User.objects.create_user(username="hospital-demo")
         cls.demo.groups.add(Group.objects.get_or_create(name="Hospital Demo")[0])
@@ -90,7 +90,7 @@ class PortalLogoutTests(TestCase):
         self.assertIn(SESSION_KEY, client.session)
         self.assertEqual(client.get("/portal/").status_code, 200)
 
-    def test_acoeur_admin_and_existing_logout_routes_remain_available(self):
+    def test_acoeurs_admin_and_existing_logout_routes_remain_available(self):
         for path in ("/portal/", "/portal/commercial/operations/"):
             client, response, soup, form = self.logged_page(self.boss, path)
             self.assertEqual(form["action"], reverse("portal:showcase_logout"))
