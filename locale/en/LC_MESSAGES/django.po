@@ -5612,3 +5612,147 @@ msgstr "Choose a business module."
 #: portal/hospital_browse
 msgid "原始 PDF"
 msgstr "Original PDF"
+
+#: portal/services/commercial_finance_service.py
+msgid "财务概览"
+msgstr "Financial overview"
+
+#: portal/services/commercial_finance_service.py
+msgid "销售额与毛利仅统计同批次已生成的销售发票和采购订单；原始订单金额单独列示。"
+msgstr "Sales and gross profit cover batches with both a sales invoice and a purchase order. Original order amounts are shown separately."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售与采购"
+msgstr "Sales and purchases"
+
+#: portal/services/commercial_finance_service.py
+msgid "收付款"
+msgstr "Receipts and payments"
+
+#: portal/services/commercial_finance_service.py
+msgid "现金流"
+msgstr "Cash flow"
+
+#: portal/services/commercial_finance_service.py
+msgid "收付款指标暂不提供。"
+msgstr "Cash and payment metrics are currently unavailable."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售额来自发票产品行；缺少可靠明细时不分摊金额。"
+msgstr "Product sales come from frozen invoice lines; amounts are not allocated when reliable detail is unavailable."
+
+#: portal/services/commercial_finance_service.py
+msgid "订单与批次金额"
+msgstr "Order and batch amounts"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额合计"
+msgstr "Total original order amount"
+
+#: portal/services/commercial_finance_service.py
+msgid "已匹配批次"
+msgstr "Matched batches"
+
+#: portal/services/commercial_finance_service.py
+msgid "待匹配批次"
+msgstr "Batches awaiting matching"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额"
+msgstr "Original order amount"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额按订单数量与医院价格快照计算；开票金额取销售发票冻结总额，采购金额取采购订单冻结总额。"
+msgstr "Original order amounts use order quantities and hospital price snapshots. Invoiced sales and purchases use their frozen document totals."
+
+#: portal/services/commercial_finance_service.py
+msgid "仅统计同批次已生成的销售发票与采购订单冻结金额。"
+msgstr "Frozen totals for batches with both a sales invoice and a purchase order."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售发票未生成"
+msgstr "Sales invoice not generated"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购订单未生成"
+msgstr "Purchase order not generated"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购已付金额"
+msgstr "Purchase payments"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购待付余额"
+msgstr "Outstanding purchase balance"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购付款"
+msgstr "Purchase payments"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已生成采购订单"
+msgstr "Generated purchase orders"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院订单数"
+msgstr "Hospital order count"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "产品总件数"
+msgstr "Total product units"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购订单总金额"
+msgstr "Total purchase order amount"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院已开票金额"
+msgstr "Hospital invoiced amount"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购订单金额"
+msgstr "Purchase order amount"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已匹配批次的医院发票冻结总额。"
+msgstr "Frozen hospital invoice totals for matched batches."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已匹配批次的采购订单冻结总额。"
+msgstr "Frozen purchase order totals for matched batches."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院已开票金额减采购订单金额。"
+msgstr "Hospital invoiced amount less purchase order amount."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "预计毛利占医院已开票金额的比例。"
+msgstr "Estimated gross profit as a share of the hospital invoiced amount."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院收款数据暂未提供。"
+msgstr "Hospital receipt data is not yet available."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购付款数据暂未提供。"
+msgstr "Purchase payment data is not yet available."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需收款及付款数据，暂不计算。"
+msgstr "Requires receipt and payment data; calculation pending."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需医院收款数据，暂不计算。"
+msgstr "Requires hospital receipt data; calculation pending."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需采购付款数据，暂不计算。"
+msgstr "Requires purchase payment data; calculation pending."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需账期及收款数据，暂不计算。"
+msgstr "Requires payment terms and receipt data; calculation pending."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "暂无订单与批次记录。"
+msgstr "No order or batch records yet."

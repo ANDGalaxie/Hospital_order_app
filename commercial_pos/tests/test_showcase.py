@@ -194,6 +194,7 @@ class ShowcaseSecurityTests(FixtureMixin, TestCase):
             product_code=self.order_item.product_code, serial_number="SYN-B2", expiration_date=date(2028, 1, 1))
         make_factory_po(self.user, batch)
         self.make_document("commercial_po", "CPO-147891-B2", build_commercial_snapshot(batch), batch=batch)
+        self.make_document("hospital_invoice", "Invoice B2", {"invoice_data": {"totals": {"total_raw": "270.00"}}}, batch=batch)
         response = self.client.get(self.pages[2])
         cards = response.context["cards"]
         self.assertEqual([card["value"] for card in cards], [2, 1, "2", "320.00 €"])

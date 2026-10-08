@@ -34,7 +34,7 @@ class CommercialUIParityTests(FixtureMixin, TestCase):
         self.client.force_login(self.demo)
         self.factory_po = make_factory_po(self.user, self.batch, number="DELAHK-PRIVATE")
         self.cpo = self.make_document("commercial_po", "CPO-147891-B1", build_commercial_snapshot(self.batch))
-        self.invoice = self.make_document("hospital_invoice", "INVOICE-B1", {})
+        self.invoice = self.make_document("hospital_invoice", "INVOICE-B1", {"invoice_data": {"totals": {"total_raw": "270.00"}}})
 
 
     def detail(self, batch, operations=False):
@@ -111,7 +111,7 @@ class CommercialUIParityTests(FixtureMixin, TestCase):
                       "finance-chart-wrap", "finance-table", "table-scroll", "order-panel", "finance-footer"):
             self.assertContains(response, value)
         self.assertEqual(len(response.context["kpi_cards"]), 10)
-        self.assertContains(response, f'{len(response.context["order_rows"])} Commercial PO')
+        self.assertContains(response, f'批次: {len(response.context["order_rows"])}')
         for key in ("cards", "kpi_cards", "groups", "order_rows", "chart_data", "monthly_rows", "hospital_rows", "product_rows"):
             dto = json.dumps(response.context[key], default=str)
             for value in ("DELAHK", "84.00", "120.00", "factory_po", "price_policy", "/admin/", "source_data"):

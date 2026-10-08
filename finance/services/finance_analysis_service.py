@@ -32,6 +32,11 @@ def money(value):
     return to_decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
+def calculate_hospital_revenue(quantity, unit_price):
+    """Revenue from a caller-selected quantity and the order price snapshot."""
+    return money(to_decimal(quantity) * to_decimal(unit_price))
+
+
 def money_float(value):
     return float(money(value))
 
@@ -226,7 +231,7 @@ def build_finance_dashboard_data():
 
             hospital_unit_price, _, _ = get_item_prices(item)
 
-            item_revenue = money(hospital_unit_price * confirmed_quantity)
+            item_revenue = calculate_hospital_revenue(confirmed_quantity, hospital_unit_price)
 
             serials = serials_by_order_product.get((order.id, product_code), [])
             item_factory_cost = calculate_factory_cost_for_item(item, serials)
@@ -295,7 +300,7 @@ def build_finance_dashboard_data():
             continue
 
         hospital_unit_price, _, _ = get_item_prices(order_item)
-        this_month_shipped_revenue += money(hospital_unit_price * quantity)
+        this_month_shipped_revenue += calculate_hospital_revenue(quantity, hospital_unit_price)
 
     # 当前待发销售额 / 当前待发预计毛利润
     backorder_revenue = ZERO
@@ -318,7 +323,7 @@ def build_finance_dashboard_data():
 
         hospital_unit_price, factory_unit_price, _ = get_item_prices(order_item)
 
-        line_revenue = money(hospital_unit_price * quantity)
+        line_revenue = calculate_hospital_revenue(quantity, hospital_unit_price)
         line_cost = money(factory_unit_price * quantity)
         line_profit = money(line_revenue - line_cost)
 

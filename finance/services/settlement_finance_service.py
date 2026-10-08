@@ -63,6 +63,31 @@ def format_percent(value):
     )
 
 
+def calculate_accrual_totals(sales, purchases):
+    """The dashboard's existing profit/margin formula, without data queries."""
+    sales, purchases = money(sales), money(purchases)
+    profit = money(sales - purchases)
+    return {"sales_total": sales, "purchase_total": purchases,
+            "gross_profit": profit, "gross_margin": profit / sales if sales > ZERO else ZERO}
+
+
+def add_accrual_amount(summary, key, *, sales=ZERO, purchases=ZERO):
+    """Accumulate the same cent-rounded amounts for any grouping key."""
+    row = summary.setdefault(key, {"sales": ZERO, "purchases": ZERO})
+    row["sales"] += money(sales)
+    row["purchases"] += money(purchases)
+
+
+def build_accrual_chart(monthly_accrual):
+    """Existing monthly sales/purchases/profit series with stable ordering."""
+    chart = {"labels": sorted(monthly_accrual), "sales": [], "purchases": [], "gross_profit": []}
+    for month in chart["labels"]:
+        totals = calculate_accrual_totals(monthly_accrual[month]["sales"], monthly_accrual[month]["purchases"])
+        for key, field in (("sales", "sales_total"), ("purchases", "purchase_total"), ("gross_profit", "gross_profit")):
+            chart[key].append(float(totals[field]))
+    return chart
+
+
 def get_order_party_names(
     order,
     account,
@@ -499,9 +524,7 @@ def build_settlement_finance_dashboard_data(
                 remaining_amount
             )
 
-            monthly_accrual[
-                month_key
-            ]["sales"] += original_amount
+            add_accrual_amount(monthly_accrual, month_key, sales=original_amount)
 
             row["invoice_numbers"].append(
                 document.document_number
@@ -576,11 +599,7 @@ def build_settlement_finance_dashboard_data(
                 remaining_amount
             )
 
-            monthly_accrual[
-                month_key
-            ]["purchases"] += (
-                original_amount
-            )
+            add_accrual_amount(monthly_accrual, month_key, purchases=original_amount)
 
             row["po_numbers"].append(
                 document.document_number
@@ -596,23 +615,14 @@ def build_settlement_finance_dashboard_data(
                 "payable_remaining"
             ] += remaining_amount
 
-    gross_profit = money(
-        sales_total
-        - purchase_total
-    )
+    accrual_totals = calculate_accrual_totals(sales_total, purchase_total)
+    gross_profit = accrual_totals["gross_profit"]
+    gross_margin = accrual_totals["gross_margin"]
 
     cash_net_inflow = money(
         receipt_total
         - payment_total
     )
-
-    if sales_total > ZERO:
-        gross_margin = (
-            gross_profit
-            / sales_total
-        )
-    else:
-        gross_margin = ZERO
 
     order_rows = []
 
@@ -661,52 +671,10 @@ def build_settlement_finance_dashboard_data(
         reverse=True,
     )
 
-    accrual_months = sorted(
-        monthly_accrual.keys()
-    )
-
+    accrual_chart = build_accrual_chart(monthly_accrual)
     cash_months = sorted(
         monthly_cash.keys()
     )
-
-    accrual_chart = {
-        "labels": accrual_months,
-        "sales": [],
-        "purchases": [],
-        "gross_profit": [],
-    }
-
-    for month_key in accrual_months:
-        sales = money(
-            monthly_accrual[
-                month_key
-            ]["sales"]
-        )
-
-        purchases = money(
-            monthly_accrual[
-                month_key
-            ]["purchases"]
-        )
-
-        accrual_chart[
-            "sales"
-        ].append(float(sales))
-
-        accrual_chart[
-            "purchases"
-        ].append(float(purchases))
-
-        accrual_chart[
-            "gross_profit"
-        ].append(
-            float(
-                money(
-                    sales
-                    - purchases
-                )
-            )
-        )
 
     cash_chart = {
         "labels": cash_months,

@@ -5693,3 +5693,147 @@ msgstr "Choisissez un module métier."
 #: portal/hospital_browse
 msgid "原始 PDF"
 msgstr "PDF original"
+
+#: portal/services/commercial_finance_service.py
+msgid "财务概览"
+msgstr "Vue financière"
+
+#: portal/services/commercial_finance_service.py
+msgid "销售额与毛利仅统计同批次已生成的销售发票和采购订单；原始订单金额单独列示。"
+msgstr "Les ventes et la marge brute portent sur les lots avec une facture de vente et un bon de commande. Les montants initiaux des commandes sont présentés séparément."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售与采购"
+msgstr "Ventes et achats"
+
+#: portal/services/commercial_finance_service.py
+msgid "收付款"
+msgstr "Encaissements et paiements"
+
+#: portal/services/commercial_finance_service.py
+msgid "现金流"
+msgstr "Flux de trésorerie"
+
+#: portal/services/commercial_finance_service.py
+msgid "收付款指标暂不提供。"
+msgstr "Les indicateurs d’encaissement et de paiement ne sont pas disponibles."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售额来自发票产品行；缺少可靠明细时不分摊金额。"
+msgstr "Les ventes par produit proviennent des lignes figées des factures ; aucun montant n’est réparti en l’absence de détails fiables."
+
+#: portal/services/commercial_finance_service.py
+msgid "订单与批次金额"
+msgstr "Montants des commandes et des lots"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额合计"
+msgstr "Total des montants initiaux des commandes"
+
+#: portal/services/commercial_finance_service.py
+msgid "已匹配批次"
+msgstr "Lots rapprochés"
+
+#: portal/services/commercial_finance_service.py
+msgid "待匹配批次"
+msgstr "Lots à rapprocher"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额"
+msgstr "Montant initial de la commande"
+
+#: portal/services/commercial_finance_service.py
+msgid "原始订单金额按订单数量与医院价格快照计算；开票金额取销售发票冻结总额，采购金额取采购订单冻结总额。"
+msgstr "Les montants initiaux utilisent les quantités commandées et les prix hospitaliers figés. Les ventes facturées et les achats utilisent les totaux figés des documents."
+
+#: portal/services/commercial_finance_service.py
+msgid "仅统计同批次已生成的销售发票与采购订单冻结金额。"
+msgstr "Totaux figés des lots disposant d’une facture de vente et d’un bon de commande."
+
+#: portal/services/commercial_finance_service.py
+msgid "销售发票未生成"
+msgstr "Facture de vente non générée"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购订单未生成"
+msgstr "Bon de commande non généré"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购已付金额"
+msgstr "Paiements des achats"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购待付余额"
+msgstr "Solde des achats à payer"
+
+#: portal/services/commercial_finance_service.py
+msgid "采购付款"
+msgstr "Paiements des achats"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已生成采购订单"
+msgstr "Bons de commande générés"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院订单数"
+msgstr "Nombre de commandes hospitalières"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "产品总件数"
+msgstr "Nombre total d’unités"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购订单总金额"
+msgstr "Montant total des bons de commande"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院已开票金额"
+msgstr "Montant facturé aux hôpitaux"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购订单金额"
+msgstr "Montant des bons de commande"
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已匹配批次的医院发票冻结总额。"
+msgstr "Totaux figés des factures hospitalières des lots rapprochés."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "已匹配批次的采购订单冻结总额。"
+msgstr "Totaux figés des bons de commande des lots rapprochés."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院已开票金额减采购订单金额。"
+msgstr "Montant facturé aux hôpitaux moins montant des bons de commande."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "预计毛利占医院已开票金额的比例。"
+msgstr "Part du montant facturé aux hôpitaux correspondant à la marge brute estimée."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "医院收款数据暂未提供。"
+msgstr "Les données d’encaissement des hôpitaux ne sont pas encore disponibles."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "采购付款数据暂未提供。"
+msgstr "Les données de paiement des achats ne sont pas encore disponibles."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需收款及付款数据，暂不计算。"
+msgstr "Nécessite les données d’encaissement et de paiement ; calcul en attente."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需医院收款数据，暂不计算。"
+msgstr "Nécessite les données d’encaissement des hôpitaux ; calcul en attente."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需采购付款数据，暂不计算。"
+msgstr "Nécessite les données de paiement des achats ; calcul en attente."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "需账期及收款数据，暂不计算。"
+msgstr "Nécessite les échéances et les données d’encaissement ; calcul en attente."
+
+#: portal/services/commercial_finance_service.py portal/templates/portal/commercial/finance.html
+msgid "暂无订单与批次记录。"
+msgstr "Aucune commande ni aucun lot pour le moment."
