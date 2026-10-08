@@ -1,0 +1,1 @@
+<div class="kpis">{% for card in cards %}<div class="kpi"><div class="kpi-label">{{ card.label }}</div><div class="kpi-value{% if card.negative %} negative{% endif %}">{{ card.value }}</div></div>{% endfor %}</div>

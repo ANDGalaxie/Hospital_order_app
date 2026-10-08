@@ -2,6 +2,12 @@ from django.utils.translation import gettext as _
 from portal.i18n import display_choices
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
+from django.urls import reverse
+import logging
+
+from finance.services.finance_pdf_export_service import build_operating_pdf, build_settlement_pdf
+
+logger = logging.getLogger(__name__)
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_safe
 
@@ -283,6 +289,7 @@ def settlement_dashboard(request):
             ]
         ),
         "export_url": export_url,
+        "pdf_export_url": reverse("portal:finance:settlement_dashboard_export_pdf") + ("?" + query_string if query_string else ""),
         "show_operating_analysis": is_boss_user(request.user),
         "accrual_rows": (
             build_accrual_rows(
@@ -374,6 +381,7 @@ def operating_dashboard(request):
         if len(request.GET.getlist("month")) > 1:
             raise ValidationError(_("Choose exactly one reporting month."))
         context = build_operating_finance_context(month=month)
+        context["pdf_export_url"] = reverse("portal:finance:operating_dashboard_export_pdf") + "?month=" + context["month"]
     except ValidationError as exc:
         context = {"month": month or "", "filter_errors": exc.messages}
         status = 400
@@ -387,3 +395,59 @@ def operating_dashboard(request):
     response["Cache-Control"] = "private, no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def _pdf_response(result):
+    response = HttpResponse(result["content"], content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="' + result["filename"] + '"'
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def _pdf_error(message, status):
+    response = HttpResponse(message, status=status, content_type="text/plain; charset=utf-8")
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@staff_member_required
+@require_safe
+def settlement_dashboard_export_pdf(request):
+    try:
+        filter_state = parse_finance_filters(request)
+    except ValueError:
+        return _pdf_error(_("Invalid financial filters."), 400)
+    errors = list(filter_state["errors"])
+    # The original parser ignores unknown statuses. PDF must reject these rather than broaden a report.
+    from settlements.models import SettlementAccount
+    status = filter_state["filter_values"]["status"]
+    if status and status not in SettlementAccount.Status.values:
+        errors.append(_("Invalid settlement status."))
+    if any(len(request.GET.getlist(key)) > 1 for key in ("date_from", "date_to", "hospital", "factory", "order", "status")):
+        errors.append(_("Choose exactly one value for each financial filter."))
+    if errors:
+        return _pdf_error("\n".join(errors), 400)
+    try:
+        return _pdf_response(build_settlement_pdf(
+            filter_values=filter_state["filter_values"], parsed_filters=filter_state["parsed_filters"],
+        ))
+    except Exception:
+        logger.exception("Financial actuals PDF generation failed")
+        return _pdf_error(_("PDF generation is temporarily unavailable. Please try again."), 503)
+
+
+@boss_account_required
+@require_safe
+def operating_dashboard_export_pdf(request):
+    try:
+        if len(request.GET.getlist("month")) > 1:
+            raise ValidationError(_("Choose exactly one reporting month."))
+        result = build_operating_pdf(month=request.GET.get("month"))
+    except ValidationError as exc:
+        return _pdf_error(" ".join(exc.messages), 400)
+    except Exception:
+        logger.exception("Operating analysis PDF generation failed")
+        return _pdf_error(_("PDF generation is temporarily unavailable. Please try again."), 503)
+    return _pdf_response(result)

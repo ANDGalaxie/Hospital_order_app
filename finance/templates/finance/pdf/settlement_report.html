@@ -1,0 +1,19 @@
+{% extends "finance/pdf/base.html" %}{% load i18n %}
+{% block report_content %}
+<h2>{% trans "Current filters" %}</h2><div class="filter-grid">{% for filter in filters %}<div><strong>{{ filter.label }}:</strong> {{ filter.value }}</div>{% endfor %}</div>
+<h2>{% trans "Key financial indicators" %}</h2>{% include "finance/pdf/kpis.html" with cards=kpi_cards %}
+<p class="note">{% trans "Frozen formal settlement amounts. Account issue dates and party filters define the account selection; cash flow includes posted transactions belonging to those accounts, grouped by payment date." %}</p>
+<p class="small">{% trans "Valid settlement accounts" %}: {{ account_count }} · {% trans "Posted transactions" %}: {{ transaction_count }}</p>
+{% for chart in charts %}{% include "finance/pdf/chart.html" %}{% endfor %}
+<section class="section-page"><h2>{% trans "Receivables risk" %}</h2>
+{% for risk in risks %}<h3>{{ risk.title }}</h3><p class="scope">{{ risk.scope }}</p><table><thead><tr><th>{% trans "Order" %}</th><th>{% trans "Document number" %}</th><th>{% trans "Counterparty" %}</th><th>{% trans "Due date" %}</th><th class="money">{% trans "Remaining amount" %}</th></tr></thead><tbody>
+{% for row in risk.rows %}<tr><td>{{ row.order_number }}</td><td>{{ row.document_number }}</td><td>{{ row.counterparty_name }}</td><td>{{ row.due_date|date:"Y-m-d" }}</td><td class="money">{{ row.remaining_display }}</td></tr>{% empty %}<tr><td colspan="5" class="empty">{% trans "No receivables in this risk group." %}</td></tr>{% endfor %}
+</tbody></table>{% endfor %}</section>
+<section class="section-page"><h2>{% trans "Order financial summary" %}</h2><p class="scope">{{ order_scope }} {% trans "Complete order details are available in the existing XLSX export." %}</p><p class="small">{% trans "Invoice/PO references longer than 180 characters are abbreviated with [...]. Complete references remain in XLSX." %}</p>
+<h3>{% trans "Orders and formal documents" %}</h3>
+<table class="order-identity"><thead><tr><th style="width:14%">{% trans "Order" %}</th><th style="width:23%">{% trans "Hospital" %}</th><th style="width:21%">{% trans "Factory" %}</th><th style="width:21%">Invoice</th><th style="width:21%">Factory PO</th></tr></thead><tbody>
+{% for row in order_rows %}<tr><td>{{ row.order_number }}</td><td>{{ row.hospital_name }}</td><td>{{ row.factory_name }}</td><td>{{ row.invoice_number_display }}</td><td>{{ row.po_number_display }}</td></tr>{% empty %}<tr><td colspan="5" class="empty">{% trans "No formal financial orders for this selection." %}</td></tr>{% endfor %}
+</tbody></table>
+<h3>{% trans "Order amounts" %}</h3><table class="order-amounts"><thead><tr><th style="width:16%">{% trans "Order" %}</th><th class="money">{% trans "Sales" %}</th><th class="money">{% trans "Purchases" %}</th><th class="money">{% trans "Estimated gross profit" %}</th><th class="money">{% trans "Received" %}</th><th class="money">{% trans "Paid" %}</th><th class="money">{% trans "Receivable balance" %}</th><th class="money">{% trans "Payable balance" %}</th></tr></thead><tbody>
+{% for row in order_rows %}<tr><td>{{ row.order_number }}</td><td class="money">{{ row.sales_display }}</td><td class="money">{{ row.purchases_display }}</td><td class="money{% if row.gross_profit < 0 %} negative{% endif %}">{{ row.gross_profit_display }}</td><td class="money">{{ row.received_display }}</td><td class="money">{{ row.paid_display }}</td><td class="money">{{ row.receivable_remaining_display }}</td><td class="money">{{ row.payable_remaining_display }}</td></tr>{% endfor %}
+</tbody></table></section>{% endblock %}

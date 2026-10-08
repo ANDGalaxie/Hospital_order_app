@@ -1,0 +1,16 @@
+{% extends "finance/pdf/base.html" %}{% load i18n %}
+{% block report_meta %}<span>{% trans "Reporting month" %}: {{ month }}</span><span>{% trans "Trend period" %}: {{ trend_start }} - {{ month }}</span>{% endblock %}
+{% block report_content %}
+{% for group in kpi_groups %}<h2>{{ group.label }}</h2>{% include "finance/pdf/kpis.html" with cards=group.cards %}{% endfor %}
+<p class="note">{% trans "Company-wide EUR estimates based on currently registered documents and expenses. VAT, income tax, depreciation, bank charges, unrecorded costs and accounting period adjustments may not be fully covered." %}</p>
+{% for chart in charts %}{% include "finance/pdf/chart.html" %}{% endfor %}
+<section class="section-page"><h2>{% trans "Administrative expenses by category" %}</h2><p class="small">{% trans "Expense date basis; voided expenses excluded." %}</p>
+<table><thead><tr><th style="width:60%">{% trans "Category" %}</th><th class="money">{% trans "Amount (EUR)" %}</th><th class="money">{% trans "Share of administrative expenses" %}</th></tr></thead><tbody>
+{% for row in categories %}<tr class="category-primary"><td>{{ row.label }}</td><td class="money">{{ row.amount_display }}</td><td class="money">{{ row.share_display }}</td></tr>{% for child in row.children %}<tr class="category-child"><td>{{ child.label }}</td><td class="money">{{ child.amount_display }}</td><td class="money">{{ child.share_display }}</td></tr>{% endfor %}{% endfor %}
+</tbody></table>
+<h2>{% trans "Financial reporting basis" %}</h2>
+<p>{% trans "Official invoices, factory purchase orders and registered administrative expenses." %}</p>
+<p>{% trans "Sales and purchases use account issue dates; administrative expenses use expense dates. Cash flow uses transaction payment dates and administrative payment dates, including payments for earlier months." %}</p>
+<p>{% trans "Administrative payment status is manually registered. The cash flow estimate is not a bank-reconciled cash balance. Administrative expenses are not allocated to hospitals or orders." %}</p>
+<p>{% trans "Estimated operating balance is not formal after-tax net profit. Taxes, depreciation, bank charges and unregistered expenses may not be fully covered." %}</p>
+</section>{% endblock %}

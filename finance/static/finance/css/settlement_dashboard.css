@@ -428,3 +428,6 @@
 .finance-export-button:hover {
     background: #ea580c;
 }
+
+.finance-export-buttons { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.finance-header-actions { flex-wrap:wrap; }

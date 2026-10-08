@@ -1,0 +1,7 @@
+{% load i18n %}
+<!doctype html><html lang="{{ LANGUAGE_CODE|default:'en' }}"><head><meta charset="utf-8"><title>Acoeurs - {{ report_title }}</title></head><body>
+<div class="brand">Acoeurs</div><h1>{{ report_title }}</h1>
+<div class="confidential">{% trans "Confidential - Internal Use" %}</div>
+<div class="meta"><span>{% trans "Currency" %}: {{ currency }}</span><span>{% trans "Generated at" %}: {{ generated_at|date:"Y-m-d H:i:s T" }}</span>{% block report_meta %}{% endblock %}</div>
+{% block report_content %}{% endblock %}
+</body></html>

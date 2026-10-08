@@ -124,3 +124,144 @@ msgstr "请选择支持完整 12 个月统计区间的月份。"
 msgid "Choose exactly one reporting month."
 msgstr "请仅选择一个统计月份。"
 
+msgid "Export PDF"
+msgstr "导出 PDF"
+
+msgid "Financial Actuals Report"
+msgstr "财务实绩报告"
+
+msgid "Company Operating Analysis"
+msgstr "公司经营分析报告"
+
+msgid "Confidential - Internal Use"
+msgstr "内部管理报告 - 仅供内部使用"
+
+msgid "Currency"
+msgstr "记账币种"
+
+msgid "Trend period"
+msgstr "趋势覆盖期间"
+
+msgid "Current filters"
+msgstr "当前筛选条件"
+
+msgid "Key financial indicators"
+msgstr "核心财务指标"
+
+msgid "Issue date from"
+msgstr "开立日期从"
+
+msgid "Issue date to"
+msgstr "开立日期至"
+
+msgid "Hospital"
+msgstr "医院"
+
+msgid "Factory"
+msgstr "工厂"
+
+msgid "Order"
+msgstr "订单号"
+
+msgid "Settlement status"
+msgstr "结算状态"
+
+msgid "Sales and purchase trends"
+msgstr "销售与采购趋势"
+
+msgid "Net cash inflow"
+msgstr "现金净流入"
+
+msgid "No trend data for this selection."
+msgstr "当前筛选暂无趋势数据。"
+
+msgid "Records shown: %(shown)s of %(total)s (limit %(limit)s)."
+msgstr "展示记录：%(shown)s / %(total)s（上限 %(limit)s）。"
+
+msgid "Receivables risk"
+msgstr "应收账款风险"
+
+msgid "Overdue receivables"
+msgstr "逾期应收"
+
+msgid "Receivables due within 30 days"
+msgstr "30 天内到期应收"
+
+msgid "Document number"
+msgstr "文档编号"
+
+msgid "Counterparty"
+msgstr "收款对象"
+
+msgid "Due date"
+msgstr "付款截止日期"
+
+msgid "Remaining amount"
+msgstr "待收余额"
+
+msgid "No receivables in this risk group."
+msgstr "当前风险分类暂无应收记录。"
+
+msgid "Order financial summary"
+msgstr "订单财务摘要"
+
+msgid "Complete order details are available in the existing XLSX export."
+msgstr "完整订单明细请使用现有 XLSX 导出。"
+
+msgid "Orders and formal documents"
+msgstr "订单与正式文档"
+
+msgid "No formal financial orders for this selection."
+msgstr "当前筛选暂无正式财务订单。"
+
+msgid "Order amounts"
+msgstr "订单金额"
+
+msgid "Sales"
+msgstr "销售额"
+
+msgid "Purchases"
+msgstr "采购额"
+
+msgid "Received"
+msgstr "已收"
+
+msgid "Paid"
+msgstr "已付"
+
+msgid "Receivable balance"
+msgstr "待收"
+
+msgid "Payable balance"
+msgstr "待付"
+
+msgid "Valid settlement accounts"
+msgstr "有效结算账户"
+
+msgid "Posted transactions"
+msgstr "有效收付款流水"
+
+msgid "Financial reporting basis"
+msgstr "财务口径说明"
+
+msgid "Frozen formal settlement amounts. Account issue dates and party filters define the account selection; cash flow includes posted transactions belonging to those accounts, grouped by payment date."
+msgstr "使用正式结算账户冻结金额。开立日期和医院、工厂等筛选条件决定账户范围；现金统计包含这些账户的有效流水，并按付款日期分组。"
+
+msgid "Estimated operating balance is not formal after-tax net profit. Taxes, depreciation, bank charges and unregistered expenses may not be fully covered."
+msgstr "预计经营结余不等于正式税后净利润，税费、折旧、银行手续费和未登记费用可能尚未完整覆盖。"
+
+msgid "Invalid financial filters."
+msgstr "财务筛选条件无效。"
+
+msgid "Invalid settlement status."
+msgstr "结算状态无效。"
+
+msgid "Choose exactly one value for each financial filter."
+msgstr "每项财务筛选条件只能指定一个值。"
+
+msgid "PDF generation is temporarily unavailable. Please try again."
+msgstr "PDF 暂时无法生成，请重试。"
+
+msgid "Invoice/PO references longer than 180 characters are abbreviated with [...]. Complete references remain in XLSX."
+msgstr "Invoice / PO 编号超过 180 个字符时以 [...] 明示缩写；完整编号请查看 XLSX。"
+

@@ -7,6 +7,8 @@ app_name = "finance"
 
 
 urlpatterns = [
+    path("export.pdf", views.settlement_dashboard_export_pdf, name="settlement_dashboard_export_pdf"),
+    path("operations/export.pdf", views.operating_dashboard_export_pdf, name="operating_dashboard_export_pdf"),
     path("operations/", views.operating_dashboard, name="operating_dashboard"),
     path(
         "",

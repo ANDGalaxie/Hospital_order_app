@@ -1,0 +1,5 @@
+{% load i18n %}
+<section class="section-page"><h2>{{ chart.title }}</h2><div class="chart">{{ chart.svg }}</div>
+<table class="trend-table"><thead><tr><th style="width:14%">{% trans "Month" %}</th>{% for header in chart.headers %}<th class="money">{{ header }}</th>{% endfor %}</tr></thead><tbody>
+{% for row in chart.rows %}<tr><td>{{ row.month }}</td>{% for amount in row.amounts %}<td class="money">{{ amount }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ chart.headers|length|add:'1' }}" class="empty">{% trans "No trend data for this selection." %}</td></tr>{% endfor %}
+</tbody></table></section>

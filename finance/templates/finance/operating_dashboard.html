@@ -12,7 +12,7 @@
 <div class="operating-dashboard">
 <section class="finance-header">
 <div><p class="finance-eyebrow">EUR · {% trans "Company-wide analysis" %}</p><h1>{% trans "Operating Analysis" %}</h1><p class="finance-subtitle">{% trans "Official invoices, factory purchase orders and registered administrative expenses." %}</p></div>
-<div class="finance-header-actions"><a class="secondary-button" href="{% url 'portal:finance:settlement_dashboard' %}">{% trans "Back to financial actuals" %}</a></div>
+<div class="finance-header-actions"><a class="secondary-button" href="{% url 'portal:finance:settlement_dashboard' %}">{% trans "Back to financial actuals" %}</a>{% if not filter_errors %}<a class="secondary-button finance-export-button" href="{{ pdf_export_url }}">{% trans "Export PDF" %}</a>{% endif %}</div>
 </section>
 <section class="finance-filter-panel">
 <form method="get" class="operating-month-form">

@@ -124,3 +124,144 @@ msgstr "Choisissez un mois permettant une période complète de 12 mois."
 msgid "Choose exactly one reporting month."
 msgstr "Choisissez un seul mois d’analyse."
 
+msgid "Export PDF"
+msgstr "Exporter en PDF"
+
+msgid "Financial Actuals Report"
+msgstr "Rapport financier"
+
+msgid "Company Operating Analysis"
+msgstr "Analyse de l’activité de l’entreprise"
+
+msgid "Confidential - Internal Use"
+msgstr "Confidentiel - Usage interne"
+
+msgid "Currency"
+msgstr "Devise"
+
+msgid "Trend period"
+msgstr "Période des tendances"
+
+msgid "Current filters"
+msgstr "Filtres appliqués"
+
+msgid "Key financial indicators"
+msgstr "Indicateurs financiers clés"
+
+msgid "Issue date from"
+msgstr "Date d’émission à partir du"
+
+msgid "Issue date to"
+msgstr "Date d’émission jusqu’au"
+
+msgid "Hospital"
+msgstr "Hôpital"
+
+msgid "Factory"
+msgstr "Fournisseur"
+
+msgid "Order"
+msgstr "Commande"
+
+msgid "Settlement status"
+msgstr "État du règlement"
+
+msgid "Sales and purchase trends"
+msgstr "Évolution des ventes et des achats"
+
+msgid "Net cash inflow"
+msgstr "Flux net de trésorerie"
+
+msgid "No trend data for this selection."
+msgstr "Aucune tendance pour cette sélection."
+
+msgid "Records shown: %(shown)s of %(total)s (limit %(limit)s)."
+msgstr "Enregistrements affichés : %(shown)s sur %(total)s (limite %(limit)s)."
+
+msgid "Receivables risk"
+msgstr "Risques liés aux créances"
+
+msgid "Overdue receivables"
+msgstr "Créances en retard"
+
+msgid "Receivables due within 30 days"
+msgstr "Créances à échéance sous 30 jours"
+
+msgid "Document number"
+msgstr "Numéro du document"
+
+msgid "Counterparty"
+msgstr "Contrepartie"
+
+msgid "Due date"
+msgstr "Échéance"
+
+msgid "Remaining amount"
+msgstr "Solde à encaisser"
+
+msgid "No receivables in this risk group."
+msgstr "Aucune créance dans ce groupe de risque."
+
+msgid "Order financial summary"
+msgstr "Synthèse financière par commande"
+
+msgid "Complete order details are available in the existing XLSX export."
+msgstr "Les détails complets sont disponibles dans l’export XLSX existant."
+
+msgid "Orders and formal documents"
+msgstr "Commandes et documents officiels"
+
+msgid "No formal financial orders for this selection."
+msgstr "Aucune commande financière officielle pour cette sélection."
+
+msgid "Order amounts"
+msgstr "Montants par commande"
+
+msgid "Sales"
+msgstr "Ventes"
+
+msgid "Purchases"
+msgstr "Achats"
+
+msgid "Received"
+msgstr "Encaissé"
+
+msgid "Paid"
+msgstr "Payé"
+
+msgid "Receivable balance"
+msgstr "Reste à encaisser"
+
+msgid "Payable balance"
+msgstr "Reste à payer"
+
+msgid "Valid settlement accounts"
+msgstr "Comptes de règlement valides"
+
+msgid "Posted transactions"
+msgstr "Transactions comptabilisées"
+
+msgid "Financial reporting basis"
+msgstr "Base de l’analyse financière"
+
+msgid "Frozen formal settlement amounts. Account issue dates and party filters define the account selection; cash flow includes posted transactions belonging to those accounts, grouped by payment date."
+msgstr "Montants figés des comptes officiels. Les dates d’émission et filtres de contrepartie définissent les comptes ; les flux incluent leurs transactions comptabilisées, regroupées par date de paiement."
+
+msgid "Estimated operating balance is not formal after-tax net profit. Taxes, depreciation, bank charges and unregistered expenses may not be fully covered."
+msgstr "Le solde d’activité estimé n’est pas un bénéfice net après impôt officiel. Taxes, amortissements, frais bancaires et dépenses non enregistrées peuvent ne pas être entièrement couverts."
+
+msgid "Invalid financial filters."
+msgstr "Filtres financiers invalides."
+
+msgid "Invalid settlement status."
+msgstr "État du règlement invalide."
+
+msgid "Choose exactly one value for each financial filter."
+msgstr "Choisissez une seule valeur pour chaque filtre financier."
+
+msgid "PDF generation is temporarily unavailable. Please try again."
+msgstr "La génération du PDF est temporairement indisponible. Réessayez."
+
+msgid "Invoice/PO references longer than 180 characters are abbreviated with [...]. Complete references remain in XLSX."
+msgstr "Les références Invoice/PO de plus de 180 caractères sont abrégées avec [...]. Les références complètes restent dans XLSX."
+

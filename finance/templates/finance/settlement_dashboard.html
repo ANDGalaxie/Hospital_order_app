@@ -49,12 +49,15 @@
             {% trans "发票与结算" %}
         </a>
 
+        <div class="finance-export-buttons">
         <a
             class="secondary-button finance-export-button"
             href="{{ export_url }}"
         >
             {% trans "导出 XLSX" %}
         </a>
+        <a class="secondary-button finance-export-button" href="{{ pdf_export_url }}">{% trans "Export PDF" %}</a>
+        </div>
     </div>
 </section>
 
