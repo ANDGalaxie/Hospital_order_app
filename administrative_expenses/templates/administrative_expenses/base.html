@@ -1,0 +1,12 @@
+{% extends "portal/base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "Administrative Expenses" %} | Acoeurs France{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'portal/css/home.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/list.css' %}">
+<link rel="stylesheet" href="{% static 'portal/css/master_data_library.css' %}">
+<link rel="stylesheet" href="{% static 'administrative_expenses/expenses.css' %}">
+{% endblock %}
+{% block breadcrumb %}
+<nav class="master-breadcrumb"><a href="{% url 'portal:home' %}">{% trans "工作台" %}</a><span>›</span><a href="{% url 'portal:administrative_expenses:home' %}">{% trans "Administrative Expenses" %}</a>{% block expense_breadcrumb %}{% endblock %}</nav>
+{% endblock %}

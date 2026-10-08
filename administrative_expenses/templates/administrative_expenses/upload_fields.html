@@ -1,0 +1,6 @@
+{% load i18n %}
+{{ attachment_form.non_field_errors }}
+{% include "administrative_expenses/field.html" with field=attachment_form.document_type %}
+{% include "administrative_expenses/field.html" with field=attachment_form.files %}
+<p class="expense-help">{% trans "PDF, JPG, JPEG or PNG. Maximum 10 MB per file and 25 MB per upload. Select a document type for this batch; additional batches can use another type." %}</p>
+<p class="expense-help">{% trans "Documents may be added later. Payment status and supporting documents are independent." %}</p>

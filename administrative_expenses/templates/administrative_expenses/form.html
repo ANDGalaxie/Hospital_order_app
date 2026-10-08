@@ -1,0 +1,40 @@
+{% extends "administrative_expenses/base.html" %}
+{% load i18n %}
+{% block content %}
+<section class="portal-page-header"><div><h1>{% if expense %}{% trans "Edit expense" %} #{{ expense.pk }}{% else %}{% trans "New expense" %}{% endif %}</h1></div></section>
+<form method="post" enctype="multipart/form-data" class="expense-form">
+{% csrf_token %}{{ form.non_field_errors }}
+<section class="expense-panel"><h2>{% trans "Expense information" %}</h2><div class="expense-form-grid">
+{% include "administrative_expenses/field.html" with field=form.category %}
+{% include "administrative_expenses/field.html" with field=form.subcategory %}
+{% include "administrative_expenses/field.html" with field=form.expense_date %}
+{% include "administrative_expenses/field.html" with field=form.employee_or_payee %}
+{% include "administrative_expenses/field.html" with field=form.amount %}
+{% include "administrative_expenses/field.html" with field=form.description %}
+</div></section>
+<section class="expense-panel"><h2>{% trans "Payment information" %}</h2><div class="expense-form-grid">{% include "administrative_expenses/field.html" with field=form.payment_status %}{% include "administrative_expenses/field.html" with field=form.paid_at %}</div></section>
+<section class="expense-panel"><h2>{% trans "Invoices and supporting documents" %}</h2>{% include "administrative_expenses/upload_fields.html" %}
+{% if expense %}<p>{{ expense.supporting_document_status }}</p><p><a href="{% url 'portal:administrative_expenses:detail' expense.pk %}">{% trans "Manage existing attachments" %}</a></p><ul>{% for attachment in attachments %}<li><a href="{% url 'portal:administrative_expenses:download' expense.pk attachment.pk %}">{{ attachment.original_filename }}</a> · {{ attachment.get_document_type_display }}</li>{% endfor %}</ul>{% endif %}</section>
+<div class="expense-actions"><button type="submit" class="portal-button">{% trans "Save expense" %}</button><a href="{% if expense %}{% url 'portal:administrative_expenses:detail' expense.pk %}{% else %}{% url 'portal:administrative_expenses:home' %}{% endif %}">{% trans "Cancel" %}</a></div>
+</form>
+{{ subcategory_map|json_script:"expense-subcategories" }}
+{% endblock %}
+{% block extra_js %}
+<script>
+(() => {
+    const groups = JSON.parse(document.getElementById("expense-subcategories").textContent);
+    const category = document.getElementById("id_category");
+    const subcategory = document.getElementById("id_subcategory");
+    const emptyLabel = subcategory.options[0].text;
+    const update = () => {
+        const previous = subcategory.value;
+        const choices = groups[category.value] || [];
+        subcategory.replaceChildren(new Option(emptyLabel, ""), ...choices.map(([value, label]) => new Option(label, value)));
+        subcategory.value = choices.some(([value]) => value === previous) ? previous : "";
+        subcategory.required = choices.length > 0;
+    };
+    category.addEventListener("change", update);
+    update();
+})();
+</script>
+{% endblock %}

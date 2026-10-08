@@ -1,0 +1,8 @@
+{% load i18n expense_tags %}
+<section class="master-stat-grid expense-stats">
+<div class="master-stat-card"><span>{% trans "Monthly total" %}</span><strong>{{ summary.total|expense_money }}</strong></div>
+<div class="master-stat-card"><span>{% trans "Paid expenses" %}</span><strong>{{ summary.paid|expense_money }}</strong></div>
+<div class="master-stat-card"><span>{% trans "Pending expenses" %}</span><strong>{{ summary.pending|expense_money }}</strong></div>
+<div class="master-stat-card"><span>{% trans "Expense records" %}</span><strong>{{ summary.count }}</strong></div>
+<div class="master-stat-card"><span>{% trans "Missing supporting document" %}</span><strong>{{ summary.missing }}</strong></div>
+</section>

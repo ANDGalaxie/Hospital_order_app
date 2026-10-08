@@ -1,0 +1,6 @@
+{% load i18n %}
+<form method="get" class="expense-filters">
+<label>{% trans "Expense month" %}<input type="month" name="month" value="{{ month }}" required></label>
+<button class="portal-button" type="submit">{% trans "Apply" %}</button>
+</form>
+<p class="expense-help">{% trans "Totals use the expense date and exclude voided expenses." %}</p>

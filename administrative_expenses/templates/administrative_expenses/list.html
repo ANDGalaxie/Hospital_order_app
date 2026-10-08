@@ -1,0 +1,20 @@
+{% extends "administrative_expenses/base.html" %}
+{% load i18n expense_tags %}
+{% block expense_breadcrumb %}<span>›</span><span>{{ title }}</span>{% endblock %}
+{% block content %}
+<section class="portal-page-header"><div><h1>{{ title }}</h1></div><a class="portal-button" href="{% url 'portal:administrative_expenses:create' %}?category={{ category }}&amp;subcategory={{ subcategory }}">{% trans "New expense" %}</a></section>
+{% include "administrative_expenses/stats.html" %}
+<form method="get" class="expense-filters expense-panel">
+<label>{% trans "Expense month" %}<input type="month" name="month" value="{{ month }}" required></label>
+<label>{% trans "Payment status" %}<select name="payment"><option value="">{% trans "All" %}</option><option value="pending" {% if payment == 'pending' %}selected{% endif %}>{% trans "Pending" %}</option><option value="paid" {% if payment == 'paid' %}selected{% endif %}>{% trans "Paid" %}</option></select></label>
+<label>{% trans "Supporting documents" %}<select name="document"><option value="">{% trans "All" %}</option><option value="missing" {% if document == 'missing' %}selected{% endif %}>{% trans "Missing supporting document" %}</option><option value="attached" {% if document == 'attached' %}selected{% endif %}>{% trans "Supporting document attached" %}</option></select></label>
+<label class="expense-checkbox"><input type="checkbox" name="void" value="1" {% if show_void %}checked{% endif %}>{% trans "Show voided expenses" %}</label>
+<button type="submit" class="portal-button">{% trans "Apply" %}</button>
+</form>
+<p class="expense-help">{% trans "Totals use the expense date and exclude voided expenses." %}</p>
+{% if filtered_summary %}<p>{% trans "Filtered total" %}: {{ filtered_summary.total|expense_money }} · {{ filtered_summary.count }} {% trans "Expense records" %}</p>{% endif %}
+<section class="expense-panel">{% include "administrative_expenses/rows.html" with records=page_obj %}
+<nav class="master-pagination">{% if page_obj.has_previous %}<a href="?{{ page_query }}&amp;page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?{{ page_query }}&amp;page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>{% endif %}</nav>
+</section>
+{% endblock %}
+{% block extra_js %}{% include "administrative_expenses/confirm.html" %}{% endblock %}

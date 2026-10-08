@@ -1,0 +1,6 @@
+{% load i18n %}
+<div class="expense-table"><table><thead><tr><th>{% trans "Filename" %}</th><th>{% trans "Document type" %}</th><th>{% trans "Size" %}</th><th>{% trans "Uploaded" %}</th><th>{% trans "Actions" %}</th></tr></thead><tbody>
+{% for attachment in attachments %}
+<tr><td>{{ attachment.original_filename }}</td><td>{{ attachment.get_document_type_display }}</td><td>{{ attachment.file_size|filesizeformat }}</td><td>{{ attachment.created_at|date:"Y-m-d H:i" }}</td><td class="expense-actions"><a href="{% url 'portal:administrative_expenses:preview' expense.pk attachment.pk %}" target="_blank" rel="noopener">{% trans "View" %}</a><a href="{% url 'portal:administrative_expenses:download' expense.pk attachment.pk %}">{% trans "Download" %}</a><form method="post" action="{% url 'portal:administrative_expenses:remove' expense.pk attachment.pk %}" data-confirm="{% trans 'Remove this attachment?' %}">{% csrf_token %}<button class="expense-link" type="submit">{% trans "Remove" %}</button></form></td></tr>
+{% empty %}<tr><td colspan="5">{% trans "Missing supporting document" %}</td></tr>{% endfor %}
+</tbody></table></div>

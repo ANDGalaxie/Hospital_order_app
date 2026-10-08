@@ -29,6 +29,7 @@ urlpatterns = [
     path("hospital-engagements/<int:hospital_id>/<slug:kind>/add/", engagement_views.edit_record, name="engagement_record_add"),
     path("hospital-engagements/<int:hospital_id>/<slug:kind>/<int:record_id>/edit/", engagement_views.edit_record, name="engagement_record_edit"),
     path("hospital-engagements/<int:hospital_id>/<slug:kind>/<int:record_id>/remove/", engagement_views.remove_record, name="engagement_record_remove"),
+    path("administrative-expenses/", include("administrative_expenses.urls")),
     path("files/<path:path>", media_views.protected_media, name="protected_media"),
     path("finance/", include("finance.urls")),
     path("", views.home, name="home"),

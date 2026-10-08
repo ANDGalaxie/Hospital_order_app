@@ -167,6 +167,15 @@ def build_home_context(request):
         modules = [by_route[MODULES[key]["route"]] for key in portal_navigation(request.user, role=role)["modules"]
                    if MODULES[key]["route"] in by_route]
 
+    if is_boss_user(request.user):
+        modules.append({
+            "title": _("Administrative Expenses"),
+            "subtitle": _("Company expenses, payments and supporting documents"),
+            "icon": "portal/img/app-icons/invoice.png", "theme": "orange",
+            "url": reverse("portal:administrative_expenses:home"),
+            "badge": None,
+        })
+
     return {
         "modules": modules,
         "lang": lang,

@@ -1,0 +1,312 @@
+msgid ""
+msgstr "Project-Id-Version: Administrative Expenses V1\nPO-Revision-Date: 2026-10-08 00:00+0000\nLast-Translator: Acoeurs\nLanguage-Team: Acoeurs\nLanguage: fr\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Administrative Expenses"
+msgstr "Dépenses administratives"
+
+msgid "Company expenses, payments and supporting documents"
+msgstr "Dépenses, paiements et justificatifs de l’entreprise"
+
+msgid "Employee salaries"
+msgstr "Salaires du personnel"
+
+msgid "Employee benefits"
+msgstr "Avantages du personnel"
+
+msgid "Office supplies"
+msgstr "Fournitures de bureau"
+
+msgid "Company premises"
+msgstr "Locaux de l’entreprise"
+
+msgid "Reimbursements"
+msgstr "Remboursements"
+
+msgid "Bonuses"
+msgstr "Primes"
+
+msgid "Meals"
+msgstr "Repas"
+
+msgid "Transport allowance"
+msgstr "Indemnité de transport"
+
+msgid "Commissions"
+msgstr "Commissions"
+
+msgid "Housing allowance"
+msgstr "Indemnité de logement"
+
+msgid "Holiday gifts"
+msgstr "Cadeaux de fêtes"
+
+msgid "Travel"
+msgstr "Déplacements"
+
+msgid "Entertainment"
+msgstr "Réceptions"
+
+msgid "Gifts"
+msgstr "Cadeaux"
+
+msgid "Invalid category."
+msgstr "Catégorie invalide."
+
+msgid "Choose a valid subcategory for this category."
+msgstr "Choisissez une sous-catégorie valide pour cette catégorie."
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Subcategory"
+msgstr "Sous-catégorie"
+
+msgid "No subcategory"
+msgstr "Aucune sous-catégorie"
+
+msgid "Expense date"
+msgstr "Date de la dépense"
+
+msgid "Employee / payee"
+msgstr "Employé / bénéficiaire"
+
+msgid "Amount (EUR)"
+msgstr "Montant (EUR)"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Payment status"
+msgstr "État du paiement"
+
+msgid "Payment date"
+msgstr "Date du paiement"
+
+msgid "Pending"
+msgstr "En attente"
+
+msgid "Paid"
+msgstr "Payé"
+
+msgid "Employee / payee is required for this category."
+msgstr "Un employé ou bénéficiaire est requis pour cette catégorie."
+
+msgid "Paid expenses require a payment date."
+msgstr "Les dépenses payées nécessitent une date de paiement."
+
+msgid "Pending expenses cannot have a payment date."
+msgstr "Les dépenses en attente ne peuvent pas avoir de date de paiement."
+
+msgid "Payment date must be on or after the expense date and cannot be in the future."
+msgstr "La date du paiement doit être égale ou postérieure à celle de la dépense et ne peut pas être future."
+
+msgid "Supporting document attached"
+msgstr "Justificatif joint"
+
+msgid "Missing supporting document"
+msgstr "Justificatif manquant"
+
+msgid "Invoice"
+msgstr "Facture"
+
+msgid "Receipt"
+msgstr "Reçu"
+
+msgid "Payslip"
+msgstr "Bulletin de paie"
+
+msgid "Contract"
+msgstr "Contrat"
+
+msgid "Payment proof"
+msgstr "Preuve de paiement"
+
+msgid "Other"
+msgstr "Autre"
+
+msgid "Document type"
+msgstr "Type de justificatif"
+
+msgid "Attachments / Justificatifs"
+msgstr "Pièces jointes / Justificatifs"
+
+msgid "Only PDF, JPG, JPEG and PNG files with safe filenames are allowed."
+msgstr "Seuls les fichiers PDF, JPG, JPEG et PNG avec un nom sûr sont acceptés."
+
+msgid "Each file must be non-empty and no larger than 10 MB."
+msgstr "Chaque fichier doit être non vide et ne pas dépasser 10 Mo."
+
+msgid "The file content does not match a valid supported document format."
+msgstr "Le contenu ne correspond pas à un format de document valide et accepté."
+
+msgid "The total upload size cannot exceed 25 MB."
+msgstr "La taille totale de l’envoi ne peut pas dépasser 25 Mo."
+
+msgid "Choose a valid month (YYYY-MM)."
+msgstr "Choisissez un mois valide (AAAA-MM)."
+
+msgid "Invalid document type."
+msgstr "Type de justificatif invalide."
+
+msgid "Voided expenses cannot be edited."
+msgstr "Les dépenses annulées ne peuvent pas être modifiées."
+
+msgid "Invalid filter."
+msgstr "Filtre invalide."
+
+msgid "Unable to save. Existing records and attachments have been preserved; please try again."
+msgstr "Impossible d’enregistrer. Les données et pièces jointes existantes sont conservées ; réessayez."
+
+msgid "Expense saved."
+msgstr "Dépense enregistrée."
+
+msgid "Unable to upload attachments; please try again."
+msgstr "Impossible d’envoyer les pièces jointes ; réessayez."
+
+msgid "Attachments uploaded."
+msgstr "Pièces jointes envoyées."
+
+msgid "Choose at least one file."
+msgstr "Choisissez au moins un fichier."
+
+msgid "Unable to remove attachment; please try again."
+msgstr "Impossible de retirer la pièce jointe ; réessayez."
+
+msgid "Attachment removed."
+msgstr "Pièce jointe retirée."
+
+msgid "Attachment removed from this expense. Private storage cleanup is pending."
+msgstr "Pièce jointe retirée de la dépense. Le nettoyage du stockage privé est en attente."
+
+msgid "Expense voided."
+msgstr "Dépense annulée."
+
+msgid "Expense month"
+msgstr "Mois de la dépense"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Totals use the expense date and exclude voided expenses."
+msgstr "Les totaux utilisent la date de la dépense et excluent les dépenses annulées."
+
+msgid "Monthly total"
+msgstr "Total mensuel"
+
+msgid "Paid expenses"
+msgstr "Dépenses payées du mois"
+
+msgid "Pending expenses"
+msgstr "Dépenses en attente du mois"
+
+msgid "Expense records"
+msgstr "Nombre de dépenses"
+
+msgid "New expense"
+msgstr "Nouvelle dépense"
+
+msgid "Monthly category summary"
+msgstr "Récapitulatif mensuel par catégorie"
+
+msgid "Recent expenses"
+msgstr "Dépenses récentes"
+
+msgid "Choose a subcategory"
+msgstr "Choisissez une sous-catégorie"
+
+msgid "Supporting documents"
+msgstr "Justificatifs"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Voided"
+msgstr "Annulée"
+
+msgid "View"
+msgstr "Voir"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Void"
+msgstr "Annuler"
+
+msgid "Void this expense? It will be excluded from totals."
+msgstr "Annuler cette dépense ? Elle sera exclue des totaux."
+
+msgid "No expenses for this month."
+msgstr "Aucune dépense pour ce mois."
+
+msgid "All"
+msgstr "Tout"
+
+msgid "Show voided expenses"
+msgstr "Afficher les dépenses annulées"
+
+msgid "Filtered total"
+msgstr "Total filtré"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "PDF, JPG, JPEG or PNG. Maximum 10 MB per file and 25 MB per upload. Select a document type for this batch; additional batches can use another type."
+msgstr "PDF, JPG, JPEG ou PNG. Maximum 10 Mo par fichier et 25 Mo par envoi. Choisissez un type pour ce lot ; les autres lots peuvent utiliser un autre type."
+
+msgid "Documents may be added later. Payment status and supporting documents are independent."
+msgstr "Les justificatifs peuvent être ajoutés plus tard. Paiement et justificatifs sont indépendants."
+
+msgid "Filename"
+msgstr "Nom du fichier"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Uploaded"
+msgstr "Date d’envoi"
+
+msgid "Download"
+msgstr "Télécharger"
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Remove this attachment?"
+msgstr "Retirer cette pièce jointe ?"
+
+msgid "Expense information"
+msgstr "Informations sur la dépense"
+
+msgid "Created by"
+msgstr "Créé par"
+
+msgid "Updated by"
+msgstr "Modifié par"
+
+msgid "Payment information"
+msgstr "Informations sur le paiement"
+
+msgid "Invoices and supporting documents"
+msgstr "Factures et justificatifs"
+
+msgid "Add documents"
+msgstr "Ajouter des justificatifs"
+
+msgid "Edit expense"
+msgstr "Modifier la dépense"
+
+msgid "Manage existing attachments"
+msgstr "Gérer les pièces jointes existantes"
+
+msgid "Save expense"
+msgstr "Enregistrer la dépense"
+
+msgid "Cancel"
+msgstr "Retour"
+
+msgid "Invalid attachment path."
+msgstr "Chemin de pièce jointe invalide."
+

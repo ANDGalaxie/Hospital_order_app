@@ -61,10 +61,12 @@ INSTALLED_APPS = [
     "settlements.apps.SettlementsConfig",
     "hospital_engagements.apps.HospitalEngagementsConfig",
     "commercial_pos.apps.CommercialPosConfig",
+    "administrative_expenses.apps.AdministrativeExpensesConfig",
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'administrative_expenses.middleware.PrivateExpenseResponseMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'portal.middleware.PortalDefaultLanguageMiddleware',

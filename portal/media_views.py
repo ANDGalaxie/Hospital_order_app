@@ -24,12 +24,18 @@ def protected_media(request, path):
     if is_demo(request.user):
         return HttpResponseForbidden("Access denied")
     media_root = Path(settings.MEDIA_ROOT).resolve()
+    from administrative_expenses.storage import is_private_media_path
+    if is_private_media_path(path):
+        return HttpResponseForbidden("Access denied")
 
     try:
         candidate = Path(safe_join(str(media_root), path)).resolve(strict=True)
         candidate.relative_to(media_root)
     except (OSError, RuntimeError, SuspiciousFileOperation, ValueError):
         raise Http404("File not found")
+
+    if is_private_media_path(candidate):
+        return HttpResponseForbidden("Access denied")
 
     if not candidate.is_file():
         raise Http404("File not found")

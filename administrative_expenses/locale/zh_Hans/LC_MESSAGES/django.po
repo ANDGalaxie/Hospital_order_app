@@ -1,0 +1,312 @@
+msgid ""
+msgstr "Project-Id-Version: Administrative Expenses V1\nPO-Revision-Date: 2026-10-08 00:00+0000\nLast-Translator: Acoeurs\nLanguage-Team: Acoeurs\nLanguage: zh_Hans\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Administrative Expenses"
+msgstr "公司行政支出"
+
+msgid "Company expenses, payments and supporting documents"
+msgstr "公司费用、支付与凭证管理"
+
+msgid "Employee salaries"
+msgstr "员工工资"
+
+msgid "Employee benefits"
+msgstr "员工福利"
+
+msgid "Office supplies"
+msgstr "办公用品"
+
+msgid "Company premises"
+msgstr "公司场地"
+
+msgid "Reimbursements"
+msgstr "报销"
+
+msgid "Bonuses"
+msgstr "奖金"
+
+msgid "Meals"
+msgstr "餐费"
+
+msgid "Transport allowance"
+msgstr "交通补助"
+
+msgid "Commissions"
+msgstr "提成"
+
+msgid "Housing allowance"
+msgstr "住房补助"
+
+msgid "Holiday gifts"
+msgstr "节假日礼品"
+
+msgid "Travel"
+msgstr "差旅"
+
+msgid "Entertainment"
+msgstr "宴请"
+
+msgid "Gifts"
+msgstr "礼品"
+
+msgid "Invalid category."
+msgstr "无效分类。"
+
+msgid "Choose a valid subcategory for this category."
+msgstr "请选择属于当前分类的二级分类。"
+
+msgid "Category"
+msgstr "一级分类"
+
+msgid "Subcategory"
+msgstr "二级分类"
+
+msgid "No subcategory"
+msgstr "无二级分类"
+
+msgid "Expense date"
+msgstr "费用发生日期"
+
+msgid "Employee / payee"
+msgstr "员工 / 收款人"
+
+msgid "Amount (EUR)"
+msgstr "金额（EUR）"
+
+msgid "Description"
+msgstr "费用说明"
+
+msgid "Payment status"
+msgstr "支付状态"
+
+msgid "Payment date"
+msgstr "实际付款日期"
+
+msgid "Pending"
+msgstr "待支付"
+
+msgid "Paid"
+msgstr "已支付"
+
+msgid "Employee / payee is required for this category."
+msgstr "工资、福利和报销必须填写员工或经办人。"
+
+msgid "Paid expenses require a payment date."
+msgstr "已支付费用必须填写付款日期。"
+
+msgid "Pending expenses cannot have a payment date."
+msgstr "待支付费用不能填写付款日期。"
+
+msgid "Payment date must be on or after the expense date and cannot be in the future."
+msgstr "付款日期不得早于费用发生日期，也不能晚于今天。"
+
+msgid "Supporting document attached"
+msgstr "已上传凭证"
+
+msgid "Missing supporting document"
+msgstr "待补凭证"
+
+msgid "Invoice"
+msgstr "发票"
+
+msgid "Receipt"
+msgstr "收据"
+
+msgid "Payslip"
+msgstr "工资单"
+
+msgid "Contract"
+msgstr "合同"
+
+msgid "Payment proof"
+msgstr "付款证明"
+
+msgid "Other"
+msgstr "其他"
+
+msgid "Document type"
+msgstr "凭证类型"
+
+msgid "Attachments / Justificatifs"
+msgstr "附件 / Justificatifs"
+
+msgid "Only PDF, JPG, JPEG and PNG files with safe filenames are allowed."
+msgstr "仅允许文件名安全的 PDF、JPG、JPEG 和 PNG 文件。"
+
+msgid "Each file must be non-empty and no larger than 10 MB."
+msgstr "单个文件不得为空，且不得超过 10 MB。"
+
+msgid "The file content does not match a valid supported document format."
+msgstr "文件实际内容与有效的支持格式不符。"
+
+msgid "The total upload size cannot exceed 25 MB."
+msgstr "单次上传总大小不得超过 25 MB。"
+
+msgid "Choose a valid month (YYYY-MM)."
+msgstr "请选择有效月份（YYYY-MM）。"
+
+msgid "Invalid document type."
+msgstr "无效凭证类型。"
+
+msgid "Voided expenses cannot be edited."
+msgstr "作废费用不可编辑。"
+
+msgid "Invalid filter."
+msgstr "无效筛选条件。"
+
+msgid "Unable to save. Existing records and attachments have been preserved; please try again."
+msgstr "保存失败，原有记录和附件已保留，请重试。"
+
+msgid "Expense saved."
+msgstr "费用已保存。"
+
+msgid "Unable to upload attachments; please try again."
+msgstr "附件上传失败，请重试。"
+
+msgid "Attachments uploaded."
+msgstr "凭证已上传。"
+
+msgid "Choose at least one file."
+msgstr "请选择至少一个文件。"
+
+msgid "Unable to remove attachment; please try again."
+msgstr "移除附件失败，请重试。"
+
+msgid "Attachment removed."
+msgstr "附件已移除。"
+
+msgid "Attachment removed from this expense. Private storage cleanup is pending."
+msgstr "附件已从费用中移除，私有存储清理待重试。"
+
+msgid "Expense voided."
+msgstr "费用已作废。"
+
+msgid "Expense month"
+msgstr "费用月份"
+
+msgid "Apply"
+msgstr "筛选"
+
+msgid "Totals use the expense date and exclude voided expenses."
+msgstr "金额按费用发生月份统计，排除作废记录。"
+
+msgid "Monthly total"
+msgstr "本月费用总额"
+
+msgid "Paid expenses"
+msgstr "本月已支付金额"
+
+msgid "Pending expenses"
+msgstr "本月待支付金额"
+
+msgid "Expense records"
+msgstr "费用记录数"
+
+msgid "New expense"
+msgstr "新增费用"
+
+msgid "Monthly category summary"
+msgstr "本月分类汇总"
+
+msgid "Recent expenses"
+msgstr "最近费用记录"
+
+msgid "Choose a subcategory"
+msgstr "请选择二级分类"
+
+msgid "Supporting documents"
+msgstr "凭证状态"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Voided"
+msgstr "已作废"
+
+msgid "View"
+msgstr "查看"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "Void"
+msgstr "作废"
+
+msgid "Void this expense? It will be excluded from totals."
+msgstr "确认作废此费用？作废后将排除统计。"
+
+msgid "No expenses for this month."
+msgstr "本月暂无费用记录。"
+
+msgid "All"
+msgstr "全部"
+
+msgid "Show voided expenses"
+msgstr "查看作废记录"
+
+msgid "Filtered total"
+msgstr "筛选结果合计"
+
+msgid "Previous"
+msgstr "上一页"
+
+msgid "Next"
+msgstr "下一页"
+
+msgid "PDF, JPG, JPEG or PNG. Maximum 10 MB per file and 25 MB per upload. Select a document type for this batch; additional batches can use another type."
+msgstr "支持 PDF、JPG、JPEG、PNG。单文件最大 10 MB，单次总计最大 25 MB。本批文件使用所选凭证类型，可分批上传其他类型。"
+
+msgid "Documents may be added later. Payment status and supporting documents are independent."
+msgstr "可稍后补传凭证。支付状态与凭证状态互相独立。"
+
+msgid "Filename"
+msgstr "文件名"
+
+msgid "Size"
+msgstr "文件大小"
+
+msgid "Uploaded"
+msgstr "上传时间"
+
+msgid "Download"
+msgstr "下载"
+
+msgid "Remove"
+msgstr "移除"
+
+msgid "Remove this attachment?"
+msgstr "确认移除此附件？"
+
+msgid "Expense information"
+msgstr "费用信息"
+
+msgid "Created by"
+msgstr "创建人"
+
+msgid "Updated by"
+msgstr "更新人"
+
+msgid "Payment information"
+msgstr "支付信息"
+
+msgid "Invoices and supporting documents"
+msgstr "发票与凭证"
+
+msgid "Add documents"
+msgstr "补传凭证"
+
+msgid "Edit expense"
+msgstr "编辑费用"
+
+msgid "Manage existing attachments"
+msgstr "管理现有附件"
+
+msgid "Save expense"
+msgstr "保存费用"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Invalid attachment path."
+msgstr "无效附件路径。"
+

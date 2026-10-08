@@ -1,0 +1,19 @@
+{% extends "administrative_expenses/base.html" %}
+{% load i18n expense_tags %}
+{% block expense_breadcrumb %}<span>›</span><span>{{ expense.category_display }} #{{ expense.pk }}</span>{% endblock %}
+{% block content %}
+<section class="portal-page-header"><div><h1>{{ expense.category_display }} #{{ expense.pk }}</h1><p>{% if expense.is_void %}{% trans "Voided" %} · {% endif %}{{ expense.supporting_document_status }}</p></div>{% if not expense.is_void %}<a href="{% url 'portal:administrative_expenses:edit' expense.pk %}" class="portal-button">{% trans "Edit" %}</a>{% endif %}</section>
+<section class="expense-panel"><h2>{% trans "Expense information" %}</h2><dl class="expense-details">
+<dt>{% trans "Expense date" %}</dt><dd>{{ expense.expense_date|date:"Y-m-d" }}</dd>
+<dt>{% trans "Employee / payee" %}</dt><dd>{{ expense.employee_or_payee|default:"—" }}</dd>
+<dt>{% trans "Amount (EUR)" %}</dt><dd>{{ expense.amount|expense_money }}</dd>
+<dt>{% trans "Description" %}</dt><dd>{{ expense.description|linebreaksbr }}</dd>
+<dt>{% trans "Created by" %}</dt><dd>{{ expense.created_by|default:"—" }} · {{ expense.created_at|date:"Y-m-d H:i" }}</dd>
+<dt>{% trans "Updated by" %}</dt><dd>{{ expense.updated_by|default:"—" }} · {{ expense.updated_at|date:"Y-m-d H:i" }}</dd></dl></section>
+<section class="expense-panel"><h2>{% trans "Payment information" %}</h2><p>{{ expense.get_payment_status_display }} · {{ expense.paid_at|date:"Y-m-d"|default:"—" }}</p></section>
+<section class="expense-panel"><h2>{% trans "Invoices and supporting documents" %}</h2>
+{% include "administrative_expenses/attachments.html" %}
+{% if not expense.is_void %}<form method="post" enctype="multipart/form-data" action="{% url 'portal:administrative_expenses:upload' expense.pk %}" class="expense-upload">{% csrf_token %}{% include "administrative_expenses/upload_fields.html" %}<button type="submit" class="portal-button">{% trans "Add documents" %}</button></form>{% endif %}</section>
+{% if not expense.is_void %}<form method="post" action="{% url 'portal:administrative_expenses:void' expense.pk %}" data-confirm="{% trans 'Void this expense? It will be excluded from totals.' %}">{% csrf_token %}<button type="submit" class="portal-button">{% trans "Void" %}</button></form>{% endif %}
+{% endblock %}
+{% block extra_js %}{% include "administrative_expenses/confirm.html" %}{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "administrative_expenses/base.html" %}
+{% load i18n expense_tags %}
+{% block content %}
+<section class="portal-page-header"><div><h1>{% trans "Administrative Expenses" %}</h1><p>{% trans "Company expenses, payments and supporting documents" %}</p></div><a class="portal-button" href="{% url 'portal:administrative_expenses:create' %}">{% trans "New expense" %}</a></section>
+{% include "administrative_expenses/month.html" %}
+{% include "administrative_expenses/stats.html" %}
+<section class="module-grid">
+{% for item in categories %}
+<a class="module-card" href="{% url 'portal:administrative_expenses:category' item.code %}?month={{ month }}"><div class="module-content"><h2>{{ item.label }}</h2><p>{{ item.total|expense_money }} · {{ item.count }}</p></div><div class="module-arrow">›</div></a>
+{% endfor %}
+</section>
+<section class="expense-panel"><h2>{% trans "Monthly category summary" %}</h2>
+<div class="expense-table"><table><thead><tr><th>{% trans "Category" %}</th><th>{% trans "Expense records" %}</th><th>{% trans "Amount (EUR)" %}</th></tr></thead><tbody>
+{% for item in categories %}<tr><td><strong>{{ item.label }}</strong></td><td>{{ item.count }}</td><td>{{ item.total|expense_money }}</td></tr>{% for child in item.children %}<tr><td class="expense-subcategory">{{ child.label }}</td><td>{{ child.count }}</td><td>{{ child.total|expense_money }}</td></tr>{% endfor %}{% endfor %}
+</tbody></table></div></section>
+<section class="expense-panel"><h2>{% trans "Recent expenses" %}</h2>{% include "administrative_expenses/rows.html" with records=recent %}</section>
+{% endblock %}
